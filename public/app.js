@@ -431,6 +431,47 @@
     $("rewards").hidden = false;
   }
 
+  // ---------- šapat: tajanstveni znak da ispod ima još ----------
+  //
+  // Pojavi se s malim zakašnjenjem, samo ako stranica stvarno ide dalje ispod ruba ekrana,
+  // i nestane čim ona krene skrolati. Ne kaže što je ispod — samo da nešto jest.
+
+  var peek = (function () {
+    var node, timer = 0;
+    var armed = false;       // smije se pokazati tek kad istekne čekanje
+    var texts = {};          // tekst po pogledu
+    var seen = {};           // pogledi u kojima je već skrolala
+    function more() {
+      return document.documentElement.scrollHeight - window.innerHeight - window.scrollY > 160;
+    }
+    function update() {
+      if (!node) return;
+      if (window.scrollY > 50) seen[currentView] = true;
+      var show = armed && Boolean(texts[currentView]) && !seen[currentView] && more() &&
+        !document.body.classList.contains("in-game");
+      if (show) $("peek-text").textContent = texts[currentView];
+      node.classList.toggle("on", show);
+    }
+    return {
+      init: function () {
+        node = $("peek");
+        window.addEventListener("scroll", update, { passive: true });
+        window.addEventListener("resize", update);
+        node.addEventListener("click", function () {
+          window.scrollBy({ top: window.innerHeight * 0.6, behavior: reducedMotion ? "auto" : "smooth" });
+        });
+      },
+      set: function (view, text) { texts[view] = text; },
+      // pričekaj da se stranica smiri (otkrivanje, promjena pogleda), pa tek onda izviri
+      soon: function (ms) {
+        armed = false;
+        if (node) node.classList.remove("on");
+        clearTimeout(timer);
+        timer = setTimeout(function () { armed = true; update(); }, ms == null ? 1400 : ms);
+      },
+    };
+  })();
+
   // ---------- pogledi: Danas / Kutija ----------
 
   var VIEWS = ["today", "box"];
@@ -449,6 +490,7 @@
       b.setAttribute("aria-current", String(b.getAttribute("data-view") === name));
     });
     window.scrollTo(0, 0);
+    peek.soon(900);
   }
 
   function initViews() {
@@ -1224,6 +1266,9 @@
     refreshBox();
     renderRewards(streak);
     initViews();
+    peek.init();
+    peek.set("today", current.note ? "psst… netko ti je nešto napisao" : "ima još nešto ispod…");
+    peek.set("box", "nešto se krije malo niže…");
 
     // spremanje kasete u kutiju
     var collectBtn = $("collect");
@@ -1262,6 +1307,7 @@
       deck.start(celebrate);
       $("after").hidden = false;
       renderNext(upcoming[0], isLatest);
+      peek.soon(celebrate ? 2600 : 1400);   // nakon slavlja, kad se ekran smiri
       if (celebrate) {
         confetti($("reveal"), 26);
         buzz([20, 40, 30]);

@@ -19,6 +19,11 @@ Dva pogleda, jahači na dnu ekrana (ili povlačenje prstom lijevo/desno): **Dana
 3. Gumb **„spremi kasetu u kutiju”**, pa poruka rukopisom, reakcija ikonom (otključa tajni `ps`
    i gumb „javi mu”), cijela pjesma (Spotify/YouTube), odbrojavanje do sljedeće.
 
+**Šapat** (`peek` u `app.js`): kad stranica ide dalje ispod ruba ekrana, iznad jahača nakon
+kratke stanke izviri papirić s tajanstvenim natpisom („psst… netko ti je nešto napisao”).
+Ne kaže što je ispod, samo da nešto jest; nestane čim krene skrolati i ne vraća se u tom
+pogledu. Novi natpisi neka ostanu kratki i zagonetni, bez uputa tipa „skrolaj dolje”.
+
 **Kutija**
 - Spremljene kasete kao male kasete; nespremljene su prazna mjesta („nije spremljena”,
   „propuštena”, „čeka te danas”). **Svaka kaseta izgleda drugačije** (`designFor` u `app.js`:

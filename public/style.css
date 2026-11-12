@@ -573,6 +573,37 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
 }
 .badge.pop { animation: bump-badge 0.5s var(--ease-out); }
 
+/* ---------- šapat: ima još ispod ---------- */
+
+/* papirić koji izviri iznad jahača; nestane čim krene skrolati */
+.peek {
+  position: fixed;
+  z-index: 4;
+  left: 50%;
+  bottom: calc(66px + env(safe-area-inset-bottom));
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 14px 6px;
+  border: 2px solid var(--ink);
+  border-radius: 3px;
+  font-family: var(--hand);
+  font-size: 1.3rem;
+  line-height: 1.1;
+  white-space: nowrap;
+  color: var(--ink);
+  background: var(--sheet);
+  box-shadow: 3px 4px 0 var(--ink);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 34px) rotate(-2deg);
+  transition: opacity 0.6s, transform 0.6s var(--ease-out);
+  cursor: pointer;
+}
+.peek.on { opacity: 1; pointer-events: auto; transform: translate(-50%, 0) rotate(-2deg); }
+.peek .icon { font-size: 0.8em; animation: bob 1.5s ease-in-out infinite; }
+.in-game .peek { display: none; }
+
 /* ---------- svaka kaseta je drugačija ---------- */
 
 .tape-label.p1 { background: repeating-linear-gradient(90deg, transparent 0 23px, var(--rule) 23px 24px), repeating-linear-gradient(transparent 0 23px, var(--rule) 23px 24px), var(--sheet); }
@@ -753,6 +784,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
 @keyframes fly { to { transform: translateY(70vh) rotate(18deg) scale(0.15); opacity: 0; } }
 @keyframes bump-badge { 40% { transform: scale(1.6) rotate(-10deg); } }
 @keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+@keyframes bob { 50% { transform: translateY(5px); } }
 @keyframes flake { to { transform: translate(var(--fx), 90px) rotate(200deg); opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) {

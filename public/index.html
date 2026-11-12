@@ -44,6 +44,7 @@
       <symbol id="i-box" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h16v10.500H4zM2.500 4.500h19V9h-19zM9.500 13h5"/></g></symbol>
       <symbol id="i-gift" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.500 11.500h15v9h-15zM3 7.500h18v4H3zM12 7.500v13M12 7.500c-1.500-4-6-3.500-5-1 .6 1.300 3 1 5 1zM12 7.500c1.500-4 6-3.500 5-1-.6 1.300-3 1-5 1z"/></g></symbol>
       <symbol id="i-check" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round" d="M4.500 12.500l5 5 10-11"/></symbol>
+      <symbol id="i-down" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></symbol>
     </defs>
   </svg>
 
@@ -163,6 +164,9 @@
       </section>
     </div>
   </main>
+
+  <!-- šapat s dna ekrana: daje do znanja da ispod ima još, a ne kaže što -->
+  <button class="peek" id="peek" type="button" tabindex="-1"><span id="peek-text"></span><svg class="icon" aria-hidden="true"><use href="#i-down"/></svg></button>
 
   <nav class="tabs" id="tabs" aria-label="Pogledi" hidden>
     <button type="button" data-view="today" aria-current="true"><svg class="icon" aria-hidden="true"><use href="#i-cassette"/></svg><span>Danas</span></button>
