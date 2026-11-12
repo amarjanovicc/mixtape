@@ -141,7 +141,7 @@
     var m = /open\.spotify\.com\/(?:intl-[a-z-]+\/)?(track|album|playlist|episode)\/([A-Za-z0-9]{10,})/.exec(url || "");
     if (!m) return null;
     return {
-      src: "https://open.spotify.com/embed/" + m[1] + "/" + m[2] + "?utm_source=generator&theme=0",
+      src: "https://open.spotify.com/embed/" + m[1] + "/" + m[2] + "?utm_source=generator",
       height: m[1] === "track" ? 152 : 352,
     };
   }
@@ -151,10 +151,12 @@
     return m ? m[1] : null;
   }
 
-  function hueFor(text) {
+  // Jedna ravna boja po pjesmi, iz male palete tiskarskih boja (uvijek ista za istu pjesmu).
+  var INKS = ["#ef6a4c", "#f0b429", "#43b6a3", "#6f9fe0", "#f08aa5", "#86c267"];
+  function inkFor(text) {
     var h = 0;
     for (var i = 0; i < text.length; i++) h = (h * 31 + text.charCodeAt(i)) >>> 0;
-    return h % 360;
+    return INKS[h % INKS.length];
   }
 
   // ---------- confetti ----------
@@ -165,7 +167,7 @@
     var cx = r.left + r.width / 2;
     var cy = r.top + r.height / 2;
     var glyphs = ["heart", "music", "sparkle", "music", "heart"];
-    var colors = ["var(--accent)", "var(--accent-2)", "var(--cream)"];
+    var colors = ["var(--accent)", "var(--ink)", "var(--accent)"];
     for (var i = 0; i < count; i++) {
       var b = el("span", { class: "bit", "aria-hidden": "true" });
       b.appendChild(icon(glyphs[i % glyphs.length]));
@@ -190,7 +192,7 @@
   // ---------- render: song ----------
 
   function renderSong(song, trackNo, label) {
-    document.documentElement.style.setProperty("--hue", hueFor(song.title + (song.artist || "")));
+    document.documentElement.style.setProperty("--accent", inkFor(song.title + (song.artist || "")));
     document.title = "Mixtape #" + pad(trackNo);
 
     $("brand").textContent = config.to ? "mixtape za " + config.to : "mixtape za tebe";
@@ -871,7 +873,7 @@
     ctx.translate(W / 2, H / 2);
     ctx.rotate(-0.35);
     ctx.fillStyle = "rgba(70,74,84,0.2)";
-    ctx.font = "800 " + 11 * dpr + "px Nunito, system-ui, sans-serif";
+    ctx.font = "800 " + 11 * dpr + "px \"Courier Prime\", monospace";
     ctx.textAlign = "center";
     for (var ry = -H; ry < H; ry += 22 * dpr) {
       for (var rx = -W; rx < W; rx += 78 * dpr) ctx.fillText("OGREBI", rx + ((ry / (22 * dpr)) % 2 ? 39 * dpr : 0), ry);
@@ -885,7 +887,7 @@
     ctx.fillStyle = "#3d4250";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.font = "800 " + 15 * dpr + "px Nunito, system-ui, sans-serif";
+    ctx.font = "800 " + 15 * dpr + "px \"Courier Prime\", monospace";
     ctx.fillText("OGREBI OVDJE", W / 2 + 12 * dpr, H / 2 + dpr);
     // novčić lijevo od natpisa (nacrtan, ne emoji)
     var cx0 = W / 2 - 70 * dpr, cy0 = H / 2;

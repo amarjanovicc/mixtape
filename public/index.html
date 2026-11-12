@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Mixtape</title>
   <meta name="description" content="Svaki dan jedna pjesma koja me podsjetila na tebe.">
-  <meta name="theme-color" content="#1b1020">
+  <meta name="theme-color" content="#f1e7d3">
   <meta name="robots" content="noindex, nofollow">
   <meta property="og:title" content="Mixtape">
   <meta property="og:description" content="Svaki dan jedna pjesma koja me podsjetila na tebe.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect x='1.5' y='4.500' width='21' height='15' rx='3' fill='%23ff7aa8'/><rect x='4.500' y='7' width='15' height='4' rx='1' fill='%23fff8ee'/><circle cx='8.500' cy='14.800' r='2' fill='%232a1830'/><circle cx='15.500' cy='14.800' r='2' fill='%232a1830'/></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;1,9..144,400&family=Nunito:wght@400;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Courier+Prime:wght@400;700&family=Fraunces:ital,opsz,wght@0,9..144,700;1,9..144,400&display=swap">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -76,6 +76,7 @@
       </div>
       <audio id="audio" preload="none"></audio>
 
+      <div class="reveal-shadow">
       <div class="reveal" id="reveal">
         <div class="ticket-head" id="ticket-head" hidden><span><svg class="icon" aria-hidden="true"><use href="#i-star"/></svg> SREĆKA <svg class="icon" aria-hidden="true"><use href="#i-star"/></svg></span><span id="ticket-no"></span></div>
         <div class="reveal-body" id="reveal-body">
@@ -89,7 +90,8 @@
           <div class="veil" id="veil" hidden><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg></div>
           <span class="stamp" id="stamp" aria-hidden="true" hidden>dobitak <svg class="icon" aria-hidden="true"><use href="#i-heart"/></svg></span>
         </div>
-        <p class="ticket-foot" id="ticket-foot" hidden>ogrebi srebrno polje · svaka srećka dobiva</p>
+        <p class="ticket-foot" id="ticket-foot" hidden>svaka srećka dobiva</p>
+      </div>
       </div>
 
       <div class="game" id="game" hidden>

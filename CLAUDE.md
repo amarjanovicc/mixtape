@@ -55,6 +55,14 @@ Stanje (otvoreno, reakcije, niz) živi samo u `localStorage` njenog mobitela —
   Uvijek SVG ikona: na stranici `icon("ime")` / `<use href="#i-ime">` iz `<defs>` na vrhu
   `public/index.html` (nova ikona = novi `<symbol>` tamo). Reakcije su ikone s tekstualnom
   oznakom (`REACTIONS` u `app.js`), a poruka za WhatsApp ide riječima.
+- **Izgled je papir, tinta i ljepljiva traka** — kao ručno složen spomenar. Ne smije izgledati
+  kao generički „AI dizajn”: bez tamne pozadine, preljeva, sjaja i neonskih sjena, bez
+  prozirnih „staklenih” ploča, bez zaobljenih pilula i velikih slova s razmakom. Umjesto toga:
+  podloga boje papira sa zrnom, listovi s tintanim rubom i tvrdom sjenom (`4px 5px 0`),
+  jedna ravna boja po pjesmi (`INKS` u `app.js`), rukopis (Caveat) za naslove odjeljaka i
+  poruke, pisaći stroj (Courier Prime) za sitni tekst, tipke koje se stvarno utisnu,
+  lagano zakrenuti papirići. Novi dijelovi neka budu predmet (ceduljica, etiketa, pečat),
+  ne „kartica”.
 - Tekst na stranici je hrvatski, kratak i topao.
 - Sadržaj ide kroz `textContent`, nikad `innerHTML`.
 - **Nikad ne otkrij pjesmu prije igre**: popis „Tvoja kaseta”, `<title>` i sl. ne smiju
