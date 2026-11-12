@@ -76,13 +76,15 @@
       </div>
 
       <div class="deck" id="deck" hidden>
+        <p class="game-text intro-only">premotaj kasetu na početak</p>
         <div class="deck-keys">
           <button type="button" id="rew" aria-label="Premotaj unazad (drži)"><svg class="icon" aria-hidden="true"><use href="#i-rewind"/></svg></button>
           <button type="button" id="play" class="deck-play" aria-label="Pusti"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg></button>
           <button type="button" id="ffw" aria-label="Premotaj unaprijed (drži)"><svg class="icon" aria-hidden="true"><use href="#i-forward"/></svg></button>
         </div>
         <div class="bar" aria-hidden="true"><i id="bar-fill"></i></div>
-        <p class="deck-time"><span id="time">0:00</span><em><svg class="icon" aria-hidden="true"><use href="#i-drag"/></svg> povuci kasetu ili drži <svg class="icon" aria-hidden="true"><use href="#i-rewind"/></svg></em></p>
+        <p class="deck-time"><span id="time">0:00</span><em id="deck-hint"></em></p>
+        <button class="skip intro-only" id="rewind-skip" type="button">samo pusti</button>
       </div>
       <audio id="audio" preload="none"></audio>
 
@@ -107,8 +109,6 @@
       <div class="game" id="game" hidden>
         <p class="hint" id="hint" hidden></p>
         <p class="game-text" id="game-text"></p>
-        <button class="pump" id="pump" type="button" aria-label="Tapni srce" hidden><svg class="icon" aria-hidden="true"><use href="#i-heart"/></svg></button>
-        <button class="hold" id="hold" type="button" hidden><span>drži</span></button>
         <div class="guess" id="guess" hidden>
           <button class="btn btn-primary" id="guess-play" type="button"><svg class="icon" aria-hidden="true"><use href="#i-rewind"/></svg>pusti unazad</button>
           <div class="guess-opts" id="guess-opts"></div>
@@ -118,7 +118,6 @@
     </section>
 
     <section class="after" id="after" hidden>
-      <button class="collect" id="collect" type="button"></button>
       <blockquote class="note" id="note-wrap" hidden>
         <p class="note-lead" id="note-lead"></p>
         <p class="note-text" id="note"></p>
@@ -132,6 +131,13 @@
       </div>
 
       <p class="ps" id="ps" hidden></p>
+
+      <!-- kraj rituala: kaseta ide u kutiju, a to puni put do sljedeće naljepnice -->
+      <div class="keep">
+        <button class="collect" id="collect" type="button"></button>
+        <p class="sticker-progress" id="sticker-progress" hidden></p>
+        <div class="unlock" id="unlock" hidden></div>
+      </div>
 
       <div class="full">
         <h2>Cijela pjesma</h2>
@@ -158,9 +164,9 @@
       </section>
 
       <section class="rewards" id="rewards" hidden>
-        <h2>Nagrade za niz</h2>
-        <p class="box-tip" id="reward-streak"></p>
-        <div class="coupons" id="reward-list"></div>
+        <h2>Naljepnice <span id="reward-count"></span></h2>
+        <p class="box-tip">Svaka kaseta u kutiji vodi bliže sljedećoj.</p>
+        <div class="stickers" id="reward-list"></div>
       </section>
     </div>
   </main>
@@ -176,6 +182,7 @@
   <noscript><p class="noscript">Uključi JavaScript da vidiš današnju pjesmu.</p></noscript>
 
   <script src="songs.js"></script>
+  <script src="pixel.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

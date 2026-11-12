@@ -9,7 +9,7 @@
     noteLead: "podsjetila me na tebe jer…",
   };
   var STORE = "pjesma-dana:v2";
-  var GAMES = ["scratch", "tap", "hold", "guess"];
+  var GAMES = ["scratch", "guess"];
   var REACTIONS = [
     { id: "love", icon: "heart", label: "Obožavam" },
     { id: "fire", icon: "flame", label: "Vatra" },
@@ -410,25 +410,89 @@
     return missing;
   }
 
-  // Nagrade za niz: kuponi koji se otključaju nakon N dana zaredom (najbolji niz se pamti).
-  function renderRewards(streak) {
-    var rewards = (Array.isArray(config.rewards) ? config.rewards : []).filter(function (r) {
-      return r && Number(r.days) > 0 && r.text;
-    }).sort(function (a, b) { return a.days - b.days; });
-    if (!rewards.length) return;
-    var list = $("reward-list");
-    list.textContent = "";
-    $("reward-streak").textContent = "Tvoj niz: " + days(streak) +
-      (state.best > streak ? " (najdulji: " + days(state.best) + ")" : "") + ".";
-    rewards.forEach(function (r) {
-      var open = state.best >= r.days;
-      var c = el("div", { class: "coupon " + (open ? "open" : "locked") });
-      c.appendChild(icon(open ? "gift" : "lock"));
-      c.appendChild(el("b", null, days(r.days) + " zaredom"));
-      c.appendChild(el("p", null, open ? r.text : "Još " + days(r.days - state.best) + " do iznenađenja."));
-      list.appendChild(c);
+  // ---------- naljepnice: pixel-art nagrade za skupljene kasete ----------
+  //
+  // Nagrada se otključa kad u kutiji ima dovoljno kaseta (ne po nizu dana: propušten dan
+  // ne smije ništa oduzeti). Svaka nagrada je pixel-art lik + poruka koju je on napisao.
+
+  function kasete(n) {
+    var m10 = n % 10, m100 = n % 100;
+    if (m10 === 1 && m100 !== 11) return n + " kaseta";
+    if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return n + " kasete";
+    return n + " kaseta";
+  }
+
+  function rewardList() {
+    var cast = config.cast || {};
+    var list = (Array.isArray(config.rewards) ? config.rewards : []).map(function (r) {
+      return { count: Math.round(Number(r && (r.count || r.days))), text: r && r.text ? String(r.text) : "" };
+    }).filter(function (r) { return r.count > 0; }).sort(function (a, b) { return a.count - b.count; });
+    var who = window.PIXEL ? PIXEL.order(cast, list.length) : [];
+    list.forEach(function (r, i) {
+      r.who = who[i] || "heart";
+      r.name = window.PIXEL ? PIXEL.label(r.who, cast) : "";
     });
+    return list;
+  }
+  function collectedCount() { return Object.keys(state.collected).length; }
+  function sprite(who, scale, locked) {
+    return window.PIXEL ? PIXEL.make(who, config.cast || {}, scale, locked) : el("span");
+  }
+
+  // popis u Kutiji: otključane u boji s porukom, zaključane kao siluete
+  function renderStickers() {
+    var rewards = rewardList();
+    if (!rewards.length) return;
+    var have = collectedCount();
+    var list = $("reward-list");
+    var open = 0;
+    list.textContent = "";
+    rewards.forEach(function (r) {
+      var unlocked = have >= r.count;
+      if (unlocked) open++;
+      var row = el("div", { class: "sticker-row " + (unlocked ? "open" : "locked") });
+      var pic = el("span", { class: "sticker-pic" });
+      pic.appendChild(sprite(r.who, 4, !unlocked));
+      row.appendChild(pic);
+      var body = el("div");
+      body.appendChild(el("b", null, unlocked ? r.name : "? ? ?"));
+      body.appendChild(el("p", null, unlocked ? r.text : "još " + kasete(r.count - have) + " u kutiju"));
+      row.appendChild(body);
+      list.appendChild(row);
+    });
+    $("reward-count").textContent = open + "/" + rewards.length;
     $("rewards").hidden = false;
+  }
+
+  // ispod gumba za spremanje: koliko još do sljedeće naljepnice
+  function renderStickerProgress() {
+    var rewards = rewardList();
+    var box = $("sticker-progress");
+    if (!rewards.length) { box.hidden = true; return; }
+    var have = collectedCount();
+    var next = rewards.filter(function (r) { return r.count > have; })[0];
+    box.textContent = "";
+    if (next) {
+      box.appendChild(sprite(next.who, 3, true));
+      box.appendChild(el("span", null, "još " + kasete(next.count - have) + " do nove naljepnice"));
+    } else {
+      box.appendChild(el("span", null, "sve naljepnice su tvoje"));
+    }
+    box.hidden = false;
+  }
+
+  // upravo otključana naljepnica: pokaži je veliko, s porukom
+  function showUnlock(r) {
+    var box = $("unlock");
+    box.textContent = "";
+    box.appendChild(el("p", { class: "unlock-top" }, "nova naljepnica"));
+    box.appendChild(sprite(r.who, 8, false));
+    box.appendChild(el("b", null, r.name));
+    if (r.text) box.appendChild(el("p", null, r.text));
+    box.hidden = false;
+    fx.win();
+    confetti(box, 22);
+    buzz([20, 40, 20, 40, 60]);
   }
 
   // ---------- šapat: tajanstveni znak da ispod ima još ----------
@@ -778,24 +842,33 @@
   })();
 
   // ---------- deck: zvuk + kaseta koja se stvarno premotava ----------
+  //
+  // Dva načina rada:
+  //  - uvod (intro): nakon otkrivanja kaseta je "na kraju" i treba je premotati na početak
+  //    (drži tipku ili povuci kasetu ulijevo). Kad dođe do početka, pjesma zasvira.
+  //    To je razlog zašto se kaseta vrti: premotaš je da bi je čula.
+  //  - sviranje: tipke i povlačenje premotavaju pjesmu u oba smjera.
 
   var deck = (function () {
-    var tape, audio, spoolL, spoolR, playBtn, timeEl, barFill;
+    var tape, audio, spoolL, spoolR, playBtn, timeEl, barFill, hintEl;
     var hasAudio = false;
     var virtualPlaying = false; // bez zvuka: kolutovi se samo vrte
     var angle = 0;              // kut kolutova u stupnjevima
-    var boost = 0;              // igra "drži gumb" ubrzava vrtnju
+    var boost = 0;              // dodatna vrtnja (igra "pogodi unazad")
     var seekDir = 0;            // -1 premotavanje unazad, +1 unaprijed
     var resumeAfterSeek = false;
     var dragging = false, dragX = 0, dragT = 0, hushTimer = 0;
     var last = 0;
+    var intro = null;           // { rw: 1 -> 0, done }
     var SEEK_RATE = 7;          // sekundi pjesme po sekundi držanja tipke
+    var INTRO_SECONDS = 2.2;    // koliko traje premotavanje cijele vrpce tipkom
 
     function fmt(t) {
       t = Math.max(0, Math.floor(t || 0));
       return Math.floor(t / 60) + ":" + pad(t % 60);
     }
     function duration() { return hasAudio && isFinite(audio.duration) ? audio.duration : 0; }
+    function tapeLength() { return duration() || 30; }
     function isPlaying() { return hasAudio ? !audio.paused : virtualPlaying; }
 
     function seekBy(sec) {
@@ -807,13 +880,12 @@
     function paint() {
       tape.style.setProperty("--a", angle.toFixed(1) + "deg");
       var d = duration();
-      var f = d ? audio.currentTime / d : 0.5;
+      var f = intro ? intro.rw : (d ? audio.currentTime / d : 0.5);
       spoolL.style.setProperty("--fill", (1 - f).toFixed(3)); // lijevi kolut se prazni
       spoolR.style.setProperty("--fill", f.toFixed(3));       // desni se puni
-      if (hasAudio) {
-        timeEl.textContent = fmt(audio.currentTime) + (d ? " / " + fmt(d) : "");
-        barFill.style.transform = "scaleX(" + (d ? f : 0).toFixed(4) + ")";
-      }
+      barFill.style.transform = "scaleX(" + (intro || d ? f : 0).toFixed(4) + ")";
+      if (intro) timeEl.textContent = "kraj vrpce";
+      else if (hasAudio) timeEl.textContent = fmt(audio.currentTime) + (d ? " / " + fmt(d) : "");
     }
 
     function syncButton() {
@@ -822,12 +894,41 @@
       playBtn.setAttribute("aria-label", on ? "Pauza" : "Pusti");
     }
 
+    function play() {
+      if (!hasAudio) { virtualPlaying = true; return; }
+      var pr = audio.play();
+      if (pr && pr.catch) pr.catch(function () { syncButton(); }); // preglednik traži dodir: ostaje gumb za puštanje
+    }
+
+    // uvod: pomakni vrpcu prema početku (delta < 0) ili natrag
+    function introStep(delta) {
+      if (!intro) return;
+      intro.rw = Math.max(0, Math.min(1, intro.rw + delta));
+      if (intro.rw > 0) return;
+      var done = intro.done;
+      intro = null;
+      seekDir = 0;
+      dragging = false;
+      clearTimeout(hushTimer);
+      fx.stopScrub();
+      fx.click();
+      buzz([10, 30, 20]);
+      $("rew").classList.remove("on");
+      $("deck").classList.remove("intro");
+      tape.classList.remove("rewind-me");
+      setContent(hintEl, icon("drag"), " povuci kasetu ili drži ", icon("rewind"));
+      paint();
+      done();
+    }
+
     function loop(t) {
       var dt = last ? Math.min((t - last) / 1000, 0.1) : 0;
       last = t;
       var rate = seekDir ? seekDir * 9 : boost ? 8 * boost : (isPlaying() && !dragging ? 1 : 0);
       if (rate && !reducedMotion) angle += rate * 150 * dt;
-      if (seekDir) {
+      if (seekDir && intro) {
+        introStep(seekDir * dt / INTRO_SECONDS);
+      } else if (seekDir) {
         seekBy(seekDir * SEEK_RATE * dt);
         var d = duration();
         // došli smo do kraja vrpce: zvuk premotavanja stane
@@ -837,23 +938,18 @@
       requestAnimationFrame(loop);
     }
 
-    function play() {
-      if (!hasAudio) { virtualPlaying = true; return; }
-      var pr = audio.play();
-      if (pr && pr.catch) pr.catch(function () { syncButton(); }); // preglednik traži dodir: ostaje gumb za puštanje
-    }
-
     function holdSeek(btn, dir) {
       var start = function (e) {
         e.preventDefault();
-        if (seekDir) return;
+        if (seekDir || (intro && dir > 0)) return;
         seekDir = dir;
-        resumeAfterSeek = hasAudio && !audio.paused;
-        if (hasAudio) audio.pause();
+        resumeAfterSeek = !intro && hasAudio && !audio.paused;
+        if (hasAudio && !intro) audio.pause();
         btn.classList.add("on");
         buzz(8);
         fx.click();
-        fx.scrub(dir, SEEK_RATE, hasAudio ? audio.currentTime : 0);
+        if (intro) fx.scrub(dir, tapeLength() / INTRO_SECONDS, intro.rw * tapeLength());
+        else fx.scrub(dir, SEEK_RATE, hasAudio ? audio.currentTime : 0);
         try { if (e.pointerId != null) btn.setPointerCapture(e.pointerId); } catch (err) {}
       };
       var stop = function () {
@@ -862,7 +958,7 @@
         btn.classList.remove("on");
         fx.stopScrub();
         fx.click();
-        if (resumeAfterSeek) play();
+        if (!intro && resumeAfterSeek) play();
       };
       btn.addEventListener("pointerdown", start);
       btn.addEventListener("pointerup", stop);
@@ -876,13 +972,14 @@
     function initDrag() {
       tape.classList.add("live");
       tape.addEventListener("pointerdown", function (e) {
+        if (!intro && !hasAudio) return;
         dragging = true;
         dragX = e.clientX;
         dragT = performance.now();
         fx.unlock();
-        tape.classList.remove("nudge");
-        resumeAfterSeek = !audio.paused;
-        audio.pause();
+        tape.classList.remove("nudge", "rewind-me");
+        resumeAfterSeek = !intro && hasAudio && !audio.paused;
+        if (hasAudio && !intro) audio.pause();
         try { tape.setPointerCapture(e.pointerId); } catch (err) {}
       });
       tape.addEventListener("pointermove", function (e) {
@@ -894,19 +991,26 @@
         dragX = e.clientX;
         dragT = now;
         angle += dx * 5;          // povlačenje ulijevo vrti kolutove unazad
+        clearTimeout(hushTimer);
+        hushTimer = setTimeout(fx.hush, 90);
+        if (intro) {
+          // otprilike jedan i pol potez preko kasete premota cijelu vrpcu
+          var part = dx / (tape.offsetWidth * 1.5);
+          fx.scrub(dx < 0 ? -1 : 1, Math.abs(part) * tapeLength() / dt, intro.rw * tapeLength());
+          introStep(part);
+          return;
+        }
         var sec = dx * 0.07;
         // zvuk prati ruku: smjer i brzina povlačenja = smjer i brzina reprodukcije
         fx.scrub(dx < 0 ? -1 : 1, Math.abs(sec) / dt, audio.currentTime);
         seekBy(sec);
-        clearTimeout(hushTimer);
-        hushTimer = setTimeout(fx.hush, 90);
       });
       var end = function () {
         if (!dragging) return;
         dragging = false;
         clearTimeout(hushTimer);
         fx.stopScrub();
-        if (resumeAfterSeek) play();
+        if (!intro && resumeAfterSeek) play();
       };
       tape.addEventListener("pointerup", end);
       tape.addEventListener("pointercancel", end);
@@ -915,7 +1019,7 @@
     return {
       init: function (song) {
         tape = $("tape"); audio = $("audio"); spoolL = $("spool-l"); spoolR = $("spool-r");
-        playBtn = $("play"); timeEl = $("time"); barFill = $("bar-fill");
+        playBtn = $("play"); timeEl = $("time"); barFill = $("bar-fill"); hintEl = $("deck-hint");
         var src = song.audio || song.preview;
         if (src) {
           hasAudio = true;
@@ -925,23 +1029,38 @@
           fx.load(src);
           ["play", "pause", "ended"].forEach(function (ev) { audio.addEventListener(ev, syncButton); });
           ["loadedmetadata", "timeupdate", "seeked"].forEach(function (ev) { audio.addEventListener(ev, paint); });
-          audio.addEventListener("error", function () { $("deck").hidden = true; hasAudio = false; virtualPlaying = true; });
-          playBtn.addEventListener("click", function () { fx.click(); if (audio.paused) play(); else audio.pause(); });
-          holdSeek($("rew"), -1);
-          holdSeek($("ffw"), 1);
-          initDrag();
+          audio.addEventListener("error", function () { hasAudio = false; virtualPlaying = true; if (!intro) $("deck").hidden = true; });
         }
+        playBtn.addEventListener("click", function () {
+          if (intro) return;
+          fx.click();
+          if (!hasAudio) { virtualPlaying = !virtualPlaying; syncButton(); return; }
+          if (audio.paused) play(); else audio.pause();
+        });
+        holdSeek($("rew"), -1);
+        holdSeek($("ffw"), 1);
+        initDrag();
         paint();
         requestAnimationFrame(loop);
       },
-      // nakon otkrivanja: pokaži tipke i pusti (otkrivanje je dodir, pa preglednik dopušta zvuk)
+      // uvod: kaseta je na kraju, treba je premotati na početak
+      intro: function (onDone) {
+        intro = { rw: 1, done: onDone };
+        $("deck").hidden = false;
+        $("deck").classList.add("intro");
+        if (!reducedMotion) tape.classList.add("rewind-me");
+        setContent(hintEl, "drži ", icon("rewind"), " ili povuci kasetu ulijevo");
+        syncButton();
+        paint();
+      },
+      skipIntro: function () { if (intro) { intro.rw = 0.0001; introStep(-1); } },
+      // pusti pjesmu (poziva se nakon dodira, pa preglednik dopušta zvuk)
       start: function (teach) {
-        if (hasAudio) $("deck").hidden = false;
-        if (hasAudio && teach && !reducedMotion) tape.classList.add("nudge"); // pokaži da se kaseta može povući
+        $("deck").hidden = !hasAudio;
+        if (hasAudio && teach && !reducedMotion) tape.classList.add("nudge");
         play();
         syncButton();
       },
-      boost: function (on) { boost = on ? 1 : 0; fx.whirr(on); },
       spin: function (speed) { boost = speed; },   // tiho vrti kolutove (negativno = unazad)
       setMuted: function (m) { if (audio) audio.muted = m; },
     };
@@ -1013,78 +1132,6 @@
         deck.spin(0);
         $("guess").hidden = true;
         veilG.classList.add("gone");
-      };
-      return;
-    }
-
-    if (type === "tap") {
-      var veil = $("veil");
-      var pump = $("pump");
-      var need = 7, count = 0;
-      veil.hidden = false;
-      pump.hidden = false;
-      text.textContent = "napuni srce — tapni " + need + " puta";
-      pump.addEventListener("click", function () {
-        if (finished) return;
-        count++;
-        fx.blip(count);
-        pump.style.setProperty("--p", count / need);
-        pump.classList.remove("bump");
-        void pump.offsetWidth;
-        pump.classList.add("bump");
-        buzz(10);
-        confetti(pump, 3);
-        if (count >= need) finish();
-        else text.textContent = "još " + (need - count) + "…";
-      });
-      cleanup = function () { veil.classList.add("gone"); };
-      return;
-    }
-
-    if (type === "hold") {
-      var veil2 = $("veil");
-      var hold = $("hold");
-      var p = 0, down = false, captured = false, last = 0, raf = 0;
-      veil2.hidden = false;
-      hold.hidden = false;
-      text.textContent = "drži gumb da premotaš kasetu";
-      // mjeri stvarno proteklo vrijeme (setInterval, ne rAF) da radi i kad preglednik štedi frameove
-      var step = function () {
-        var t = Date.now();
-        var dt = last ? t - last : 0;
-        last = t;
-        p = Math.max(0, Math.min(1, p + (down ? dt / 1800 : -dt / 900)));
-        hold.style.setProperty("--p", p);
-        if (p >= 1) { finish(); return; }
-        if (!down && p <= 0) { clearInterval(raf); raf = 0; last = 0; }
-      };
-      var press = function (e) {
-        e.preventDefault();
-        if (finished) return;
-        down = true;
-        captured = false;
-        // uhvati pokazivač da mali pomak prsta ne prekine držanje
-        try { if (e.pointerId != null) { hold.setPointerCapture(e.pointerId); captured = true; } } catch (err) {}
-        deck.boost(true);
-        buzz(10);
-        if (!raf) { last = Date.now(); raf = setInterval(step, 30); }
-      };
-      var release = function () {
-        down = false;
-        deck.boost(false);
-      };
-      hold.addEventListener("pointerdown", press);
-      hold.addEventListener("pointerup", release);
-      hold.addEventListener("pointercancel", release);
-      hold.addEventListener("lostpointercapture", release);
-      hold.addEventListener("pointerleave", function () { if (!captured) release(); });
-      hold.addEventListener("contextmenu", function (e) { e.preventDefault(); });
-      hold.addEventListener("keydown", function (e) { if ((e.key === " " || e.key === "Enter") && !e.repeat) press(e); });
-      hold.addEventListener("keyup", release);
-      cleanup = function () {
-        clearInterval(raf);
-        deck.boost(false);
-        veil2.classList.add("gone");
       };
       return;
     }
@@ -1262,9 +1309,8 @@
     deck.init(current);
     renderReactions(current);
     var streak = touchStreak(today);
-    refreshBox = function () { renderBox(released, current); };
+    refreshBox = function () { renderBox(released, current); renderStickers(); renderStickerProgress(); };
     refreshBox();
-    renderRewards(streak);
     initViews();
     peek.init();
     peek.set("today", current.note ? "psst… netko ti je nešto napisao" : "ima još nešto ispod…");
@@ -1284,10 +1330,12 @@
       state.collected[current.at] = Date.now();
       saveState();
       fx.click();
-      fx.reveal();
+      if (!rewardList().some(function (r) { return r.count === collectedCount(); })) fx.reveal();
       buzz([15, 30, 15]);
       paintCollect();
       refreshBox();
+      var won = rewardList().filter(function (r) { return r.count === collectedCount(); })[0];
+      if (won) setTimeout(function () { showUnlock(won); }, reducedMotion ? 0 : 700);
       var badge = $("box-badge");
       badge.classList.remove("pop");
       void badge.offsetWidth;
@@ -1314,7 +1362,7 @@
       }
     }
 
-    // ?igra=scratch|tap|hold|guess — ponovno odigraj otkrivanje (za isprobavanje)
+    // ?igra=scratch|guess — ponovno odigraj otkrivanje (za isprobavanje)
     var forced = new URLSearchParams(location.search).get("igra");
     if (GAMES.indexOf(forced) === -1) forced = null;
 
@@ -1323,7 +1371,9 @@
       return;
     }
 
-    var type = forced || (GAMES.indexOf(current.reveal) !== -1 ? current.reveal : GAMES[(trackNo - 1) % GAMES.length]);
+    // Ritual je uvijek isti (srećka), a svaka peta pjesma je iznenađenje: "pogodi unazad".
+    var auto = trackNo % 5 === 0 ? "guess" : "scratch";
+    var type = forced || (GAMES.indexOf(current.reveal) !== -1 ? current.reveal : auto);
     // "pogodi unazad" treba zvuk i dva druga naslova za krive odgovore; inače srećka
     var decoys = [];
     released.forEach(function (s) {
@@ -1336,8 +1386,15 @@
       state.opened[current.at] = Date.now();
       saveState();
       refreshBox();
-      showAfter(true);
+      // drugi korak rituala: premotaj kasetu na početak pa će zasvirati
+      document.body.classList.add("in-game");
+      window.scrollTo({ top: 0, behavior: reducedMotion ? "auto" : "smooth" });
+      deck.intro(function () {
+        document.body.classList.remove("in-game");
+        showAfter(true);
+      });
     });
+    $("rewind-skip").addEventListener("click", deck.skipIntro);
   }
 
   try {

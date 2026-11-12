@@ -81,12 +81,25 @@ function cleanData(input) {
     if (typeof v === "string" && v.trim()) config[k] = v.trim();
   }
   config.whatsapp = config.whatsapp.replace(/\D/g, "");
-  // nagrade za niz: [{ days, text }]
-  const seenDays = new Set();
+  // naljepnice: [{ count, text }] — otključaju se kad je u kutiji toliko kaseta
+  const seenCounts = new Set();
   config.rewards = (Array.isArray(input.config?.rewards) ? input.config.rewards : []).map((r) => ({
-    days: Math.round(Number(r?.days)), text: String(r?.text ?? "").trim().slice(0, 400),
-  })).filter((r) => r.days >= 1 && r.days <= 999 && r.text && !seenDays.has(r.days) && seenDays.add(r.days))
-    .sort((a, b) => a.days - b.days);
+    count: Math.round(Number(r?.count ?? r?.days)), text: String(r?.text ?? "").trim().slice(0, 400),
+  })).filter((r) => r.count >= 1 && r.count <= 999 && !seenCounts.has(r.count) && seenCounts.add(r.count))
+    .sort((a, b) => a.count - b.count);
+  // likovi za pixel-art naljepnice
+  const one = (v, allowed, fallback) => (allowed.includes(v) ? v : fallback);
+  const HAIR = ["crna", "smeda", "plava", "rida", "sijeda"], SKIN = ["svijetla", "srednja", "tamna"];
+  const FUR = ["crna", "bijela", "narancasta", "smeda", "siva"], PET = ["macka", "pas", "zec"];
+  const person = (p, long) => ({ hair: one(p?.hair, HAIR, "smeda"), long: p?.long == null ? long : Boolean(p.long), skin: one(p?.skin, SKIN, "svijetla") });
+  const cast = input.config?.cast || {};
+  config.cast = {
+    her: person(cast.her, true),
+    him: person(cast.him, false),
+    pets: (Array.isArray(cast.pets) ? cast.pets : []).slice(0, 4).map((a) => ({
+      type: one(a?.type, PET, "macka"), color: one(a?.color, FUR, "siva"), name: String(a?.name ?? "").trim().slice(0, 20),
+    })),
+  };
   try { new Intl.DateTimeFormat("en-US", { timeZone: config.timeZone }); } catch { throw bad("Vremenska zona nije ispravna."); }
 
   const seen = new Set();
@@ -103,7 +116,7 @@ function cleanData(input) {
     if (seen.has(at)) throw bad(`Pjesma ${name}: već postoji pjesma za ${s.date}.`);
     seen.add(at);
     s.date = at.endsWith("T00:00") ? at.slice(0, 10) : at.replace("T", " ");
-    if (s.reveal && !["scratch", "tap", "hold", "guess"].includes(s.reveal)) delete s.reveal;
+    if (s.reveal && !["scratch", "guess"].includes(s.reveal)) delete s.reveal;
     if (s.audio && !/^audio\/[A-Za-z0-9._-]+$/.test(s.audio)) throw bad(`Pjesma ${name}: neispravna putanja zvuka.`);
     for (const k of ["spotify", "youtube", "preview", "cover"]) {
       if (s[k] && !/^https:\/\//.test(s[k])) throw bad(`Pjesma ${name}: ${k} mora biti https link.`);

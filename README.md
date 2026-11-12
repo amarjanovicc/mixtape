@@ -2,18 +2,15 @@
 
 Ona skenira QR kod (uvijek isti) pa otvori se kaseta sa skrivenom pjesmom koja te podsjetila na nju.
 
-**Zašto se isplati otvoriti svaki dan:**
+**Kako izgleda njen dan:**
 
-- **Pjesma je skrivena** — vidi samo trag (npr. „naša prva vožnja”) i mora je otkriti: jedan dan grebe **srećku** sa srebrnom folijom, drugi puni srce tapkanjem, treći drži gumb dok se kaseta premotava.
-- Nakon otkrivanja **pjesma krene svirati**, uz konfete i tvoju poruku rukopisom.
-- **Kaseta je pravi player**: povuče je prstom ili drži tipke za premotavanje i kolutovi se vrte unazad i unaprijed dok se zvuk premotava.
-- **Zvučni efekti**: dok premotava, pjesma se čuje ubrzano unazad (kao kad rukom vratiš ploču), srećka šušti pod prstom i zazvoni kad dobije, tipke kazetofona klikću. Gumb zvučnika gore desno sve utiša.
-- Reagira emojijem pa otključa se **tajni P.S.** i gumb „javi mu” koji ti pošalje njenu reakciju (WhatsApp).
-- Odbrojavanje do sljedeće pjesme i niz „5 dana zaredom”.
-- **Kutija s kasetama**: svaku otvorenu kasetu sprema u kutiju. Svaka izgleda drugačije, a propušteni dani ostaju prazna mjesta.
-- **Pogodi unazad**: četvrta igra, čuje nekoliko sekundi pjesme unatrag i bira između tri naslova.
-- **Nagrade za niz**: kuponi koje upišeš u sučelju (npr. 7 dana: doručak u krevet) otključaju se kad otvara dovoljno dana zaredom.
-- Stranicu može dodati na početni zaslon kao aplikaciju.
+1. **Srećka.** Vidi samo trag i grebe srebrnu foliju da otkrije koja je pjesma. Svaka peta pjesma je umjesto toga "pogodi unazad".
+2. **Kaseta.** Premota je na početak (drži tipku ili povuče kasetu ulijevo), čuje pjesmu ubrzano unatrag, i onda pjesma zasvira.
+3. **Poruka.** Tvoja poruka rukopisom, pa reakcija ikonom koja otključa tajni P.S. i gumb "javi mu".
+4. **Kutija.** Kasetu spremi u kutiju. Svaka izgleda drugačije, a propušteni dani ostaju prazna mjesta koja može naknadno popuniti.
+5. **Naljepnice.** Kad skupi dovoljno kaseta, otključa pixel-art naljepnicu: nju, tebe, vaše životinje i na kraju vas dvoje, svaku s tvojom porukom. Zaključane vidi kao siluete.
+
+Nagrade idu po broju spremljenih kaseta, ne po nizu dana, pa propušten dan ništa ne oduzima. Zvuk se može utišati, a stranicu može dodati na početni zaslon.
 
 Čisti HTML/CSS/JS, bez ovisnosti i build koraka. Na stranici nema emojija: sve su vlastite SVG ikone.
 
@@ -31,7 +28,7 @@ Otvori http://localhost:4321/admin. Obrazac ima tri koraka:
 
 Zatim *Spremi pjesmu*. Žuti okvir na vrhu javi da ima promjena koje ona još ne vidi; *Objavi* ih šalje (provjera, git commit i push ako repo ima `origin`).
 
-Ostalo je skriveno pod **Više opcija**: trag prije otkrivanja, tajni P.S., odabir igre, izbor isječka i vlastiti zvuk (mp3, m4a, ogg, wav, sprema se u `public/audio/`). Njeno ime, tvoj potpis, WhatsApp i nagrade za niz su pod **Postavke**.
+Ostalo je skriveno pod **Više opcija**: trag prije otkrivanja, tajni P.S., odabir igre, izbor isječka i vlastiti zvuk (mp3, m4a, ogg, wav, sprema se u `public/audio/`). Njeno ime, tvoj potpis, WhatsApp, likovi za naljepnice (kosa, ten, životinje) i same naljepnice su pod **Postavke**.
 
 Uvijek se prikazuje najnovija pjesma čije je vrijeme došlo:
 
@@ -60,7 +57,7 @@ Polja se mogu uređivati i ručno u [`public/songs.js`](public/songs.js): `date`
 
 ## Isprobavanje
 
-`node server.mjs` pa http://localhost:4321. Igru možeš ponovno odigrati s `?igra=scratch`, `?igra=tap`, `?igra=hold` ili `?igra=guess`.
+`node server.mjs` pa http://localhost:4321. Igru možeš ponovno odigrati s `?igra=scratch` ili `?igra=guess`.
 
 ## Napomene
 

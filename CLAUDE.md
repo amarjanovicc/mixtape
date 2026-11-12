@@ -8,28 +8,46 @@ otvoriti to svaki dan, ne samo lijepo.
 
 Dva pogleda, jahači na dnu ekrana (ili povlačenje prstom lijevo/desno): **Danas** i **Kutija**.
 
-**Danas**
-1. Kaseta + skrivena pjesma. Prije otkrivanja vidi samo trag (`hint`) i mora odigrati mini-igru:
-   **srećka** (`scratch`), **napuni srce** (`tap`), **drži gumb** (`hold`) ili **pogodi unazad**
-   (`guess`: čuje 5 s pjesme unatrag i bira između tri naslova; treba zvuk i barem dvije druge
-   objavljene pjesme, inače se igra srećka). Igre se izmjenjuju po rednom broju pjesme; `reveal`
-   to nadjača. Dok traje igra, jahači su skriveni.
-2. Otkrivanje: konfeti, **zvuk krene sam** (otkrivanje je dodir, pa preglednik to dopušta).
-   Kaseta je pravi player: tipke i povlačenje kasete stvarno premotavaju zvuk, i unazad.
-3. Gumb **„spremi kasetu u kutiju”**, pa poruka rukopisom, reakcija ikonom (otključa tajni `ps`
-   i gumb „javi mu”), cijela pjesma (Spotify/YouTube), odbrojavanje do sljedeće.
+### Ritual (pogled Danas) — svaki korak ima jasan razlog
 
-**Šapat** (`peek` u `app.js`): kad stranica ide dalje ispod ruba ekrana, iznad jahača nakon
-kratke stanke izviri papirić s tajanstvenim natpisom („psst… netko ti je nešto napisao”).
-Ne kaže što je ispod, samo da nešto jest; nestane čim krene skrolati i ne vraća se u tom
-pogledu. Novi natpisi neka ostanu kratki i zagonetni, bez uputa tipa „skrolaj dolje”.
+1. **Srećka: koja je pjesma?** Vidi samo trag (`hint`) i grebe srebrnu foliju. Ritual je
+   svaki dan isti (to ga čini navikom), a iznenađenje je sadržaj. Svaka peta pjesma je
+   umjesto toga **pogodi unazad** (`guess`: 5 s pjesme unatrag, tri naslova; treba zvuk i dvije
+   druge objavljene pjesme, inače srećka). `reveal` u pjesmi to nadjača. Uvijek postoji
+   „samo otvori”.
+2. **Kaseta: premotaj je na početak da zasvira.** Kaseta je „na kraju vrpce”; drži tipku za
+   unazad ili povuci kasetu ulijevo (oko 2 s). Dok premotava čuje pjesmu ubrzano unatrag,
+   a kad dođe do početka pjesma krene. Zato se kaseta vrti: premotaš je da bi je čula.
+   Uvijek postoji „samo pusti”. Tijekom koraka 1 i 2 jahači su skriveni.
+3. **Poruka** rukopisom (emotivni vrhunac, dok pjesma svira), pa **reakcija** ikonom koja
+   otključa tajni `ps` i gumb „javi mu”.
+4. **Spremi kasetu u kutiju** — završetak rituala. Ispod piše koliko još kaseta treba do
+   sljedeće naljepnice (uz njenu siluetu); ako se upravo otključala, pokaže se velika, s porukom.
+5. Cijela pjesma (Spotify/YouTube) i odbrojavanje do sljedeće.
 
-**Kutija**
+Nakon otkrivanja kaseta ostaje pravi player: tipke i povlačenje premotavaju u oba smjera.
+
+### Kutija
+
 - Spremljene kasete kao male kasete; nespremljene su prazna mjesta („nije spremljena”,
-  „propuštena”, „čeka te danas”). **Svaka kaseta izgleda drugačije** (`designFor` u `app.js`:
-  boja, uzorak naljepnice, oblik prozorčića, naljepnica, nagib — izvedeno iz datuma i naslova).
-- **Nagrade za niz** (`config.rewards = [{ days, text }]`): kuponi koji se otključaju kad
-  najdulji niz dosegne N dana; zaključani pokazuju samo koliko još dana treba.
+  „propuštena”, „čeka te danas”). **Svaka kaseta izgleda drugačije** (`designFor` u `app.js`).
+- **Naljepnice** (`config.rewards = [{ count, text }]`): pixel-art likovi (ona, on, njihove
+  životinje, „nas dvoje”) koji se otključaju kad je u kutiji `count` kaseta. Zaključane su
+  siluete s „? ? ?”. Likove crta `public/pixel.js` prema `config.cast`
+  (`her`/`him`: `hair`, `long`, `skin`; `pets`: `type`, `color`, `name`); isti kod koristi i
+  sučelje za unos za pregled uživo. Redoslijed: ona, prva životinja, on, ostale, nas dvoje.
+
+### Zašto baš tako (ne mijenjati bez razloga)
+
+- **Nagrade idu po broju kaseta u kutiji, ne po nizu dana.** Propušten dan ne smije ništa
+  oduzeti niti stvarati grižnju savjesti; propuštenu kasetu može otvoriti i spremiti kasnije.
+  Niz dana je samo veseli plamen u kutu.
+- **Jedan ritual, ne izmjena četiri igre.** Navika traži isti početak; raznolikost dolazi iz
+  pjesme, poruke, izgleda kasete i povremenog „pogodi unazad”.
+- **Trud prije nagrade, ali kratak** (grebanje nekoliko sekundi, premotavanje oko dvije) i
+  uvijek s izlazom. Poruka dolazi tek nakon truda i uz glazbu.
+- **Siluete i „još N do…”** drže znatiželju i pokazuju da je cilj blizu.
+- **Spremanje u kutiju je kraj**, da dan završi s osjećajem dovršenosti.
 
 Stanje (otvoreno, spremljeno, reakcije, niz) živi samo u `localStorage` njenog mobitela.
 Stranica se može dodati na početni zaslon (`manifest.webmanifest`, `icon-*.png`); nema
@@ -41,6 +59,7 @@ service workera, namjerno, da nikad ne vidi staru verziju.
   - `songs.js` — **jedini sadržaj**: `config` + popis pjesama (piše ga sučelje za unos)
   - `audio/` — vlastiti zvukovi učitani kroz sučelje
   - `index.html`, `style.css`, `app.js` — izgled i logika
+  - `pixel.js` — pixel-art likovi za naljepnice (koristi ga i sučelje za unos)
 - `server.mjs` — backend bez ovisnosti: servira `public/`, sučelje `/admin` i `/api/*`
   (dohvat podataka iz linka, spremanje `songs.js`, učitavanje zvuka, „Objavi” = provjera + git)
 - `admin/index.html` — sučelje za unos (ne objavljuje se, radi samo lokalno). Mora ostati
@@ -89,7 +108,7 @@ service workera, namjerno, da nikad ne vidi staru verziju.
   `prefers-reduced-motion`. Dizajn se provjerava na ≈375 px širine.
 - Vrijeme se uspoređuje kao „zidni sat” u `config.timeZone` (tekst `YYYY-MM-DDTHH:MM`);
   ista logika je u `app.js` i `check-songs.mjs` — mijenjaj obje zajedno.
-- Isprobavanje igre: `?igra=scratch`, `?igra=tap`, `?igra=hold`, `?igra=guess`. Stara pjesma: `?t=<date>`.
+- Isprobavanje igre: `?igra=scratch`, `?igra=guess`. Stara pjesma: `?t=<date>`.
 
 ## Kad korisnik kaže „dodaj pjesmu” (glavni posao)
 

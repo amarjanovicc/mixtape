@@ -104,7 +104,16 @@
     .tag.now { background: var(--accent); } .tag.wait { background: var(--sticky); }
     .acts { display: flex; gap: 6px; flex: none; }
     .empty { margin: 0; color: var(--muted); }
-    .reward { display: grid; grid-template-columns: 80px 1fr auto; gap: 8px; margin-bottom: 8px; align-items: center; }
+    .reward { display: grid; grid-template-columns: 44px 76px 1fr auto; gap: 8px; margin-bottom: 8px; align-items: center; }
+    .reward .who, .cast .who { display: grid; place-items: center; min-height: 44px; }
+    .cast, .pet { display: grid; grid-template-columns: 64px 1fr; gap: 10px; align-items: center; margin-bottom: 12px; }
+    .pet > button { grid-column: 2; justify-self: start; }
+    .row3 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+    .row3 .check { grid-column: 1 / -1; }
+    .check { display: flex; align-items: center; gap: 8px; margin: 0; font-weight: 400; }
+    .check input { width: 20px; height: 20px; accent-color: var(--accent); }
+    .px { display: block; image-rendering: pixelated; }
+    select, .pet input, .reward input { padding: 9px 8px; }
   </style>
 </head>
 <body>
@@ -177,10 +186,8 @@
 
           <label for="reveal">Igra otkrivanja</label>
           <select id="reveal">
-            <option value="">Izmjenjuju se same</option>
+            <option value="">Srećka, a svaka peta pogodi unazad</option>
             <option value="scratch">Srećka</option>
-            <option value="tap">Napuni srce</option>
-            <option value="hold">Drži gumb</option>
             <option value="guess">Pogodi unazad</option>
           </select>
 
@@ -216,10 +223,36 @@
         </div>
         <p class="help">Broj s pozivnim, samo znamenke. Bez njega "javi mu" otvara dijeljenje iz mobitela.</p>
 
-        <div class="label">Nagrade za niz</div>
+        <div class="label">Likovi za naljepnice</div>
+        <div class="cast">
+          <div class="who" id="pv-her"></div>
+          <div>
+            <b>Ona</b>
+            <div class="row3">
+              <select id="her-hair" aria-label="Njena kosa"></select>
+              <select id="her-skin" aria-label="Njen ten"></select>
+              <label class="check"><input type="checkbox" id="her-long"> duga kosa</label>
+            </div>
+          </div>
+        </div>
+        <div class="cast">
+          <div class="who" id="pv-him"></div>
+          <div>
+            <b>Ti</b>
+            <div class="row3">
+              <select id="him-hair" aria-label="Tvoja kosa"></select>
+              <select id="him-skin" aria-label="Tvoj ten"></select>
+              <label class="check"><input type="checkbox" id="him-long"> duga kosa</label>
+            </div>
+          </div>
+        </div>
+        <div id="pets"></div>
+        <button class="small" type="button" id="add-pet">Dodaj životinju</button>
+
+        <div class="label">Naljepnice</div>
         <div id="rewards"></div>
-        <button class="small" type="button" id="add-reward">Dodaj nagradu</button>
-        <p class="help">Npr. 7 dana: "Doručak u krevet". Otključa se kad otvara toliko dana zaredom.</p>
+        <button class="small" type="button" id="add-reward">Dodaj naljepnicu</button>
+        <p class="help">Otključa se kad u kutiji ima toliko kaseta. Poruka je neobavezna, npr. "Kupon za doručak u krevet". Likovi idu redom: ona, prva životinja, ti, ostale životinje, pa vas dvoje.</p>
 
         <button class="primary big" type="submit" style="margin-top:16px">Spremi postavke</button>
         <p class="msg" id="config-msg" hidden></p>
@@ -227,6 +260,7 @@
     </details>
   </div>
 
+  <script src="/pixel.js"></script>
   <script>
     (function () {
       "use strict";
@@ -528,25 +562,109 @@
 
       // ---------- postavke ----------
 
+      var OPT = PIXEL.OPTIONS;
+      function fill(select, map, value) {
+        select.textContent = "";
+        Object.keys(map).forEach(function (k) {
+          select.appendChild(el("option", { value: k }, typeof map[k] === "string" && map[k].charAt(0) !== "#" ? map[k] : OPT.labels[k] || k));
+        });
+        if (value) select.value = value;
+      }
+
+      // trenutno upisani likovi (iz obrasca)
+      function readCast() {
+        return {
+          her: { hair: $("her-hair").value, skin: $("her-skin").value, long: $("her-long").checked },
+          him: { hair: $("him-hair").value, skin: $("him-skin").value, long: $("him-long").checked },
+          pets: Array.prototype.map.call($("pets").children, function (row) {
+            var f = row.querySelectorAll("select, input");
+            return { type: f[0].value, color: f[1].value, name: f[2].value };
+          }),
+        };
+      }
+
+      // nacrtaj likove i sličice uz naljepnice prema onome što piše u obrascu
+      function paintCast() {
+        var cast = readCast();
+        ["her", "him"].forEach(function (who) {
+          $("pv-" + who).textContent = "";
+          $("pv-" + who).appendChild(PIXEL.make(who, cast, 3));
+        });
+        Array.prototype.forEach.call($("pets").children, function (row, i) {
+          var pic = row.querySelector(".who");
+          pic.textContent = "";
+          pic.appendChild(PIXEL.make("pet" + i, cast, 4));
+        });
+        var rows = $("rewards").children;
+        var order = PIXEL.order(cast, rows.length);
+        Array.prototype.forEach.call(rows, function (row, i) {
+          var pic = row.querySelector(".who");
+          pic.textContent = "";
+          pic.appendChild(PIXEL.make(order[i], cast, order[i] === "us" ? 1.600 : 2.500));
+          pic.title = PIXEL.label(order[i], cast);
+        });
+      }
+
+      function addPetRow(a) {
+        if ($("pets").children.length >= 4) return;
+        var row = el("div", { class: "pet" });
+        row.appendChild(el("div", { class: "who" }));
+        var fields = el("div", { class: "row3" });
+        var type = el("select", { "aria-label": "Vrsta" });
+        var color = el("select", { "aria-label": "Boja" });
+        var name = el("input", { type: "text", placeholder: "Ime", "aria-label": "Ime životinje", maxlength: "20" });
+        fill(type, OPT.pet, a && a.type);
+        fill(color, OPT.fur, a && a.color);
+        name.value = a && a.name ? a.name : "";
+        name.style.gridColumn = "1 / -1";
+        fields.appendChild(type); fields.appendChild(color); fields.appendChild(name);
+        row.appendChild(fields);
+        var del = el("button", { class: "small danger", type: "button" }, "Ukloni");
+        del.addEventListener("click", function () { row.remove(); paintCast(); });
+        row.appendChild(del);
+        $("pets").appendChild(row);
+        $("add-pet").hidden = $("pets").children.length >= 4;
+      }
+      $("add-pet").addEventListener("click", function () { addPetRow(); paintCast(); });
+
       function addRewardRow(r) {
         var row = el("div", { class: "reward" });
-        var days = el("input", { type: "number", min: "1", max: "999", placeholder: "dana", "aria-label": "Broj dana" });
-        var text = el("input", { type: "text", placeholder: "Što dobiva", "aria-label": "Nagrada" });
+        row.appendChild(el("div", { class: "who" }));
+        var count = el("input", { type: "number", min: "1", max: "999", placeholder: "kaseta", "aria-label": "Broj kaseta" });
+        var text = el("input", { type: "text", placeholder: "Poruka uz naljepnicu", "aria-label": "Poruka" });
         var del = el("button", { class: "small danger", type: "button" }, "Ukloni");
-        days.value = r && r.days ? r.days : "";
+        count.value = r && (r.count || r.days) ? (r.count || r.days) : "";
         text.value = r && r.text ? r.text : "";
-        del.addEventListener("click", function () { row.remove(); });
-        row.appendChild(days); row.appendChild(text); row.appendChild(del);
+        del.addEventListener("click", function () { row.remove(); paintCast(); });
+        row.appendChild(count); row.appendChild(text); row.appendChild(del);
         $("rewards").appendChild(row);
       }
-      $("add-reward").addEventListener("click", function () { addRewardRow(); });
+      $("add-reward").addEventListener("click", function () {
+        var rows = $("rewards").children;
+        var lastCount = rows.length ? Number(rows[rows.length - 1].querySelector("input").value) || 0 : 0;
+        addRewardRow({ count: lastCount ? lastCount + 7 : 3 });
+        paintCast();
+      });
+      $("config-form").addEventListener("change", paintCast);
 
       function renderConfig() {
         $("c-to").value = state.config.to || "";
         $("c-from").value = state.config.from || "";
         $("c-whatsapp").value = state.config.whatsapp || "";
+        var cast = state.config.cast || {};
+        var her = cast.her || {}, him = cast.him || {};
+        fill($("her-hair"), OPT.hair, her.hair || "smeda");
+        fill($("her-skin"), OPT.skin, her.skin || "svijetla");
+        $("her-long").checked = her.long !== false;
+        fill($("him-hair"), OPT.hair, him.hair || "smeda");
+        fill($("him-skin"), OPT.skin, him.skin || "svijetla");
+        $("him-long").checked = Boolean(him.long);
+        $("pets").textContent = "";
+        (cast.pets || []).forEach(addPetRow);
+        $("add-pet").hidden = $("pets").children.length >= 4;
         $("rewards").textContent = "";
         (state.config.rewards || []).forEach(addRewardRow);
+        paintCast();
         $("settings").open = !state.config.to;     // dok nema njenog imena, postavke su otvorene
       }
 
@@ -554,9 +672,10 @@
         e.preventDefault();
         var config = Object.assign({}, state.config, {
           to: $("c-to").value, from: $("c-from").value, whatsapp: $("c-whatsapp").value,
+          cast: readCast(),
           rewards: Array.prototype.map.call($("rewards").children, function (row) {
             var inputs = row.querySelectorAll("input");
-            return { days: Number(inputs[0].value), text: inputs[1].value };
+            return { count: Number(inputs[0].value), text: inputs[1].value };
           }),
         });
         api("PUT", "/api/data", { config: config, songs: state.songs }).then(function (data) {

@@ -46,7 +46,7 @@ const normalizeWhen = (s) => {
 const SPOTIFY = /^https:\/\/open\.spotify\.com\/(?:intl-[a-z-]+\/)?(track|album|playlist|episode)\/[A-Za-z0-9]{10,}/;
 const YOUTUBE = /(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/))[A-Za-z0-9_-]{11}/;
 const KNOWN = new Set(["date", "title", "artist", "note", "hint", "ps", "spotify", "youtube", "audio", "preview", "cover", "reveal"]);
-const REVEALS = new Set(["scratch", "tap", "hold", "guess"]);
+const REVEALS = new Set(["scratch", "guess"]);
 
 const seen = new Map();
 const valid = [];
@@ -63,7 +63,7 @@ data.songs.forEach((s, i) => {
   if (s.audio && !existsSync(new URL(`../public/${s.audio}`, import.meta.url))) errors.push(`${where}: zvuk ${s.audio} ne postoji u public/`);
   if (!s.audio && !s.preview) warnings.push(`${where}: nema zvuka (ni isječka ni vlastite datoteke) — kaseta će se vrtjeti bez glazbe`);
   if (/\p{Extended_Pictographic}/u.test(`${s.hint ?? ""}${s.note ?? ""}${s.ps ?? ""}`)) warnings.push(`${where}: tekst sadrži emoji — stranica koristi samo ikone, napiši riječima`);
-  if (s.reveal && !REVEALS.has(s.reveal)) errors.push(`${where}: reveal mora biti "scratch", "tap", "hold" ili "guess"`);
+  if (s.reveal && !REVEALS.has(s.reveal)) errors.push(`${where}: reveal mora biti "scratch" ili "guess"`);
   for (const k of Object.keys(s)) if (!KNOWN.has(k)) warnings.push(`${where}: nepoznato polje "${k}" (tipfeler?)`);
   if (!at) return;
   if (seen.has(at)) errors.push(`${where}: vrijeme ${s.date} se ponavlja (već ga ima pjesma #${seen.get(at) + 1})`);
@@ -99,7 +99,7 @@ if (!days.has(today)) warnings.push("za danas nema nove pjesme (prikazuje se zad
 if (covered < 2) warnings.push("nema pjesme za sutra — dodaj je da se niz ne prekine");
 if (data.songs.some((s) => /primjer/i.test(`${s?.note ?? ""} ${s?.ps ?? ""}`))) warnings.push("još postoje PRIMJER pjesme — zamijeni ih svojima");
 for (const r of Array.isArray(config.rewards) ? config.rewards : []) {
-  if (!(Number(r?.days) >= 1) || !r?.text) errors.push(`config.rewards: svaka nagrada treba days (broj dana) i text`);
+  if (!(Number(r?.count ?? r?.days) >= 1)) errors.push(`config.rewards: svaka naljepnica treba count (broj kaseta u kutiji)`);
 }
 if (!config.to) warnings.push("config.to je prazan (njeno ime na kaseti)");
 if (!config.whatsapp) warnings.push("config.whatsapp je prazan — gumb „javi mu” koristit će dijeljenje iz mobitela");

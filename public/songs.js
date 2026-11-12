@@ -14,18 +14,41 @@ window.DAILY_SONG = {
     "noteLead": "podsjetila me na tebe jer…",
     "rewards": [
       {
-        "days": 1,
-        "text": "Primjer nagrade: kupon za kavu po izboru."
+        "count": 1,
+        "text": "Primjer: prva naljepnica, kupon za kavu po izboru."
       },
       {
-        "days": 7,
-        "text": "Primjer nagrade: doručak u krevet."
+        "count": 3,
+        "text": "Primjer: netko te čeka kod kuće."
       },
       {
-        "days": 30,
-        "text": "Primjer nagrade: izlet iznenađenja."
+        "count": 5,
+        "text": "Primjer: doručak u krevet."
+      },
+      {
+        "count": 10,
+        "text": "Primjer: izlet iznenađenja."
       }
-    ]
+    ],
+    "cast": {
+      "her": {
+        "hair": "smeda",
+        "long": true,
+        "skin": "svijetla"
+      },
+      "him": {
+        "hair": "crna",
+        "long": false,
+        "skin": "svijetla"
+      },
+      "pets": [
+        {
+          "type": "macka",
+          "color": "narancasta",
+          "name": "Primjer mačka"
+        }
+      ]
+    }
   },
   "songs": [
     {
