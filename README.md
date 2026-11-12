@@ -23,12 +23,15 @@ Ona skenira QR kod (uvijek isti) pa otvori se kaseta sa skrivenom pjesmom koja t
 node server.mjs
 ```
 
-Otvori http://localhost:4321/admin:
+Otvori http://localhost:4321/admin. Obrazac ima tri koraka:
 
-1. Zalijepi **Spotify ili YouTube link** pa *Dohvati*. Naslov, izvođač, omot i službeni isječak od 30 s popune se sami.
-2. Odaberi dan (i vrijeme, ako želiš), napiši poruku, trag i tajni P.S.
-3. Po želji učitaj **vlastiti zvuk** (mp3, m4a, ogg, wav) — sprema se u `public/audio/` i svira umjesto isječka.
-4. *Spremi pjesmu*, pa *Objavi* (provjera + git commit + push, ako repo ima `origin`).
+1. **Zalijepi link** sa Spotifyja ili YouTubea. Naslov, izvođač, omot i službeni isječak od 30 s popune se sami.
+2. **Kad se pojavi?** Sljedeći slobodan dan (zadano), odmah, ili odabrani dan.
+3. **Zašto te podsjetila na nju?** Tvoja poruka.
+
+Zatim *Spremi pjesmu*. Žuti okvir na vrhu javi da ima promjena koje ona još ne vidi; *Objavi* ih šalje (provjera, git commit i push ako repo ima `origin`).
+
+Ostalo je skriveno pod **Više opcija**: trag prije otkrivanja, tajni P.S., odabir igre, izbor isječka i vlastiti zvuk (mp3, m4a, ogg, wav, sprema se u `public/audio/`). Njeno ime, tvoj potpis, WhatsApp i nagrade za niz su pod **Postavke**.
 
 Uvijek se prikazuje najnovija pjesma čije je vrijeme došlo:
 

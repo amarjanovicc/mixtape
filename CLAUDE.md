@@ -43,7 +43,9 @@ service workera, namjerno, da nikad ne vidi staru verziju.
   - `index.html`, `style.css`, `app.js` — izgled i logika
 - `server.mjs` — backend bez ovisnosti: servira `public/`, sučelje `/admin` i `/api/*`
   (dohvat podataka iz linka, spremanje `songs.js`, učitavanje zvuka, „Objavi” = provjera + git)
-- `admin/index.html` — sučelje za unos (ne objavljuje se, radi samo lokalno)
+- `admin/index.html` — sučelje za unos (ne objavljuje se, radi samo lokalno). Mora ostati
+  jednostavno: tri koraka (link, kad, poruka) na vidiku, sve ostalo u „Više opcija” ili
+  „Postavke”. Novo polje ide u skrivene opcije osim ako ga treba svaka pjesma.
 - `scripts/check-songs.mjs` — provjera `songs.js` (datumi, duplikati, linkovi, raspored)
 - `tools/qr.html` — generator QR koda
 - `.github/workflows/pages.yml` — push na `main` pa provjera pa GitHub Pages
