@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="hr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>QR kod · Pjesma dana</title>
+  <style>
+    :root { --ink: #3b2430; --muted: #8f6e7b; --rose: #e0507a; --line: #f4d9e2; color-scheme: light; }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px 16px;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--ink);
+      background: radial-gradient(110% 70% at 0% 0%, #ffe3ec, transparent 60%), #fff6ef;
+    }
+    main { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 14px; }
+    h1 { margin: 0; font-size: 1.3rem; }
+    p { margin: 0; color: var(--muted); font-size: .92rem; line-height: 1.5; }
+    label { font-weight: 700; font-size: .9rem; }
+    input, select {
+      width: 100%; padding: 12px 14px; font: inherit; border: 1px solid var(--line);
+      border-radius: 12px; background: #fff;
+    }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .qr-card {
+      background: #fff; border: 1px solid var(--line); border-radius: 24px; padding: 22px;
+      display: grid; justify-items: center; gap: 10px; box-shadow: 0 20px 50px -28px rgba(179,48,90,.45);
+    }
+    #qr svg { width: 100%; max-width: 300px; height: auto; display: block; }
+    .caption { font-family: Georgia, serif; font-style: italic; color: var(--ink); font-size: 1.05rem; text-align: center; }
+    button {
+      padding: 12px 16px; font: inherit; font-weight: 700; border-radius: 999px; cursor: pointer;
+      border: 1px solid var(--line); background: #fff; color: #b3305a;
+    }
+    button.primary { background: var(--rose); color: #fff; border-color: var(--rose); }
+    .error { color: #b3305a; }
+    @media print {
+      body { background: #fff; } .no-print { display: none !important; }
+      .qr-card { box-shadow: none; border: 0; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="no-print">
+      <h1>QR kod za Pjesmu dana 💌</h1>
+      <p>Upiši adresu stranice (npr. GitHub Pages link). QR kod se ne mijenja — svaki dan vodi na istu adresu, a stranica sama pokaže današnju pjesmu.</p>
+    </div>
+
+    <div class="no-print">
+      <label for="url">Adresa</label>
+      <input id="url" type="url" placeholder="https://korisnik.github.io/pjesma-dana/" autocomplete="off">
+    </div>
+    <div class="no-print">
+      <label for="caption">Natpis ispod koda</label>
+      <input id="caption" type="text" value="skeniraj me kad ti nedostajem ♥">
+    </div>
+
+    <div class="qr-card">
+      <div id="qr" aria-live="polite"></div>
+      <div class="caption" id="caption-out"></div>
+    </div>
+    <p class="error" id="err" hidden></p>
+
+    <div class="row no-print">
+      <button class="primary" id="png" type="button">Preuzmi PNG</button>
+      <button id="svg" type="button">Preuzmi SVG</button>
+    </div>
+    <button class="no-print" id="print" type="button">Isprintaj</button>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+  <script>
+    (function () {
+      "use strict";
+      var COLOR = "#7a1f3d"; // tamna ruža: dovoljno kontrasta za skeniranje
+      var urlIn = document.getElementById("url");
+      var capIn = document.getElementById("caption");
+      var out = document.getElementById("qr");
+      var err = document.getElementById("err");
+      var currentSvg = "";
+
+      try { urlIn.value = localStorage.getItem("qr-url") || ""; } catch (e) {}
+
+      function buildSvg(text) {
+        var qr = qrcode(0, "M");
+        qr.addData(text);
+        qr.make();
+        var n = qr.getModuleCount(), m = 4, size = n + m * 2, rects = "";
+        for (var r = 0; r < n; r++) {
+          for (var c = 0; c < n; c++) {
+            if (qr.isDark(r, c)) rects += '<rect x="' + (c + m) + '" y="' + (r + m) + '" width="1.02" height="1.02" rx="0.28"/>';
+          }
+        }
+        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ' + size + " " + size + '" shape-rendering="geometricPrecision">' +
+          '<rect width="100%" height="100%" fill="#fff"/><g fill="' + COLOR + '">' + rects + "</g></svg>";
+      }
+
+      function render() {
+        document.getElementById("caption-out").textContent = capIn.value;
+        var text = urlIn.value.trim();
+        err.hidden = true;
+        if (!text) { out.innerHTML = ""; currentSvg = ""; return; }
+        if (typeof qrcode !== "function") {
+          err.textContent = "QR biblioteka se nije učitala — provjeri internet vezu.";
+          err.hidden = false;
+          return;
+        }
+        try { localStorage.setItem("qr-url", text); } catch (e) {}
+        currentSvg = buildSvg(text);
+        out.innerHTML = currentSvg;
+      }
+
+      function download(name, href) {
+        var a = document.createElement("a");
+        a.href = href; a.download = name;
+        document.body.appendChild(a); a.click(); a.remove();
+      }
+
+      document.getElementById("svg").addEventListener("click", function () {
+        if (!currentSvg) return;
+        var url = URL.createObjectURL(new Blob([currentSvg], { type: "image/svg+xml" }));
+        download("pjesma-dana-qr.svg", url);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      });
+
+      document.getElementById("png").addEventListener("click", function () {
+        if (!currentSvg) return;
+        var img = new Image();
+        img.onload = function () {
+          var canvas = document.createElement("canvas");
+          canvas.width = canvas.height = 1200;
+          var ctx = canvas.getContext("2d");
+          ctx.imageSmoothingEnabled = false;
+          ctx.drawImage(img, 0, 0, 1200, 1200);
+          download("pjesma-dana-qr.png", canvas.toDataURL("image/png"));
+        };
+        img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(currentSvg);
+      });
+
+      document.getElementById("print").addEventListener("click", function () { window.print(); });
+      urlIn.addEventListener("input", render);
+      capIn.addEventListener("input", render);
+      render();
+    })();
+  </script>
+</body>
+</html>

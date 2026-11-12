@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="hr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Pjesma dana 💌</title>
+  <meta name="description" content="Svaki dan jedna pjesma koja me podsjetila na tebe.">
+  <meta name="theme-color" content="#ffe9ef">
+  <meta name="robots" content="noindex, nofollow">
+  <meta property="og:title" content="Pjesma dana 💌">
+  <meta property="og:description" content="Svaki dan jedna pjesma koja me podsjetila na tebe.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💌</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,400&family=Nunito:wght@400;600;700;800&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="bg-hearts" id="bg-hearts" aria-hidden="true"></div>
+
+  <main class="wrap">
+    <a class="back" id="back" href="./" hidden>← natrag na današnju</a>
+
+    <section class="envelope" id="envelope" hidden>
+      <button class="envelope-btn" id="open-btn" type="button">
+        <span class="env-emoji" aria-hidden="true">💌</span>
+        <span class="env-title" id="env-title">Imaš novu pjesmu</span>
+        <span class="env-hint">dodirni da otvoriš</span>
+      </button>
+    </section>
+
+    <article class="card" id="card" hidden>
+      <p class="eyebrow" id="label">Pjesma dana</p>
+      <p class="date" id="date"></p>
+
+      <div class="vinyl" aria-hidden="true"><div class="vinyl-label">♥</div></div>
+
+      <h1 class="title" id="title"></h1>
+      <p class="artist" id="artist"></p>
+
+      <div class="player" id="player"></div>
+      <div class="links" id="links"></div>
+
+      <blockquote class="note" id="note-wrap" hidden>
+        <p class="note-lead" id="note-lead"></p>
+        <p class="note-text" id="note"></p>
+      </blockquote>
+
+      <button class="heart-btn" id="heart-btn" type="button" aria-label="Pošalji srce">♥</button>
+      <p class="sign" id="sign"></p>
+    </article>
+
+    <article class="card empty" id="empty" hidden>
+      <div class="empty-emoji" aria-hidden="true">💗</div>
+      <h1 class="title">Prva pjesma stiže uskoro</h1>
+      <p class="artist">vrati se sutra</p>
+    </article>
+
+    <details class="archive" id="archive" hidden>
+      <summary><span>Prijašnje pjesme</span><span class="count" id="archive-count"></span></summary>
+      <ol id="archive-list"></ol>
+    </details>
+  </main>
+
+  <noscript>
+    <p class="noscript">Uključi JavaScript da vidiš današnju pjesmu 💌</p>
+  </noscript>
+
+  <script src="songs.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

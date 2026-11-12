@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "pjesma-dana",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "4321", "-d", "public"],
+      "port": 4321
+    },
+    {
+      "name": "qr-tool",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "4322", "-d", "tools"],
+      "port": 4322
+    }
+  ]
+}
