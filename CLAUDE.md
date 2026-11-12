@@ -41,6 +41,13 @@ Stanje (otvoreno, reakcije, niz) živi samo u `localStorage` njenog mobitela —
   od 30 s s iTunesa, svira se s njihovog servera). Ne dodaji skidanje cijelih pjesama sa
   Spotifyja/YouTubea — to bi bilo javno dijeljenje tuđe glazbe; vlastiti zvuk je za ono što
   korisnik smije dijeliti (glasovna poruka, vlastita snimka).
+- **Zvučni efekti** (`fx` u `app.js`) su sintetizirani kroz Web Audio — nema zvučnih datoteka.
+  Premotavanje pušta dekodirani isječak unazad/unaprijed (`fx.scrub`); ako se zvuk ne može
+  dekodirati (CORS, datoteka veća od 3 MB), ostaje samo šum motora. AudioContext se smije
+  stvoriti tek na dodir. Sve mora poštovati gumb za utišavanje (`state.muted`).
+- **Mobile-first**: dok traje igra sve stane na jedan ekran (`.stage.gaming`), a kontrole su
+  dolje pod palcem; dodirne mete su najmanje 44 px. Nakon otkrivanja redoslijed je:
+  kaseta i tipke → pjesma → poruka → reakcija → P.S. → cijela pjesma → odbrojavanje → popis.
 - `server.mjs` sluša samo na 127.0.0.1, provjerava `Host` i traži zaglavlje `X-Mixtape` za
   sve što mijenja podatke. Nema lozinke — ne izlagati ga na internet.
 - Tekst na stranici je hrvatski, kratak i topao. Ne pretjerivati s emojijima.

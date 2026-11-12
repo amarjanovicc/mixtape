@@ -37,6 +37,7 @@
       opened: s.opened && typeof s.opened === "object" ? s.opened : {},
       reactions: s.reactions && typeof s.reactions === "object" ? s.reactions : {},
       days: Array.isArray(s.days) ? s.days : [],
+      muted: s.muted === true,
     };
   }
   function saveState() {
@@ -169,6 +170,11 @@
     $("title").textContent = song.title;
     $("artist").textContent = song.artist || "";
     $("artist").hidden = !song.artist;
+    if (song.cover) {
+      $("cover").src = song.cover;
+      $("cover").hidden = false;
+      $("cover").addEventListener("error", function () { this.hidden = true; });
+    }
 
     var player = $("player");
     var sp = spotifyEmbed(song.spotify);
@@ -322,18 +328,224 @@
     }
   }
 
+  // ---------- fx: zvučni efekti (Web Audio, bez datoteka) ----------
+  //
+  // Premotavanje: isječak se dekodira i pušta ubrzano UNAZAD/unaprijed, kao kad se
+  // vrpca ili ploča povuče rukom. Ako se zvuk ne može dekodirati, ostaje šum motora.
+
+  var fx = (function () {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    var ctx = null, master = null, noiseBuf = null;
+    var raw = null, buf = null, rev = null;       // preuzeti bajtovi → dekodirano → obrnuto
+    var scrubSrc = null, scrubGain = null, scrubDir = 0;
+    var whirr = null, scr = null, scrTimer = 0;
+
+    function ready() {
+      if (!AC) return false;
+      if (!ctx) {
+        try {
+          ctx = new AC();
+          master = ctx.createGain();
+          master.gain.value = state.muted ? 0 : 1;
+          master.connect(ctx.destination);
+          var n = ctx.sampleRate * 2;
+          noiseBuf = ctx.createBuffer(1, n, ctx.sampleRate);
+          var d = noiseBuf.getChannelData(0);
+          for (var i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+        } catch (e) { ctx = null; return false; }
+        decode();
+      }
+      if (ctx.state === "suspended") { try { ctx.resume(); } catch (e) {} }
+      return true;
+    }
+
+    function decode() {
+      if (!ctx || !raw || buf) return;
+      var bytes = raw;
+      raw = null;
+      try {
+        ctx.decodeAudioData(bytes, function (b) {
+          buf = b;
+          rev = ctx.createBuffer(b.numberOfChannels, b.length, b.sampleRate);
+          for (var c = 0; c < b.numberOfChannels; c++) {
+            var data = new Float32Array(b.getChannelData(c));
+            data.reverse();
+            rev.getChannelData(c).set(data);
+          }
+        }, function () {});
+      } catch (e) {}
+    }
+
+    function noise() {
+      var src = ctx.createBufferSource();
+      src.buffer = noiseBuf;
+      src.loop = true;
+      return src;
+    }
+
+    function tone(freq, at, dur, type, vol) {
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = type || "sine";
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(0.0001, at);
+      g.gain.exponentialRampToValueAtTime(vol || 0.2, at + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+      o.connect(g); g.connect(master);
+      o.start(at); o.stop(at + dur + 0.05);
+    }
+
+    function setWhirr(on, loud) {
+      if (!ready()) return;
+      if (on && !whirr) {
+        var src = noise(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+        var lfo = ctx.createOscillator(), lg = ctx.createGain();
+        f.type = "bandpass"; f.frequency.value = 1500; f.Q.value = 1.4;
+        lfo.frequency.value = 11; lg.gain.value = 260;      // lagano "zavijanje" motora
+        lfo.connect(lg); lg.connect(f.frequency);
+        g.gain.value = 0;
+        src.connect(f); f.connect(g); g.connect(master);
+        src.start(); lfo.start();
+        whirr = { src: src, lfo: lfo, g: g };
+      }
+      if (!whirr) return;
+      whirr.g.gain.setTargetAtTime(on ? (loud ? 0.2 : 0.06) : 0, ctx.currentTime, 0.04);
+      if (!on) {
+        var w = whirr;
+        whirr = null;
+        setTimeout(function () { try { w.src.stop(); w.lfo.stop(); } catch (e) {} }, 350);
+      }
+    }
+
+    function dropScrub() {
+      if (!scrubSrc) return;
+      var src = scrubSrc, g = scrubGain;
+      scrubSrc = null; scrubGain = null; scrubDir = 0;
+      try { g.gain.setTargetAtTime(0, ctx.currentTime, 0.02); } catch (e) {}
+      setTimeout(function () { try { src.stop(); } catch (e) {} }, 120);
+    }
+
+    return {
+      // preuzmi zvuk za premotavanje (mali isječci; cijele pjesme bi pojele memoriju mobitela)
+      load: function (url) {
+        if (!AC || !window.fetch) return;
+        fetch(url).then(function (r) {
+          if (!r.ok) throw new Error("fetch");
+          return r.arrayBuffer();
+        }).then(function (ab) {
+          if (ab.byteLength > 3 * 1024 * 1024) return;
+          raw = ab;
+          decode();
+        }).catch(function () {});
+      },
+      unlock: ready,
+      setMuted: function (m) { if (master) master.gain.setTargetAtTime(m ? 0 : 1, ctx.currentTime, 0.02); },
+
+      // dir: -1 unazad, +1 unaprijed; rate: koliko puta brže; pos: sekunda u pjesmi
+      scrub: function (dir, rate, pos) {
+        if (!ready()) return;
+        if (!buf) { setWhirr(true, true); return; }
+        rate = Math.max(0.05, Math.min(14, rate));
+        if (!scrubSrc || dir !== scrubDir) {
+          dropScrub();
+          scrubSrc = ctx.createBufferSource();
+          scrubSrc.buffer = dir > 0 ? buf : rev;
+          scrubGain = ctx.createGain();
+          scrubGain.gain.value = 0;
+          scrubSrc.connect(scrubGain); scrubGain.connect(master);
+          var off = Math.max(0, Math.min(buf.duration - 0.02, dir > 0 ? pos : buf.duration - pos));
+          scrubSrc.playbackRate.value = rate;
+          scrubSrc.start(0, off);
+          scrubDir = dir;
+        }
+        scrubSrc.playbackRate.setTargetAtTime(rate, ctx.currentTime, 0.03);
+        scrubGain.gain.setTargetAtTime(0.9, ctx.currentTime, 0.015);
+        setWhirr(true, false);
+      },
+      // prst miruje na kaseti: zvuk stane, kao ploča pod rukom
+      hush: function () {
+        if (scrubSrc) {
+          scrubGain.gain.setTargetAtTime(0, ctx.currentTime, 0.03);
+          scrubSrc.playbackRate.setTargetAtTime(0.05, ctx.currentTime, 0.03);
+        }
+        if (whirr) whirr.g.gain.setTargetAtTime(0, ctx.currentTime, 0.04);
+      },
+      stopScrub: function () { dropScrub(); setWhirr(false); },
+      whirr: function (on) { setWhirr(on, true); },
+
+      // tipka kazetofona
+      click: function () {
+        if (!ready()) return;
+        var src = noise(), f = ctx.createBiquadFilter(), g = ctx.createGain(), t = ctx.currentTime;
+        f.type = "highpass"; f.frequency.value = 1800;
+        g.gain.setValueAtTime(0.35, t);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+        src.connect(f); f.connect(g); g.connect(master);
+        src.start(t); src.stop(t + 0.07);
+        tone(140, t, 0.06, "square", 0.08);
+      },
+
+      // grebanje folije: šum čija glasnoća prati brzinu prsta
+      scratch: function (speed) {
+        if (!ready()) return;
+        if (!scr) {
+          var src = noise(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+          f.type = "bandpass"; f.frequency.value = 3200; f.Q.value = 0.7;
+          g.gain.value = 0;
+          src.connect(f); f.connect(g); g.connect(master);
+          src.start();
+          scr = { src: src, f: f, g: g };
+        }
+        var v = Math.min(1, speed / 1.6);                    // px/ms → 0..1
+        scr.g.gain.setTargetAtTime(0.05 + v * 0.3, ctx.currentTime, 0.012);
+        scr.f.frequency.setTargetAtTime(2400 + v * 3200, ctx.currentTime, 0.02);
+        clearTimeout(scrTimer);
+        scrTimer = setTimeout(function () { if (scr) scr.g.gain.setTargetAtTime(0, ctx.currentTime, 0.03); }, 60);
+      },
+      scratchEnd: function () {
+        clearTimeout(scrTimer);
+        if (!scr) return;
+        var x = scr;
+        scr = null;
+        x.g.gain.setTargetAtTime(0, ctx.currentTime, 0.03);
+        setTimeout(function () { try { x.src.stop(); } catch (e) {} }, 250);
+      },
+
+      // dobitak: zvon novčića + uzlazni akord
+      win: function () {
+        if (!ready()) return;
+        var t = ctx.currentTime + 0.02;
+        tone(1976, t, 0.09, "square", 0.1);
+        tone(2637, t + 0.07, 0.5, "square", 0.1);
+        [1047, 1319, 1568, 2093].forEach(function (f, i) { tone(f, t + 0.22 + i * 0.085, 0.5, "triangle", 0.18); });
+        tone(3136, t + 0.6, 0.9, "sine", 0.1);
+      },
+      // tap po srcu: svaki malo viši
+      blip: function (step) {
+        if (!ready()) return;
+        tone(392 * Math.pow(2, step / 12 * 2), ctx.currentTime, 0.16, "triangle", 0.22);
+      },
+      // otkrivanje u ostalim igrama
+      reveal: function () {
+        if (!ready()) return;
+        var t = ctx.currentTime + 0.02;
+        [784, 1047, 1319].forEach(function (f, i) { tone(f, t + i * 0.08, 0.45, "triangle", 0.18); });
+      },
+    };
+  })();
+
   // ---------- deck: zvuk + kaseta koja se stvarno premotava ----------
 
   var deck = (function () {
-    var tape, audio, spoolL, spoolR, playBtn, timeEl;
+    var tape, audio, spoolL, spoolR, playBtn, timeEl, barFill;
     var hasAudio = false;
     var virtualPlaying = false; // bez zvuka: kolutovi se samo vrte
     var angle = 0;              // kut kolutova u stupnjevima
     var boost = 0;              // igra "drži gumb" ubrzava vrtnju
     var seekDir = 0;            // -1 premotavanje unazad, +1 unaprijed
     var resumeAfterSeek = false;
-    var dragging = false, dragX = 0;
+    var dragging = false, dragX = 0, dragT = 0, hushTimer = 0;
     var last = 0;
+    var SEEK_RATE = 7;          // sekundi pjesme po sekundi držanja tipke
 
     function fmt(t) {
       t = Math.max(0, Math.floor(t || 0));
@@ -354,7 +566,10 @@
       var f = d ? audio.currentTime / d : 0.5;
       spoolL.style.setProperty("--fill", (1 - f).toFixed(3)); // lijevi kolut se prazni
       spoolR.style.setProperty("--fill", f.toFixed(3));       // desni se puni
-      if (hasAudio) timeEl.textContent = fmt(audio.currentTime) + (d ? " / " + fmt(d) : "");
+      if (hasAudio) {
+        timeEl.textContent = fmt(audio.currentTime) + (d ? " / " + fmt(d) : "");
+        barFill.style.transform = "scaleX(" + (d ? f : 0).toFixed(4) + ")";
+      }
     }
 
     function syncButton() {
@@ -368,7 +583,12 @@
       last = t;
       var rate = seekDir ? seekDir * 9 : boost ? 8 : (isPlaying() && !dragging ? 1 : 0);
       if (rate && !reducedMotion) angle += rate * 150 * dt;
-      if (seekDir) seekBy(seekDir * 7 * dt);
+      if (seekDir) {
+        seekBy(seekDir * SEEK_RATE * dt);
+        var d = duration();
+        // došli smo do kraja vrpce: zvuk premotavanja stane
+        if (d && (seekDir < 0 ? audio.currentTime <= 0.05 : audio.currentTime >= d - 0.1)) fx.hush();
+      }
       if (rate || dragging) paint();
       requestAnimationFrame(loop);
     }
@@ -388,12 +608,16 @@
         if (hasAudio) audio.pause();
         btn.classList.add("on");
         buzz(8);
+        fx.click();
+        fx.scrub(dir, SEEK_RATE, hasAudio ? audio.currentTime : 0);
         try { if (e.pointerId != null) btn.setPointerCapture(e.pointerId); } catch (err) {}
       };
       var stop = function () {
         if (seekDir !== dir) return;
         seekDir = 0;
         btn.classList.remove("on");
+        fx.stopScrub();
+        fx.click();
         if (resumeAfterSeek) play();
       };
       btn.addEventListener("pointerdown", start);
@@ -410,6 +634,9 @@
       tape.addEventListener("pointerdown", function (e) {
         dragging = true;
         dragX = e.clientX;
+        dragT = performance.now();
+        fx.unlock();
+        tape.classList.remove("nudge");
         resumeAfterSeek = !audio.paused;
         audio.pause();
         try { tape.setPointerCapture(e.pointerId); } catch (err) {}
@@ -417,13 +644,24 @@
       tape.addEventListener("pointermove", function (e) {
         if (!dragging) return;
         var dx = e.clientX - dragX;
+        if (!dx) return;
+        var now = performance.now();
+        var dt = Math.max(8, now - dragT) / 1000;
         dragX = e.clientX;
+        dragT = now;
         angle += dx * 5;          // povlačenje ulijevo vrti kolutove unazad
-        seekBy(dx * 0.07);
+        var sec = dx * 0.07;
+        // zvuk prati ruku: smjer i brzina povlačenja = smjer i brzina reprodukcije
+        fx.scrub(dx < 0 ? -1 : 1, Math.abs(sec) / dt, audio.currentTime);
+        seekBy(sec);
+        clearTimeout(hushTimer);
+        hushTimer = setTimeout(fx.hush, 90);
       });
       var end = function () {
         if (!dragging) return;
         dragging = false;
+        clearTimeout(hushTimer);
+        fx.stopScrub();
         if (resumeAfterSeek) play();
       };
       tape.addEventListener("pointerup", end);
@@ -433,16 +671,18 @@
     return {
       init: function (song) {
         tape = $("tape"); audio = $("audio"); spoolL = $("spool-l"); spoolR = $("spool-r");
-        playBtn = $("play"); timeEl = $("time");
+        playBtn = $("play"); timeEl = $("time"); barFill = $("bar-fill");
         var src = song.audio || song.preview;
         if (src) {
           hasAudio = true;
           audio.preload = "metadata";
           audio.src = src;
+          audio.muted = state.muted;
+          fx.load(src);
           ["play", "pause", "ended"].forEach(function (ev) { audio.addEventListener(ev, syncButton); });
           ["loadedmetadata", "timeupdate", "seeked"].forEach(function (ev) { audio.addEventListener(ev, paint); });
           audio.addEventListener("error", function () { $("deck").hidden = true; hasAudio = false; virtualPlaying = true; });
-          playBtn.addEventListener("click", function () { if (audio.paused) play(); else audio.pause(); });
+          playBtn.addEventListener("click", function () { fx.click(); if (audio.paused) play(); else audio.pause(); });
           holdSeek($("rew"), -1);
           holdSeek($("ffw"), 1);
           initDrag();
@@ -451,12 +691,14 @@
         requestAnimationFrame(loop);
       },
       // nakon otkrivanja: pokaži tipke i pusti (otkrivanje je dodir, pa preglednik dopušta zvuk)
-      start: function () {
+      start: function (teach) {
         if (hasAudio) $("deck").hidden = false;
+        if (hasAudio && teach && !reducedMotion) tape.classList.add("nudge"); // pokaži da se kaseta može povući
         play();
         syncButton();
       },
-      boost: function (on) { boost = on ? 1 : 0; },
+      boost: function (on) { boost = on ? 1 : 0; fx.whirr(on); },
+      setMuted: function (m) { if (audio) audio.muted = m; },
     };
   })();
 
@@ -473,6 +715,8 @@
       finished = true;
       cleanup();
       game.hidden = true;
+      $("stage").classList.remove("gaming");
+      if (type === "scratch" && $("reveal").classList.contains("ticket")) fx.win(); else fx.reveal();
       onDone();
     }
 
@@ -481,6 +725,7 @@
       $("hint").hidden = false;
     }
     game.hidden = false;
+    $("stage").classList.add("gaming");
     $("skip").addEventListener("click", finish);
 
     if (type === "tap") {
@@ -493,6 +738,7 @@
       pump.addEventListener("click", function () {
         if (finished) return;
         count++;
+        fx.blip(count);
         pump.style.setProperty("--p", count / need);
         pump.classList.remove("bump");
         void pump.offsetWidth;
@@ -607,7 +853,7 @@
     ctx.lineJoin = "round";
     ctx.lineWidth = 30 * dpr;
 
-    var drawing = false, px = 0, py = 0, moves = 0;
+    var drawing = false, px = 0, py = 0, moves = 0, lastMove = 0;
     function pos(e) {
       var r = canvas.getBoundingClientRect();
       return [(e.clientX - r.left) * (W / r.width), (e.clientY - r.top) * (H / r.height)];
@@ -644,6 +890,8 @@
       var p0 = pos(e);
       px = p0[0]; py = p0[1];
       try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+      lastMove = performance.now();
+      fx.scratch(0.4);
       ctx.beginPath();
       ctx.arc(px, py, 15 * dpr, 0, Math.PI * 2);
       ctx.fill();
@@ -657,16 +905,24 @@
       ctx.lineTo(p1[0], p1[1]);
       ctx.stroke();
       rough(p1[0], p1[1]);
+      var tNow = performance.now();
+      fx.scratch(Math.hypot(p1[0] - px, p1[1] - py) / dpr / Math.max(8, tNow - lastMove));
+      lastMove = tNow;
       px = p1[0]; py = p1[1];
       moves++;
       if (moves % 3 === 0) flake(e);
       if (moves % 6 === 0) buzz(4);
       if (moves % 10 === 0) check();
     });
-    var stop = function () { if (drawing) { drawing = false; check(); } };
+    var stop = function () { if (drawing) { drawing = false; fx.scratchEnd(); check(); } };
     canvas.addEventListener("pointerup", stop);
     canvas.addEventListener("pointercancel", stop);
-    cleanup = function () { canvas.classList.add("gone"); };
+    cleanup = function () {
+      fx.scratchEnd();
+      canvas.classList.add("gone");
+      $("reveal").classList.add("won");   // sjaj preko listića
+      $("stamp").hidden = false;          // pečat "dobitak"
+    };
   }
 
   // ---------- main ----------
@@ -691,6 +947,21 @@
     var trackNo = released.indexOf(current) + 1;
     var label = !isLatest ? "Iz arhive" : current.day === today ? "Pjesma dana" : "Zadnja pjesma";
 
+    var muteBtn = $("mute");
+    var paintMute = function () {
+      muteBtn.textContent = state.muted ? "🔇" : "🔊";
+      muteBtn.setAttribute("aria-pressed", String(state.muted));
+      muteBtn.setAttribute("aria-label", state.muted ? "Uključi zvuk" : "Isključi zvuk");
+    };
+    muteBtn.addEventListener("click", function () {
+      state.muted = !state.muted;
+      saveState();
+      fx.setMuted(state.muted);
+      deck.setMuted(state.muted);
+      paintMute();
+    });
+    paintMute();
+
     renderSong(current, trackNo, label);
     deck.init(current);
     renderReactions(current);
@@ -700,7 +971,7 @@
     $("stage").hidden = false;
 
     function showAfter(celebrate) {
-      deck.start();
+      deck.start(celebrate);
       $("after").hidden = false;
       $("shelf").hidden = released.length < 2; // tek nakon otkrivanja, da popis ne oda pjesmu
       renderNext(upcoming[0], isLatest);

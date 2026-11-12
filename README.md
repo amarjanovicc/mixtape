@@ -7,6 +7,7 @@ Ona skenira QR kod (uvijek isti) → otvori se kaseta sa skrivenom pjesmom koja 
 - 🎮 **Pjesma je skrivena** — vidi samo trag (npr. `🚗🌊`) i mora je otkriti: jedan dan grebe **srećku** sa srebrnom folijom, drugi puni srce tapkanjem, treći drži gumb dok se kaseta premotava.
 - 🔊 Nakon otkrivanja **pjesma krene svirati**, uz konfete i tvoju poruku rukopisom.
 - 📼 **Kaseta je pravi player**: povuče je prstom ili drži ⏪ / ⏩ i kolutovi se vrte unazad i unaprijed dok se zvuk premotava.
+- 🎚️ **Zvučni efekti**: dok premotava, pjesma se čuje ubrzano unazad (kao kad rukom vratiš ploču), srećka šušti pod prstom i zazvoni kad dobije, tipke kazetofona klikću. Gumb 🔊 gore desno sve utiša.
 - 😍 Reagira emojijem → otključa se **tajni P.S.** i gumb „javi mu” koji ti pošalje njenu reakciju (WhatsApp).
 - ⏳ Odbrojavanje do sljedeće pjesme i niz „🔥 5 dana zaredom”.
 - 📼 „Tvoja kaseta” — raste svaki dan; sve dosadašnje pjesme s njenim reakcijama.

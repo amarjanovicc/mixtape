@@ -15,7 +15,9 @@
 
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
 html, body { margin: 0; }
+button, a { touch-action: manipulation; }
 
 body {
   min-height: 100vh;
@@ -30,6 +32,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
   overflow-x: hidden;
+  overscroll-behavior-y: none;
 }
 
 .wrap {
@@ -51,6 +54,19 @@ body {
   text-transform: uppercase;
   color: var(--accent);
 }
+.top-right { display: flex; align-items: center; gap: 8px; }
+.mute {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--panel-line);
+  border-radius: 50%;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--ink);
+  background: var(--panel);
+  cursor: pointer;
+}
+.mute[aria-pressed="true"] { opacity: 0.55; }
 .streak {
   padding: 6px 12px;
   border-radius: 999px;
@@ -65,6 +81,10 @@ body {
 /* ---------- cassette ---------- */
 
 .stage { display: flex; flex-direction: column; gap: 18px; }
+/* dok traje igra: sve stane na jedan ekran, a kontrole su dolje, pod palcem */
+.stage.gaming { min-height: calc(100vh - 110px); min-height: calc(100dvh - 110px); }
+.stage.gaming .game { margin-top: auto; padding-bottom: 8px; }
+.tape.nudge { animation: nudge 1.1s var(--ease-out) 0.5s both; }
 
 .tape {
   position: relative;
@@ -155,8 +175,8 @@ body {
 .deck { display: flex; flex-direction: column; align-items: center; gap: 6px; animation: rise 0.6s var(--ease-out) both; }
 .deck-keys { display: flex; align-items: center; gap: 14px; }
 .deck-keys button {
-  width: 52px;
-  height: 52px;
+  width: 58px;
+  height: 58px;
   border: 1px solid var(--panel-line);
   border-radius: 50%;
   font-size: 20px;
@@ -171,9 +191,13 @@ body {
   transition: transform 0.15s var(--ease-out), background-color 0.15s;
 }
 .deck-keys button:active, .deck-keys button.on { transform: scale(0.92); background: rgba(255, 255, 255, 0.16); }
-.deck-keys .deck-play { width: 66px; height: 66px; font-size: 24px; color: var(--dark); background: var(--accent); border: 0; box-shadow: 0 12px 24px -12px var(--accent); }
-.deck-time { margin: 0; font-size: 0.8rem; color: var(--muted); text-align: center; }
+.deck-keys .deck-play { width: 74px; height: 74px; font-size: 24px; color: var(--dark); background: var(--accent); border: 0; box-shadow: 0 12px 24px -12px var(--accent); }
+.bar { width: 100%; height: 4px; margin-top: 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: inherit; background: var(--accent); transform-origin: left; transform: scaleX(0); }
+.deck-time { width: 100%; margin: 0; display: flex; justify-content: space-between; gap: 10px; font-size: 0.8rem; color: var(--muted); }
 .deck-time span { color: var(--ink); font-weight: 800; font-variant-numeric: tabular-nums; }
+.deck-time em { font-style: normal; }
+.cover { display: block; width: 84px; height: 84px; margin: 0 auto 12px; border-radius: 14px; object-fit: cover; background: rgba(0, 0, 0, 0.15); box-shadow: 0 12px 24px -12px rgba(0, 0, 0, 0.7); }
 
 .reveal {
   position: relative;
@@ -224,6 +248,34 @@ body {
 .ticket .artist { color: #6b5670; }
 .ticket-foot { margin: 0; padding: 0 22px 12px; font-size: 0.7rem; letter-spacing: 0.04em; color: #6b5670; }
 .ticket .scratch { cursor: grab; }
+
+/* dobitak: sjaj preleti listić, udari pečat */
+.ticket.won { animation: won 0.6s var(--ease-out); }
+.ticket.won::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.85) 50%, transparent 65%);
+  transform: translateX(-120%);
+  animation: shine 0.9s ease-out 0.15s forwards;
+  pointer-events: none;
+}
+.stamp {
+  position: absolute;
+  top: 10px;
+  right: 8px;
+  padding: 3px 10px;
+  border: 2.5px solid currentColor;
+  border-radius: 8px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: hsl(var(--hue) 75% 42%);
+  transform: rotate(11deg);
+  animation: stamp 0.45s cubic-bezier(0.3, 1.6, 0.5, 1) 0.35s both;
+  pointer-events: none;
+}
 .flake {
   position: fixed;
   z-index: 10;
@@ -325,7 +377,8 @@ body {
 }
 .skip {
   margin-top: 2px;
-  padding: 8px 12px;
+  min-height: 44px;
+  padding: 8px 16px;
   border: 0;
   background: none;
   font: inherit;
@@ -383,8 +436,8 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
 .react-q { margin: 0; font-weight: 800; }
 .react-row { display: flex; gap: 6px; }
 .react-row button {
-  width: 52px;
-  height: 52px;
+  width: 54px;
+  height: 54px;
   border: 0;
   border-radius: 50%;
   font-size: 26px;
@@ -410,6 +463,9 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
 }
 .ps::before { content: "P.S. "; color: var(--accent); font-weight: 700; }
 
+.full { display: flex; flex-direction: column; gap: 12px; margin-top: 6px; }
+.full h2 { margin: 0; font-size: 0.74rem; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+
 .next { margin: 4px 0 0; text-align: center; color: var(--muted); font-weight: 700; }
 .next b { color: var(--ink); font-variant-numeric: tabular-nums; }
 .next a { color: var(--accent); }
@@ -420,7 +476,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
 .shelf h2 { margin: 0 0 8px; font-size: 0.74rem; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
 .shelf ol { list-style: none; margin: 0; padding: 0; border-radius: 22px; background: var(--panel); border: 1px solid var(--panel-line); overflow: hidden; }
 .shelf li + li { border-top: 1px solid rgba(255, 255, 255, 0.07); }
-.shelf a { display: flex; align-items: center; gap: 12px; padding: 13px 14px; color: inherit; text-decoration: none; }
+.shelf a { display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 12px 14px; color: inherit; text-decoration: none; }
 .shelf a:active { background: rgba(255, 255, 255, 0.06); }
 .shelf a[aria-current="true"] { background: rgba(255, 255, 255, 0.07); }
 .shelf .n { flex: none; width: 26px; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
@@ -442,6 +498,10 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outlin
 
 @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 @keyframes drop { from { opacity: 0; transform: translateY(-30px) rotate(6deg); } to { opacity: 1; transform: rotate(-2.5deg); } }
+@keyframes nudge { 0%, 100% { transform: rotate(-2.5deg); } 25% { transform: rotate(-2.5deg) translateX(-16px); } 60% { transform: rotate(-2.5deg) translateX(12px); } }
+@keyframes won { 30% { transform: scale(1.035) rotate(-0.6deg); } 60% { transform: scale(0.99) rotate(0.4deg); } }
+@keyframes shine { to { transform: translateX(120%); } }
+@keyframes stamp { from { opacity: 0; transform: rotate(11deg) scale(2.4); } to { opacity: 1; transform: rotate(11deg) scale(1); } }
 @keyframes flake { to { transform: translate(var(--fx), 90px) rotate(200deg); opacity: 0; } }
 @keyframes bump { 40% { transform: scale(calc(1.14 + var(--p) * 0.18)); } }
 @keyframes bit {

@@ -19,7 +19,10 @@
   <main class="wrap">
     <header class="top">
       <span class="brand" id="brand">mixtape za tebe</span>
-      <span class="streak" id="streak" hidden></span>
+      <span class="top-right">
+        <span class="streak" id="streak" hidden></span>
+        <button class="mute" id="mute" type="button" aria-label="Isključi zvuk" aria-pressed="false">🔊</button>
+      </span>
     </header>
 
     <a class="back" id="back" href="./" hidden>← na najnoviju</a>
@@ -44,7 +47,8 @@
           <button type="button" id="play" class="deck-play" aria-label="Pusti">▶</button>
           <button type="button" id="ffw" aria-label="Premotaj unaprijed (drži)">⏩</button>
         </div>
-        <p class="deck-time"><span id="time">0:00</span> · povuci kasetu ili drži ⏪ za premotavanje</p>
+        <div class="bar" aria-hidden="true"><i id="bar-fill"></i></div>
+        <p class="deck-time"><span id="time">0:00</span><em>povuci kasetu ↔ ili drži ⏪</em></p>
       </div>
       <audio id="audio" preload="none"></audio>
 
@@ -52,12 +56,14 @@
         <div class="ticket-head" id="ticket-head" hidden><span>★ SREĆKA ★</span><span id="ticket-no"></span></div>
         <div class="reveal-body" id="reveal-body">
           <div class="reveal-content">
+            <img class="cover" id="cover" alt="" width="84" height="84" hidden>
             <p class="eyebrow" id="label"></p>
             <h1 class="title" id="title"></h1>
             <p class="artist" id="artist"></p>
           </div>
           <canvas class="scratch" id="scratch" hidden></canvas>
           <div class="veil" id="veil" hidden>?&nbsp;?&nbsp;?</div>
+          <span class="stamp" id="stamp" aria-hidden="true" hidden>dobitak ♥</span>
         </div>
         <p class="ticket-foot" id="ticket-foot" hidden>ogrebi srebrno polje · svaka srećka dobiva ♥</p>
       </div>
@@ -72,9 +78,6 @@
     </section>
 
     <section class="after" id="after" hidden>
-      <div class="player" id="player"></div>
-      <div class="links" id="links"></div>
-
       <blockquote class="note" id="note-wrap" hidden>
         <p class="note-lead" id="note-lead"></p>
         <p class="note-text" id="note"></p>
@@ -88,6 +91,13 @@
       </div>
 
       <p class="ps" id="ps" hidden></p>
+
+      <div class="full">
+        <h2>Cijela pjesma</h2>
+        <div class="player" id="player"></div>
+        <div class="links" id="links"></div>
+      </div>
+
       <p class="next" id="next" hidden></p>
     </section>
 
