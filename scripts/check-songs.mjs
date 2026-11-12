@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Provjera public/songs.js: ispravni datumi, nema duplikata, linkovi u dobrom formatu.
 // Pokretanje:  node scripts/check-songs.mjs
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import vm from "node:vm";
 
 const file = new URL("../public/songs.js", import.meta.url);
@@ -45,7 +45,7 @@ const normalizeWhen = (s) => {
 
 const SPOTIFY = /^https:\/\/open\.spotify\.com\/(?:intl-[a-z-]+\/)?(track|album|playlist|episode)\/[A-Za-z0-9]{10,}/;
 const YOUTUBE = /(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/))[A-Za-z0-9_-]{11}/;
-const KNOWN = new Set(["date", "title", "artist", "note", "hint", "ps", "spotify", "youtube", "reveal"]);
+const KNOWN = new Set(["date", "title", "artist", "note", "hint", "ps", "spotify", "youtube", "audio", "preview", "cover", "reveal"]);
 const REVEALS = new Set(["scratch", "tap", "hold"]);
 
 const seen = new Map();
@@ -60,6 +60,8 @@ data.songs.forEach((s, i) => {
   if (!s.note) warnings.push(`${where}: nema note — poruka je pola čarolije 💌`);
   if (s.spotify && !SPOTIFY.test(s.spotify)) errors.push(`${where}: spotify link nije oblika https://open.spotify.com/track/...`);
   if (s.youtube && !YOUTUBE.test(s.youtube)) errors.push(`${where}: youtube link nije prepoznat`);
+  if (s.audio && !existsSync(new URL(`../public/${s.audio}`, import.meta.url))) errors.push(`${where}: zvuk ${s.audio} ne postoji u public/`);
+  if (!s.audio && !s.preview) warnings.push(`${where}: nema zvuka (ni isječka ni vlastite datoteke) — kaseta će se vrtjeti bez glazbe`);
   if (s.reveal && !REVEALS.has(s.reveal)) errors.push(`${where}: reveal mora biti "scratch", "tap" ili "hold"`);
   for (const k of Object.keys(s)) if (!KNOWN.has(k)) warnings.push(`${where}: nepoznato polje "${k}" (tipfeler?)`);
   if (!at) return;

@@ -4,58 +4,56 @@ Ona skenira QR kod (uvijek isti) → otvori se kaseta sa skrivenom pjesmom koja 
 
 **Zašto se isplati otvoriti svaki dan:**
 
-- 🎮 **Pjesma je skrivena** — vidi samo trag (npr. `🚗🌊`) i mora je otkriti: jedan dan grebe karticu, drugi puni srce tapkanjem, treći drži gumb dok se kaseta premotava.
-- 💌 Nakon otkrivanja: konfeti, player, tvoja poruka rukopisom.
+- 🎮 **Pjesma je skrivena** — vidi samo trag (npr. `🚗🌊`) i mora je otkriti: jedan dan grebe **srećku** sa srebrnom folijom, drugi puni srce tapkanjem, treći drži gumb dok se kaseta premotava.
+- 🔊 Nakon otkrivanja **pjesma krene svirati**, uz konfete i tvoju poruku rukopisom.
+- 📼 **Kaseta je pravi player**: povuče je prstom ili drži ⏪ / ⏩ i kolutovi se vrte unazad i unaprijed dok se zvuk premotava.
 - 😍 Reagira emojijem → otključa se **tajni P.S.** i gumb „javi mu” koji ti pošalje njenu reakciju (WhatsApp).
 - ⏳ Odbrojavanje do sljedeće pjesme i niz „🔥 5 dana zaredom”.
 - 📼 „Tvoja kaseta” — raste svaki dan; sve dosadašnje pjesme s njenim reakcijama.
 
 Čisti HTML/CSS/JS, bez servera, ovisnosti i build koraka.
 
-## Dodaj pjesmu
-
-Uredi [`public/songs.js`](public/songs.js):
-
-```js
-{
-  date: "2026-11-13",              // ili "2026-11-13 18:30" za točno vrijeme
-  title: "Lover",
-  artist: "Taylor Swift",
-  hint: "🚗🎤",                    // trag prije otkrivanja
-  note: "jer smo je pjevali u autu na putu za more",
-  ps: "u subotu vozim ja",         // tajna poruka nakon njene reakcije
-  spotify: "https://open.spotify.com/track/...",
-},
-```
-
-Obavezni su samo `date` i `title`. Uvijek se prikazuje najnovija pjesma čije je vrijeme došlo, pa:
-
-- **jednom dnevno** → dodaj pjesme s datumima unaprijed, mijenjaju se u ponoć;
-- **kad god** → dodaj pjesmu s današnjim datumom i vremenom (`"2026-11-13 18:30"`); čim to vrijeme prođe, ona dobije novu igru i novu pjesmu.
-
-Provjeri pa pushaj:
+## Dodaj pjesmu (sučelje)
 
 ```bash
-node scripts/check-songs.mjs
+node server.mjs
 ```
 
-Ili u Claude Code u ovom folderu reci: *„dodaj za sutra Lover od Taylor Swift, jer…”* — [`CLAUDE.md`](CLAUDE.md) mu objašnjava cijeli postupak.
+Otvori http://localhost:4321/admin:
+
+1. Zalijepi **Spotify ili YouTube link** → *Dohvati*. Naslov, izvođač, omot i službeni isječak od 30 s popune se sami.
+2. Odaberi dan (i vrijeme, ako želiš), napiši poruku, trag i tajni P.S.
+3. Po želji učitaj **vlastiti zvuk** (mp3, m4a, ogg, wav) — sprema se u `public/audio/` i svira umjesto isječka.
+4. *Spremi pjesmu*, pa *Objavi* (provjera + git commit + push, ako repo ima `origin`).
+
+Uvijek se prikazuje najnovija pjesma čije je vrijeme došlo:
+
+- **jednom dnevno** → pjesme s datumima unaprijed, mijenjaju se u ponoć;
+- **kad god** → dan + vrijeme; čim to vrijeme prođe, ona dobije novu igru i novu pjesmu.
+
+### O zvuku
+
+Sučelje **ne skida cijele pjesme** sa Spotifyja ili YouTubea: to bi značilo javno dijeliti tuđu glazbu s tvoje stranice (a Spotify je ionako zaštićen). Umjesto toga:
+
+- **isječak od 30 s** — službeni pretpregled (iTunes), svira sam nakon otkrivanja;
+- **cijela pjesma** — gumbi i player za Spotify/YouTube odmah ispod;
+- **vlastiti zvuk** — za ono što smiješ dijeliti: glasovna poruka, tvoja snimka ili obrada. Glasovna poruka umjesto pjesme zna biti i najbolji dan na kaseti.
+
+Sučelje radi samo na tvom računalu (127.0.0.1) i nema lozinku, pa ga ne izlaži na internet. Objavljena stranica ostaje statična.
+
+Polja se mogu uređivati i ručno u [`public/songs.js`](public/songs.js): `date`, `title`, `artist`, `hint`, `note`, `ps`, `spotify`, `youtube`, `audio`, `preview`, `cover`, `reveal`. Nakon ručne promjene: `node scripts/check-songs.mjs`.
 
 ## Prvo postavljanje
 
-1. U `public/songs.js` upiši `config.to` (njeno ime), `config.from` (potpis) i `config.whatsapp` (tvoj broj, samo znamenke s pozivnim), obriši primjere i dodaj svoje pjesme.
+1. U sučelju pod *Postavke* upiši njeno ime, svoj potpis i WhatsApp broj, obriši primjere i dodaj svoje pjesme.
 2. Napravi repo na GitHubu i pushaj na `main`.
 3. Na GitHubu: **Settings → Pages → Source: GitHub Actions**. Svaki push provjeri pjesme i objavi stranicu na `https://<korisnik>.github.io/<repo>/`.
    (Pages iz privatnog repoa traži plaćeni plan — alternativa je Netlify/Cloudflare Pages s folderom `public`.)
 4. Otvori [`tools/qr.html`](tools/qr.html), upiši adresu stranice, preuzmi PNG i isprintaj.
 
-## Lokalno
+## Isprobavanje
 
-```bash
-python3 -m http.server 4321 -d public
-```
-
-Pa otvori http://localhost:4321. Igru možeš ponovno odigrati s `?igra=scratch`, `?igra=tap` ili `?igra=hold`.
+`node server.mjs` pa http://localhost:4321. Igru možeš ponovno odigrati s `?igra=scratch`, `?igra=tap` ili `?igra=hold`.
 
 ## Napomene
 

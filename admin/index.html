@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="hr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mixtape · unos pjesama</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📼</text></svg>">
+  <style>
+    :root {
+      --bg: #17101c; --panel: #221829; --line: #3a2c44; --ink: #fff3e6; --muted: #b9a5b6;
+      --accent: #ff7aa8; --accent-ink: #2a1830; --ok: #7be0a5; --warn: #ffd27a; --err: #ff8f8f;
+      color-scheme: dark;
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .wrap { max-width: 1040px; margin: 0 auto; padding: 20px 16px 60px; }
+    header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 18px; }
+    h1 { margin: 0; font-size: 1.25rem; }
+    h2 { margin: 0 0 12px; font-size: .78rem; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+    header .sp { flex: 1; }
+    a { color: var(--accent); }
+    .grid { display: grid; gap: 16px; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: start; }
+    @media (max-width: 820px) { .grid { grid-template-columns: 1fr; } }
+    .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 16px; }
+    .panel + .panel { margin-top: 16px; }
+    label { display: block; margin: 10px 0 4px; font-weight: 600; font-size: .88rem; }
+    label small { font-weight: 400; color: var(--muted); }
+    input, textarea, select {
+      width: 100%; padding: 10px 12px; font: inherit; color: var(--ink);
+      background: #17101c; border: 1px solid var(--line); border-radius: 10px;
+    }
+    input:focus, textarea:focus, select:focus, button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+    textarea { min-height: 76px; resize: vertical; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .row3 { display: grid; grid-template-columns: 1.3fr .8fr 1fr; gap: 10px; }
+    .inline { display: flex; gap: 8px; }
+    .inline input { flex: 1; }
+    button {
+      padding: 10px 16px; font: inherit; font-weight: 700; color: var(--ink); cursor: pointer;
+      background: #2f2238; border: 1px solid var(--line); border-radius: 999px; white-space: nowrap;
+    }
+    button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+    button.danger { color: var(--err); }
+    button.small { padding: 5px 11px; font-size: .82rem; }
+    button:disabled { opacity: .5; cursor: default; }
+    .actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+    .msg { margin: 10px 0 0; font-size: .9rem; white-space: pre-wrap; }
+    .msg.ok { color: var(--ok); } .msg.err { color: var(--err); } .msg.warn { color: var(--warn); }
+    .hint { margin: 4px 0 0; font-size: .82rem; color: var(--muted); }
+    .found { display: flex; gap: 12px; align-items: center; margin-top: 12px; }
+    .found img { width: 64px; height: 64px; border-radius: 8px; object-fit: cover; background: #17101c; }
+    .previews { margin-top: 8px; display: grid; gap: 6px; }
+    .previews label { display: flex; align-items: center; gap: 10px; margin: 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; font-weight: 400; cursor: pointer; }
+    .previews input { width: auto; }
+    .previews .who { flex: 1; min-width: 0; }
+    .previews .who b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .previews .who span { font-size: .8rem; color: var(--muted); }
+    .previews audio { height: 30px; width: 170px; }
+    ul.songs { list-style: none; margin: 0; padding: 0; }
+    ul.songs li { display: flex; gap: 10px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); }
+    ul.songs li:first-child { border-top: 0; }
+    ul.songs img, ul.songs .noimg { flex: none; width: 44px; height: 44px; border-radius: 6px; object-fit: cover; background: #17101c; display: grid; place-items: center; }
+    ul.songs .info { flex: 1; min-width: 0; }
+    ul.songs .info b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    ul.songs .info span { font-size: .82rem; color: var(--muted); }
+    .tag { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: .72rem; font-weight: 700; border: 1px solid var(--line); }
+    .tag.now { color: var(--accent-ink); background: var(--accent); border-color: var(--accent); }
+    .tag.wait { color: var(--warn); }
+    pre.log { margin: 10px 0 0; padding: 10px; max-height: 240px; overflow: auto; font-size: .8rem; background: #17101c; border-radius: 10px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>📼 Mixtape · unos pjesama</h1>
+      <span class="sp"></span>
+      <a href="/" target="_blank" rel="noopener">otvori stranicu ↗</a>
+      <button class="primary" id="publish" type="button">Objavi</button>
+    </header>
+    <p class="msg" id="top-msg" hidden></p>
+    <pre class="log" id="publish-log" hidden></pre>
+
+    <div class="grid">
+      <div>
+        <form class="panel" id="song-form" autocomplete="off">
+          <h2 id="form-title">Nova pjesma</h2>
+
+          <label for="link">Link pjesme <small>(Spotify ili YouTube)</small></label>
+          <div class="inline">
+            <input id="link" type="url" placeholder="https://open.spotify.com/track/…">
+            <button id="lookup" type="button">Dohvati</button>
+          </div>
+          <p class="msg" id="lookup-msg" hidden></p>
+
+          <div class="found" id="found" hidden>
+            <img id="found-cover" alt="">
+            <div><b id="found-title"></b><br><span class="hint" id="found-artist"></span></div>
+          </div>
+          <div id="preview-box" hidden>
+            <label>Isječak koji svira na stranici <small>(službenih 30 s)</small></label>
+            <div class="previews" id="previews"></div>
+          </div>
+
+          <div class="row">
+            <div><label for="title">Naslov</label><input id="title" required></div>
+            <div><label for="artist">Izvođač</label><input id="artist"></div>
+          </div>
+
+          <div class="row3">
+            <div><label for="day">Dan</label><input id="day" type="date" required></div>
+            <div><label for="time">Vrijeme <small>(neobavezno)</small></label><input id="time" type="time"></div>
+            <div>
+              <label for="reveal">Igra</label>
+              <select id="reveal">
+                <option value="">izmjenjuj sama</option>
+                <option value="scratch">srećka</option>
+                <option value="tap">napuni srce</option>
+                <option value="hold">drži gumb</option>
+              </select>
+            </div>
+          </div>
+          <p class="hint">Bez vremena pjesma kreće u ponoć. S vremenom se pojavi točno tada — i usred dana.</p>
+
+          <label for="note">Podsjetila me na tebe jer…</label>
+          <textarea id="note"></textarea>
+
+          <div class="row">
+            <div><label for="hint">Trag <small>(prije otkrivanja)</small></label><input id="hint" placeholder="🚗🌊"></div>
+            <div><label for="ps">Tajni P.S. <small>(nakon reakcije)</small></label><input id="ps"></div>
+          </div>
+
+          <label for="file">Vlastiti zvuk <small>(neobavezno · mp3, m4a, ogg, wav)</small></label>
+          <input id="file" type="file" accept=".mp3,.m4a,.ogg,.wav,audio/*">
+          <p class="hint" id="file-hint">Sprema se u projekt i svira umjesto isječka. Učitaj samo ono što smiješ dijeliti: glasovnu poruku, vlastitu snimku ili obradu.</p>
+
+          <div class="actions">
+            <button class="primary" type="submit" id="save">Spremi pjesmu</button>
+            <button type="button" id="cancel" hidden>Odustani</button>
+          </div>
+          <p class="msg" id="form-msg" hidden></p>
+        </form>
+      </div>
+
+      <div>
+        <div class="panel">
+          <h2>Pjesme <span id="count"></span></h2>
+          <ul class="songs" id="songs"></ul>
+        </div>
+
+        <form class="panel" id="config-form" autocomplete="off">
+          <h2>Postavke</h2>
+          <div class="row">
+            <div><label for="c-to">Njeno ime</label><input id="c-to" placeholder="Ana"></div>
+            <div><label for="c-from">Tvoj potpis</label><input id="c-from"></div>
+          </div>
+          <label for="c-whatsapp">Tvoj WhatsApp broj <small>(s pozivnim, samo znamenke)</small></label>
+          <input id="c-whatsapp" inputmode="numeric" placeholder="385911234567">
+          <div class="actions"><button type="submit">Spremi postavke</button></div>
+          <p class="msg" id="config-msg" hidden></p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+      var $ = function (id) { return document.getElementById(id); };
+      var state = { config: {}, songs: [], git: {} };
+      var editing = null;      // date pjesme koja se uređuje
+      var draft = {};          // spotify/youtube/preview/cover/audio trenutnog unosa
+      var candidates = [];
+
+      function api(method, url, body, raw) {
+        var opts = { method: method, headers: { "X-Mixtape": "1" } };
+        if (body != null) opts.body = raw ? body : JSON.stringify(body);
+        return fetch(url, opts).then(function (res) {
+          return res.json().catch(function () { return {}; }).then(function (data) {
+            if (!res.ok) throw new Error(data.error || "Greška " + res.status);
+            return data;
+          });
+        });
+      }
+
+      function msg(id, text, kind) {
+        var el = $(id);
+        el.textContent = text || "";
+        el.className = "msg " + (kind || "");
+        el.hidden = !text;
+      }
+
+      function el(tag, attrs, text) {
+        var n = document.createElement(tag);
+        Object.keys(attrs || {}).forEach(function (k) { n.setAttribute(k, attrs[k]); });
+        if (text != null) n.textContent = text;
+        return n;
+      }
+
+      function pad(n) { return String(n).padStart(2, "0"); }
+      function nowLocal() {
+        var d = new Date();
+        return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + "T" + pad(d.getHours()) + ":" + pad(d.getMinutes());
+      }
+      function at(s) { return s.date.length === 10 ? s.date + "T00:00" : s.date.replace(" ", "T"); }
+
+      function nextFreeDay() {
+        var taken = {};
+        state.songs.forEach(function (s) { taken[s.date.slice(0, 10)] = true; });
+        var d = new Date();
+        for (var i = 0; i < 800; i++) {
+          var day = d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+          if (!taken[day]) return day;
+          d.setDate(d.getDate() + 1);
+        }
+        return "";
+      }
+
+      // ---------- list ----------
+
+      function renderSongs() {
+        var list = $("songs");
+        list.textContent = "";
+        var now = nowLocal();
+        var sorted = state.songs.slice().sort(function (a, b) { return at(a) < at(b) ? 1 : -1; });
+        var current = sorted.find(function (s) { return at(s) <= now; });
+        $("count").textContent = "· " + state.songs.length;
+        if (!sorted.length) list.appendChild(el("li", null, "Još nema pjesama."));
+
+        sorted.forEach(function (s) {
+          var li = el("li");
+          if (s.cover) li.appendChild(el("img", { src: s.cover, alt: "", loading: "lazy" }));
+          else li.appendChild(el("span", { class: "noimg" }, "♪"));
+          var info = el("div", { class: "info" });
+          info.appendChild(el("b", null, s.title + (s.artist ? " — " + s.artist : "")));
+          var sub = el("span", null, s.date + " · ");
+          var tag = s === current ? el("span", { class: "tag now" }, "svira sada")
+            : at(s) > now ? el("span", { class: "tag wait" }, "čeka") : el("span", { class: "tag" }, "prošla");
+          sub.appendChild(tag);
+          sub.appendChild(document.createTextNode(s.audio ? " · vlastiti zvuk" : s.preview ? " · isječak" : " · bez zvuka"));
+          info.appendChild(sub);
+          li.appendChild(info);
+          var edit = el("button", { class: "small", type: "button" }, "Uredi");
+          edit.addEventListener("click", function () { startEdit(s); });
+          var del = el("button", { class: "small danger", type: "button" }, "Obriši");
+          del.addEventListener("click", function () { removeSong(s); });
+          li.appendChild(edit);
+          li.appendChild(del);
+          list.appendChild(li);
+        });
+
+        $("publish").textContent = state.git.dirty ? "Objavi promjene" : "Objavi";
+      }
+
+      // ---------- form ----------
+
+      function resetForm() {
+        editing = null;
+        draft = {};
+        candidates = [];
+        $("song-form").reset();
+        $("day").value = nextFreeDay();
+        $("form-title").textContent = "Nova pjesma";
+        $("save").textContent = "Spremi pjesmu";
+        $("cancel").hidden = true;
+        $("found").hidden = true;
+        $("preview-box").hidden = true;
+        $("file-hint").textContent = "Sprema se u projekt i svira umjesto isječka. Učitaj samo ono što smiješ dijeliti: glasovnu poruku, vlastitu snimku ili obradu.";
+        msg("lookup-msg");
+      }
+
+      function startEdit(s) {
+        resetForm();
+        editing = s.date;
+        draft = { spotify: s.spotify, youtube: s.youtube, preview: s.preview, cover: s.cover, audio: s.audio };
+        $("form-title").textContent = "Uređivanje: " + s.title;
+        $("save").textContent = "Spremi izmjene";
+        $("cancel").hidden = false;
+        $("link").value = s.spotify || s.youtube || "";
+        $("title").value = s.title || "";
+        $("artist").value = s.artist || "";
+        $("day").value = s.date.slice(0, 10);
+        $("time").value = s.date.length > 10 ? s.date.slice(11) : "";
+        $("reveal").value = s.reveal || "";
+        $("note").value = s.note || "";
+        $("hint").value = s.hint || "";
+        $("ps").value = s.ps || "";
+        if (s.audio) $("file-hint").textContent = "Trenutno: " + s.audio + " — odaberi novu datoteku samo ako je želiš zamijeniti.";
+        msg("form-msg");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      function renderPreviews() {
+        var box = $("previews");
+        box.textContent = "";
+        candidates.forEach(function (c, i) {
+          var row = el("label");
+          var radio = el("input", { type: "radio", name: "preview", value: String(i) });
+          if (draft.preview === c.preview) radio.checked = true;
+          row.appendChild(radio);
+          var who = el("span", { class: "who" });
+          who.appendChild(el("b", null, c.title));
+          who.appendChild(el("span", null, c.artist + (c.album ? " · " + c.album : "")));
+          row.appendChild(who);
+          row.appendChild(el("audio", { controls: "", preload: "none", src: c.preview }));
+          box.appendChild(row);
+        });
+        var none = el("label");
+        var r = el("input", { type: "radio", name: "preview", value: "" });
+        if (!draft.preview) r.checked = true;
+        none.appendChild(r);
+        none.appendChild(el("span", { class: "who" }, "bez isječka"));
+        box.appendChild(none);
+        $("preview-box").hidden = false;
+      }
+
+      $("previews").addEventListener("change", function (e) {
+        var c = candidates[Number(e.target.value)];
+        draft.preview = e.target.value === "" || !c ? "" : c.preview;
+        if (c && c.cover) draft.cover = c.cover;
+      });
+
+      $("lookup").addEventListener("click", function () {
+        var url = $("link").value.trim();
+        if (!url) return msg("lookup-msg", "Zalijepi link pjesme.", "err");
+        $("lookup").disabled = true;
+        msg("lookup-msg", "Tražim…");
+        api("POST", "/api/lookup", { url: url }).then(function (r) {
+          draft.spotify = r.spotify || "";
+          draft.youtube = r.youtube || "";
+          draft.cover = r.cover || "";
+          candidates = r.previews || [];
+          draft.preview = candidates[0] ? candidates[0].preview : "";
+          if (!draft.cover && candidates[0]) draft.cover = candidates[0].cover;
+          if (r.title) $("title").value = r.title;
+          if (r.artist) $("artist").value = r.artist;
+          $("found-title").textContent = r.title || "(naslov nije pronađen — upiši ga)";
+          $("found-artist").textContent = r.artist || "";
+          $("found-cover").src = draft.cover || "";
+          $("found").hidden = false;
+          renderPreviews();
+          msg("lookup-msg", (r.notes || []).join("\n"), "warn");
+          $("note").focus();
+        }).catch(function (err) {
+          msg("lookup-msg", err.message, "err");
+        }).then(function () { $("lookup").disabled = false; });
+      });
+
+      $("cancel").addEventListener("click", resetForm);
+
+      $("song-form").addEventListener("submit", function (e) {
+        e.preventDefault();
+        var link = $("link").value.trim();
+        // link upisan bez "Dohvati": svejedno ga spremi kao Spotify/YouTube link
+        if (link && !draft.spotify && !draft.youtube) {
+          if (/open\.spotify\.com/.test(link)) draft.spotify = link.split("?")[0];
+          else if (/youtu\.?be/.test(link)) draft.youtube = link;
+        }
+        var song = {
+          date: $("day").value + ($("time").value ? " " + $("time").value : ""),
+          title: $("title").value, artist: $("artist").value,
+          hint: $("hint").value, note: $("note").value, ps: $("ps").value,
+          spotify: draft.spotify, youtube: draft.youtube,
+          audio: draft.audio, preview: draft.preview, cover: draft.cover,
+          reveal: $("reveal").value,
+        };
+        var file = $("file").files[0];
+        $("save").disabled = true;
+        msg("form-msg", file ? "Učitavam zvuk…" : "Spremam…");
+
+        var upload = file
+          ? api("PUT", "/api/audio?name=" + encodeURIComponent(file.name), file, true).then(function (r) { song.audio = r.audio; })
+          : Promise.resolve();
+
+        upload.then(function () {
+          var songs = state.songs.filter(function (s) { return s.date !== editing; }).concat([song]);
+          return api("PUT", "/api/data", { config: state.config, songs: songs });
+        }).then(function (data) {
+          state = data;
+          renderSongs();
+          resetForm();
+          msg("form-msg", "Spremljeno: " + song.title + " (" + song.date + "). Klikni „Objavi” da ode na stranicu.", "ok");
+        }).catch(function (err) {
+          msg("form-msg", err.message, "err");
+        }).then(function () { $("save").disabled = false; });
+      });
+
+      function removeSong(s) {
+        if (!confirm("Obrisati „" + s.title + "” (" + s.date + ")?" + (s.audio ? "\nBriše se i spremljeni zvuk." : ""))) return;
+        var songs = state.songs.filter(function (x) { return x !== s; });
+        api("PUT", "/api/data", { config: state.config, songs: songs }).then(function (data) {
+          state = data;
+          renderSongs();
+          if (editing === s.date) resetForm();
+        }).catch(function (err) { msg("top-msg", err.message, "err"); });
+      }
+
+      // ---------- config ----------
+
+      function renderConfig() {
+        $("c-to").value = state.config.to || "";
+        $("c-from").value = state.config.from || "";
+        $("c-whatsapp").value = state.config.whatsapp || "";
+      }
+
+      $("config-form").addEventListener("submit", function (e) {
+        e.preventDefault();
+        var config = Object.assign({}, state.config, {
+          to: $("c-to").value, from: $("c-from").value, whatsapp: $("c-whatsapp").value,
+        });
+        api("PUT", "/api/data", { config: config, songs: state.songs }).then(function (data) {
+          state = data;
+          renderConfig();
+          renderSongs();
+          msg("config-msg", "Postavke spremljene.", "ok");
+        }).catch(function (err) { msg("config-msg", err.message, "err"); });
+      });
+
+      // ---------- publish ----------
+
+      $("publish").addEventListener("click", function () {
+        $("publish").disabled = true;
+        msg("top-msg", "Provjeravam i objavljujem…");
+        api("POST", "/api/publish", {}).then(function (r) {
+          state.git = r.git || state.git;
+          renderSongs();
+          $("publish-log").textContent = r.log || "";
+          $("publish-log").hidden = !r.log;
+          msg("top-msg", !r.ok ? "Objava nije uspjela — pogledaj ispis." : r.pushed ? "Objavljeno. Stranica će se osvježiti za minutu-dvije." : "Spremljeno u git, ali nije poslano na internet (nema udaljenog repozitorija).", !r.ok ? "err" : r.pushed ? "ok" : "warn");
+        }).catch(function (err) {
+          msg("top-msg", err.message, "err");
+        }).then(function () { $("publish").disabled = false; });
+      });
+
+      // ---------- start ----------
+
+      api("GET", "/api/data").then(function (data) {
+        state = data;
+        renderConfig();
+        renderSongs();
+        resetForm();
+      }).catch(function (err) { msg("top-msg", err.message, "err"); });
+    })();
+  </script>
+</body>
+</html>

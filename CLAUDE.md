@@ -7,9 +7,11 @@ otvoriti to svaki dan, ne samo lijepo.
 ## Kako stranica radi (za nju)
 
 1. Kaseta + skrivena pjesma. Prije otkrivanja vidi samo trag (`hint`) i mora odigrati
-   mini-igru: **ogrebi karticu** (`scratch`), **napuni srce** (`tap`) ili **drži gumb**
-   (`hold`). Igre se izmjenjuju po rednom broju pjesme; `reveal` u pjesmi to nadjača.
-2. Otkrivanje: konfeti, kaseta se zavrti, player, poruka rukopisom.
+   mini-igru: **srećka** sa srebrnom folijom (`scratch`), **napuni srce** (`tap`) ili
+   **drži gumb** (`hold`). Igre se izmjenjuju po rednom broju pjesme; `reveal` to nadjača.
+2. Otkrivanje: konfeti, **zvuk krene sam** (otkrivanje je dodir, pa preglednik to dopušta),
+   poruka rukopisom. Kaseta je pravi player: tipke ⏪ ▶ ⏩ (drži za premotavanje) i
+   povlačenje kasete prstom vrte kolutove i stvarno premotavaju zvuk, i unazad.
 3. Reakcija emojijem → pojavi se tajni `ps` i gumb „javi mu” (WhatsApp ako je
    `config.whatsapp` postavljen, inače dijeljenje iz mobitela).
 4. Odbrojavanje do sljedeće pjesme, niz „🔥 N dana zaredom”, i „Tvoja kaseta” — popis svih
@@ -20,8 +22,12 @@ Stanje (otvoreno, reakcije, niz) živi samo u `localStorage` njenog mobitela —
 ## Struktura
 
 - `public/` — cijela stranica, objavljuje se kakva jest (bez build koraka)
-  - `songs.js` — **jedini sadržaj**: `config` + popis pjesama
+  - `songs.js` — **jedini sadržaj**: `config` + popis pjesama (piše ga sučelje za unos)
+  - `audio/` — vlastiti zvukovi učitani kroz sučelje
   - `index.html`, `style.css`, `app.js` — izgled i logika
+- `server.mjs` — backend bez ovisnosti: servira `public/`, sučelje `/admin` i `/api/*`
+  (dohvat podataka iz linka, spremanje `songs.js`, učitavanje zvuka, „Objavi” = provjera + git)
+- `admin/index.html` — sučelje za unos (ne objavljuje se, radi samo lokalno)
 - `scripts/check-songs.mjs` — provjera `songs.js` (datumi, duplikati, linkovi, raspored)
 - `tools/qr.html` — generator QR koda
 - `.github/workflows/pages.yml` — push na `main` → provjera → GitHub Pages
@@ -29,7 +35,14 @@ Stanje (otvoreno, reakcije, niz) živi samo u `localStorage` njenog mobitela —
 ## Pravila
 
 - Bez frameworka, npm ovisnosti i build koraka. Mora raditi i kad se `public/index.html`
-  otvori direktno iz datoteke.
+  otvori direktno iz datoteke. Objavljena stranica je i dalje čisto statična — backend
+  služi samo za unos na korisnikovom računalu.
+- **Zvuk**: `audio` (datoteka u `public/audio/`) ima prednost pred `preview` (službeni isječak
+  od 30 s s iTunesa, svira se s njihovog servera). Ne dodaji skidanje cijelih pjesama sa
+  Spotifyja/YouTubea — to bi bilo javno dijeljenje tuđe glazbe; vlastiti zvuk je za ono što
+  korisnik smije dijeliti (glasovna poruka, vlastita snimka).
+- `server.mjs` sluša samo na 127.0.0.1, provjerava `Host` i traži zaglavlje `X-Mixtape` za
+  sve što mijenja podatke. Nema lozinke — ne izlagati ga na internet.
 - Tekst na stranici je hrvatski, kratak i topao. Ne pretjerivati s emojijima.
 - Sadržaj ide kroz `textContent`, nikad `innerHTML`.
 - **Nikad ne otkrij pjesmu prije igre**: popis „Tvoja kaseta”, `<title>` i sl. ne smiju
@@ -41,6 +54,11 @@ Stanje (otvoreno, reakcije, niz) živi samo u `localStorage` njenog mobitela —
 - Isprobavanje igre: `?igra=scratch`, `?igra=tap`, `?igra=hold`. Stara pjesma: `?t=<date>`.
 
 ## Kad korisnik kaže „dodaj pjesmu” (glavni posao)
+
+Korisnik to inače radi sam kroz sučelje (`node server.mjs` → `/admin`). Ako traži od tebe,
+najlakše je preko istog API-ja dok server radi: `POST /api/lookup {url}` vrati naslov,
+izvođača, omot i isječke, a `PUT /api/data` sprema cijeli `{config, songs}` (zaglavlje
+`X-Mixtape: 1`). Inače uredi `public/songs.js` ručno po koracima ispod.
 
 Npr. „dodaj za sutra Lover od Taylor Swift, podsjetila me jer smo je pjevali u autu”.
 
@@ -64,6 +82,6 @@ Više pjesama odjednom → rasporedi ih redom na uzastopne slobodne dane.
 ## Lokalno
 
 ```bash
-python3 -m http.server 4321 -d public   # http://localhost:4321
-node scripts/check-songs.mjs            # provjera sadržaja
+node server.mjs                  # stranica http://localhost:4321, unos http://localhost:4321/admin
+node scripts/check-songs.mjs     # provjera sadržaja
 ```

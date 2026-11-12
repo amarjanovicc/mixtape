@@ -322,12 +322,149 @@
     }
   }
 
+  // ---------- deck: zvuk + kaseta koja se stvarno premotava ----------
+
+  var deck = (function () {
+    var tape, audio, spoolL, spoolR, playBtn, timeEl;
+    var hasAudio = false;
+    var virtualPlaying = false; // bez zvuka: kolutovi se samo vrte
+    var angle = 0;              // kut kolutova u stupnjevima
+    var boost = 0;              // igra "drži gumb" ubrzava vrtnju
+    var seekDir = 0;            // -1 premotavanje unazad, +1 unaprijed
+    var resumeAfterSeek = false;
+    var dragging = false, dragX = 0;
+    var last = 0;
+
+    function fmt(t) {
+      t = Math.max(0, Math.floor(t || 0));
+      return Math.floor(t / 60) + ":" + pad(t % 60);
+    }
+    function duration() { return hasAudio && isFinite(audio.duration) ? audio.duration : 0; }
+    function isPlaying() { return hasAudio ? !audio.paused : virtualPlaying; }
+
+    function seekBy(sec) {
+      var d = duration();
+      if (!d) return;
+      try { audio.currentTime = Math.max(0, Math.min(d - 0.05, audio.currentTime + sec)); } catch (e) {}
+    }
+
+    function paint() {
+      tape.style.setProperty("--a", angle.toFixed(1) + "deg");
+      var d = duration();
+      var f = d ? audio.currentTime / d : 0.5;
+      spoolL.style.setProperty("--fill", (1 - f).toFixed(3)); // lijevi kolut se prazni
+      spoolR.style.setProperty("--fill", f.toFixed(3));       // desni se puni
+      if (hasAudio) timeEl.textContent = fmt(audio.currentTime) + (d ? " / " + fmt(d) : "");
+    }
+
+    function syncButton() {
+      var on = isPlaying();
+      playBtn.textContent = on ? "⏸" : "▶";
+      playBtn.setAttribute("aria-label", on ? "Pauza" : "Pusti");
+    }
+
+    function loop(t) {
+      var dt = last ? Math.min((t - last) / 1000, 0.1) : 0;
+      last = t;
+      var rate = seekDir ? seekDir * 9 : boost ? 8 : (isPlaying() && !dragging ? 1 : 0);
+      if (rate && !reducedMotion) angle += rate * 150 * dt;
+      if (seekDir) seekBy(seekDir * 7 * dt);
+      if (rate || dragging) paint();
+      requestAnimationFrame(loop);
+    }
+
+    function play() {
+      if (!hasAudio) { virtualPlaying = true; return; }
+      var pr = audio.play();
+      if (pr && pr.catch) pr.catch(function () { syncButton(); }); // preglednik traži dodir: ostaje gumb ▶
+    }
+
+    function holdSeek(btn, dir) {
+      var start = function (e) {
+        e.preventDefault();
+        if (seekDir) return;
+        seekDir = dir;
+        resumeAfterSeek = hasAudio && !audio.paused;
+        if (hasAudio) audio.pause();
+        btn.classList.add("on");
+        buzz(8);
+        try { if (e.pointerId != null) btn.setPointerCapture(e.pointerId); } catch (err) {}
+      };
+      var stop = function () {
+        if (seekDir !== dir) return;
+        seekDir = 0;
+        btn.classList.remove("on");
+        if (resumeAfterSeek) play();
+      };
+      btn.addEventListener("pointerdown", start);
+      btn.addEventListener("pointerup", stop);
+      btn.addEventListener("pointercancel", stop);
+      btn.addEventListener("lostpointercapture", stop);
+      btn.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+      btn.addEventListener("keydown", function (e) { if ((e.key === " " || e.key === "Enter") && !e.repeat) start(e); });
+      btn.addEventListener("keyup", stop);
+    }
+
+    function initDrag() {
+      tape.classList.add("live");
+      tape.addEventListener("pointerdown", function (e) {
+        dragging = true;
+        dragX = e.clientX;
+        resumeAfterSeek = !audio.paused;
+        audio.pause();
+        try { tape.setPointerCapture(e.pointerId); } catch (err) {}
+      });
+      tape.addEventListener("pointermove", function (e) {
+        if (!dragging) return;
+        var dx = e.clientX - dragX;
+        dragX = e.clientX;
+        angle += dx * 5;          // povlačenje ulijevo vrti kolutove unazad
+        seekBy(dx * 0.07);
+      });
+      var end = function () {
+        if (!dragging) return;
+        dragging = false;
+        if (resumeAfterSeek) play();
+      };
+      tape.addEventListener("pointerup", end);
+      tape.addEventListener("pointercancel", end);
+    }
+
+    return {
+      init: function (song) {
+        tape = $("tape"); audio = $("audio"); spoolL = $("spool-l"); spoolR = $("spool-r");
+        playBtn = $("play"); timeEl = $("time");
+        var src = song.audio || song.preview;
+        if (src) {
+          hasAudio = true;
+          audio.preload = "metadata";
+          audio.src = src;
+          ["play", "pause", "ended"].forEach(function (ev) { audio.addEventListener(ev, syncButton); });
+          ["loadedmetadata", "timeupdate", "seeked"].forEach(function (ev) { audio.addEventListener(ev, paint); });
+          audio.addEventListener("error", function () { $("deck").hidden = true; hasAudio = false; virtualPlaying = true; });
+          playBtn.addEventListener("click", function () { if (audio.paused) play(); else audio.pause(); });
+          holdSeek($("rew"), -1);
+          holdSeek($("ffw"), 1);
+          initDrag();
+        }
+        paint();
+        requestAnimationFrame(loop);
+      },
+      // nakon otkrivanja: pokaži tipke i pusti (otkrivanje je dodir, pa preglednik dopušta zvuk)
+      start: function () {
+        if (hasAudio) $("deck").hidden = false;
+        play();
+        syncButton();
+      },
+      boost: function (on) { boost = on ? 1 : 0; },
+    };
+  })();
+
   // ---------- games ----------
 
-  function startGame(type, song, onDone) {
+  function startGame(type, song, ticketNo, onDone) {
     var game = $("game");
     var text = $("game-text");
-    var tape = $("tape");
     var finished = false;
     var cleanup = function () {};
 
@@ -393,13 +530,13 @@
         captured = false;
         // uhvati pokazivač da mali pomak prsta ne prekine držanje
         try { if (e.pointerId != null) { hold.setPointerCapture(e.pointerId); captured = true; } } catch (err) {}
-        tape.classList.add("fast");
+        deck.boost(true);
         buzz(10);
         if (!raf) { last = Date.now(); raf = setInterval(step, 30); }
       };
       var release = function () {
         down = false;
-        tape.classList.remove("fast");
+        deck.boost(false);
       };
       hold.addEventListener("pointerdown", press);
       hold.addEventListener("pointerup", release);
@@ -411,51 +548,86 @@
       hold.addEventListener("keyup", release);
       cleanup = function () {
         clearInterval(raf);
-        tape.classList.remove("fast");
+        deck.boost(false);
         veil2.classList.add("gone");
       };
       return;
     }
 
-    // scratch
+    // srećka: srebrna folija koja se grebe
     var canvas = $("scratch");
-    var ctx = canvas.getContext && canvas.getContext("2d");
+    var ctx = canvas.getContext && canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) { $("veil").hidden = false; cleanup = function () { $("veil").classList.add("gone"); }; text.textContent = "dodirni „samo otvori”"; return; }
+    $("reveal").classList.add("ticket");
+    $("ticket-head").hidden = false;
+    $("ticket-foot").hidden = false;
+    $("ticket-no").textContent = "№ " + String(ticketNo).padStart(4, "0");
+    $("label").textContent = "♥ ♥ ♥ · dobitak";
     canvas.hidden = false;
-    text.textContent = "ogrebi karticu prstom";
+    text.textContent = "ogrebi srećku prstom";
 
     var box = canvas.getBoundingClientRect();
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
     var W = canvas.width = Math.max(1, Math.round(box.width * dpr));
     var H = canvas.height = Math.max(1, Math.round(box.height * dpr));
-    var cs = getComputedStyle(document.documentElement);
-    var hue = cs.getPropertyValue("--hue").trim() || "335";
+
+    // folija: metalni preljev + zrno + sitni tisak "OGREBI"
     var g = ctx.createLinearGradient(0, 0, W, H);
-    g.addColorStop(0, "hsl(" + hue + " 95% 70%)");
-    g.addColorStop(1, "hsl(" + ((Number(hue) + 45) % 360) + " 95% 68%)");
+    [[0, "#d9dce2"], [0.3, "#a2a7b0"], [0.48, "#eceef2"], [0.62, "#9a9fa9"], [0.85, "#d2d5db"], [1, "#b0b5bd"]]
+      .forEach(function (st) { g.addColorStop(st[0], st[1]); });
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = "rgba(255,255,255,0.35)";
-    for (var i = 0; i < 70; i++) {
-      ctx.beginPath();
-      ctx.arc(Math.random() * W, Math.random() * H, (1 + Math.random() * 2.5) * dpr, 0, Math.PI * 2);
-      ctx.fill();
+    for (var i = 0; i < 1400; i++) {
+      ctx.fillStyle = Math.random() < 0.5 ? "rgba(255,255,255,0.28)" : "rgba(60,64,74,0.16)";
+      ctx.fillRect(Math.random() * W, Math.random() * H, dpr, dpr);
     }
-    ctx.fillStyle = "#2a1830";
+    ctx.save();
+    ctx.translate(W / 2, H / 2);
+    ctx.rotate(-0.35);
+    ctx.fillStyle = "rgba(70,74,84,0.2)";
+    ctx.font = "800 " + 11 * dpr + "px Nunito, system-ui, sans-serif";
+    ctx.textAlign = "center";
+    for (var ry = -H; ry < H; ry += 22 * dpr) {
+      for (var rx = -W; rx < W; rx += 78 * dpr) ctx.fillText("OGREBI", rx + ((ry / (22 * dpr)) % 2 ? 39 * dpr : 0), ry);
+    }
+    ctx.restore();
+    var pw = 190 * dpr, ph = 40 * dpr;
+    ctx.fillStyle = "rgba(245,246,248,0.9)";
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect((W - pw) / 2, (H - ph) / 2, pw, ph, ph / 2); else ctx.rect((W - pw) / 2, (H - ph) / 2, pw, ph);
+    ctx.fill();
+    ctx.fillStyle = "#3d4250";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.font = "700 " + 30 * dpr + "px Caveat, cursive";
-    ctx.fillText("ogrebi me ✨", W / 2, H / 2);
+    ctx.font = "800 " + 15 * dpr + "px Nunito, system-ui, sans-serif";
+    ctx.fillText("🪙 OGREBI OVDJE", W / 2, H / 2 + dpr);
 
     ctx.globalCompositeOperation = "destination-out";
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
-    ctx.lineWidth = 46 * dpr;
+    ctx.lineWidth = 30 * dpr;
 
     var drawing = false, px = 0, py = 0, moves = 0;
     function pos(e) {
       var r = canvas.getBoundingClientRect();
       return [(e.clientX - r.left) * (W / r.width), (e.clientY - r.top) * (H / r.height)];
+    }
+    // neravan rub poteza, kao trag novčića
+    function rough(x, y) {
+      for (var k = 0; k < 6; k++) {
+        ctx.beginPath();
+        ctx.arc(x + (Math.random() - 0.5) * 40 * dpr, y + (Math.random() - 0.5) * 40 * dpr, (2 + Math.random() * 6) * dpr, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    function flake(e) {
+      if (reducedMotion) return;
+      var f = el("i", { class: "flake", "aria-hidden": "true" });
+      f.style.left = e.clientX + (Math.random() - 0.5) * 24 + "px";
+      f.style.top = e.clientY + "px";
+      f.style.setProperty("--fx", (Math.random() - 0.5) * 60 + "px");
+      document.body.appendChild(f);
+      f.addEventListener("animationend", function () { this.remove(); });
     }
     function cleared() {
       try {
@@ -465,7 +637,7 @@
         return clear / total;
       } catch (e) { return 1; }
     }
-    function check() { if (cleared() > 0.45) finish(); }
+    function check() { if (cleared() > 0.6) finish(); }
 
     canvas.addEventListener("pointerdown", function (e) {
       drawing = true;
@@ -473,8 +645,9 @@
       px = p0[0]; py = p0[1];
       try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
       ctx.beginPath();
-      ctx.arc(px, py, 23 * dpr, 0, Math.PI * 2);
+      ctx.arc(px, py, 15 * dpr, 0, Math.PI * 2);
       ctx.fill();
+      rough(px, py);
     });
     canvas.addEventListener("pointermove", function (e) {
       if (!drawing) return;
@@ -483,8 +656,12 @@
       ctx.moveTo(px, py);
       ctx.lineTo(p1[0], p1[1]);
       ctx.stroke();
+      rough(p1[0], p1[1]);
       px = p1[0]; py = p1[1];
-      if (++moves % 10 === 0) check();
+      moves++;
+      if (moves % 3 === 0) flake(e);
+      if (moves % 6 === 0) buzz(4);
+      if (moves % 10 === 0) check();
     });
     var stop = function () { if (drawing) { drawing = false; check(); } };
     canvas.addEventListener("pointerup", stop);
@@ -515,6 +692,7 @@
     var label = !isLatest ? "Iz arhive" : current.day === today ? "Pjesma dana" : "Zadnja pjesma";
 
     renderSong(current, trackNo, label);
+    deck.init(current);
     renderReactions(current);
     renderShelf(released, current);
     touchStreak(today);
@@ -522,7 +700,7 @@
     $("stage").hidden = false;
 
     function showAfter(celebrate) {
-      $("tape").classList.add("playing");
+      deck.start();
       $("after").hidden = false;
       $("shelf").hidden = released.length < 2; // tek nakon otkrivanja, da popis ne oda pjesmu
       renderNext(upcoming[0], isLatest);
@@ -542,7 +720,7 @@
     }
 
     var type = forced || (GAMES.indexOf(current.reveal) !== -1 ? current.reveal : GAMES[(trackNo - 1) % GAMES.length]);
-    startGame(type, current, function () {
+    startGame(type, current, trackNo, function () {
       state.opened[current.at] = Date.now();
       saveState();
       showAfter(true);

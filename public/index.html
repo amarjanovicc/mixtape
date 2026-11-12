@@ -25,23 +25,41 @@
     <a class="back" id="back" href="./" hidden>← na najnoviju</a>
 
     <section class="stage" id="stage" hidden>
-      <div class="tape" id="tape" aria-hidden="true">
+      <div class="tape" id="tape">
         <div class="tape-label">
           <span class="tape-line" id="tape-line1"></span>
           <span class="tape-line small" id="tape-line2"></span>
         </div>
-        <div class="tape-window"><i class="reel"></i><i class="tape-band"></i><i class="reel"></i></div>
+        <div class="tape-window">
+          <span class="spool" id="spool-l"><i class="reel"></i></span>
+          <i class="tape-band"></i>
+          <span class="spool" id="spool-r"><i class="reel"></i></span>
+        </div>
         <i class="screw s1"></i><i class="screw s2"></i>
       </div>
 
-      <div class="reveal" id="reveal">
-        <div class="reveal-content">
-          <p class="eyebrow" id="label"></p>
-          <h1 class="title" id="title"></h1>
-          <p class="artist" id="artist"></p>
+      <div class="deck" id="deck" hidden>
+        <div class="deck-keys">
+          <button type="button" id="rew" aria-label="Premotaj unazad (drži)">⏪</button>
+          <button type="button" id="play" class="deck-play" aria-label="Pusti">▶</button>
+          <button type="button" id="ffw" aria-label="Premotaj unaprijed (drži)">⏩</button>
         </div>
-        <canvas class="scratch" id="scratch" hidden></canvas>
-        <div class="veil" id="veil" hidden>?&nbsp;?&nbsp;?</div>
+        <p class="deck-time"><span id="time">0:00</span> · povuci kasetu ili drži ⏪ za premotavanje</p>
+      </div>
+      <audio id="audio" preload="none"></audio>
+
+      <div class="reveal" id="reveal">
+        <div class="ticket-head" id="ticket-head" hidden><span>★ SREĆKA ★</span><span id="ticket-no"></span></div>
+        <div class="reveal-body" id="reveal-body">
+          <div class="reveal-content">
+            <p class="eyebrow" id="label"></p>
+            <h1 class="title" id="title"></h1>
+            <p class="artist" id="artist"></p>
+          </div>
+          <canvas class="scratch" id="scratch" hidden></canvas>
+          <div class="veil" id="veil" hidden>?&nbsp;?&nbsp;?</div>
+        </div>
+        <p class="ticket-foot" id="ticket-foot" hidden>ogrebi srebrno polje · svaka srećka dobiva ♥</p>
       </div>
 
       <div class="game" id="game" hidden>
