@@ -1,46 +1,65 @@
-# Pjesma dana 💌
+# Mixtape — pjesma dana 💌
 
-Mala statična web stranica: cura skenira QR kod → otvori se stranica s **pjesmom dana**
-i kratkom porukom „podsjetila me na tebe jer…”. QR kod je uvijek isti; stranica sama bira
-pjesmu po današnjem datumu (zona `Europe/Zagreb`).
+Mala statična web stranica: cura skenira **uvijek isti QR kod** → otvori se „mixtape” s
+najnovijom pjesmom i porukom „podsjetila me na tebe jer…”. Cilj je da joj bude zabavno
+otvoriti to svaki dan, ne samo lijepo.
+
+## Kako stranica radi (za nju)
+
+1. Kaseta + skrivena pjesma. Prije otkrivanja vidi samo trag (`hint`) i mora odigrati
+   mini-igru: **ogrebi karticu** (`scratch`), **napuni srce** (`tap`) ili **drži gumb**
+   (`hold`). Igre se izmjenjuju po rednom broju pjesme; `reveal` u pjesmi to nadjača.
+2. Otkrivanje: konfeti, kaseta se zavrti, player, poruka rukopisom.
+3. Reakcija emojijem → pojavi se tajni `ps` i gumb „javi mu” (WhatsApp ako je
+   `config.whatsapp` postavljen, inače dijeljenje iz mobitela).
+4. Odbrojavanje do sljedeće pjesme, niz „🔥 N dana zaredom”, i „Tvoja kaseta” — popis svih
+   dosadašnjih pjesama s njenim reakcijama.
+
+Stanje (otvoreno, reakcije, niz) živi samo u `localStorage` njenog mobitela — nema servera.
 
 ## Struktura
 
-- `public/` — to je cijela stranica, objavljuje se kakva jest (bez build koraka)
-  - `songs.js` — **jedini sadržaj**: `config` (njeno ime, potpis) + popis pjesama
+- `public/` — cijela stranica, objavljuje se kakva jest (bez build koraka)
+  - `songs.js` — **jedini sadržaj**: `config` + popis pjesama
   - `index.html`, `style.css`, `app.js` — izgled i logika
 - `scripts/check-songs.mjs` — provjera `songs.js` (datumi, duplikati, linkovi, raspored)
-- `tools/qr.html` — generator QR koda (otvori u pregledniku, upiši URL, preuzmi PNG)
-- `.github/workflows/pages.yml` — na push na `main`: provjera pa objava na GitHub Pages
+- `tools/qr.html` — generator QR koda
+- `.github/workflows/pages.yml` — push na `main` → provjera → GitHub Pages
 
 ## Pravila
 
-- Bez frameworka, bez npm ovisnosti, bez build koraka. Čisti HTML/CSS/JS koji radi i
-  kad se `public/index.html` otvori direktno iz datoteke.
-- Sav tekst na stranici je na hrvatskom, nježan i kratak. Ne pretjerivati s emojijima.
-- Sadržaj se ubacuje kroz `textContent`, nikad `innerHTML`.
-- Animacije poštuju `prefers-reduced-motion`. Stranica mora izgledati dobro na mobitelu
-  (≈375 px širine) jer se uvijek otvara preko QR koda.
-- Pjesme s budućim datumom se ne prikazuju — to je namjerno (iznenađenje).
+- Bez frameworka, npm ovisnosti i build koraka. Mora raditi i kad se `public/index.html`
+  otvori direktno iz datoteke.
+- Tekst na stranici je hrvatski, kratak i topao. Ne pretjerivati s emojijima.
+- Sadržaj ide kroz `textContent`, nikad `innerHTML`.
+- **Nikad ne otkrij pjesmu prije igre**: popis „Tvoja kaseta”, `<title>` i sl. ne smiju
+  sadržavati naslov neotvorene pjesme. Buduće pjesme se ne prikazuju nigdje.
+- Svaka igra mora imati izlaz „samo otvori” i raditi na dodir. Animacije poštuju
+  `prefers-reduced-motion`. Dizajn se provjerava na ≈375 px širine.
+- Vrijeme se uspoređuje kao „zidni sat” u `config.timeZone` (tekst `YYYY-MM-DDTHH:MM`);
+  ista logika je u `app.js` i `check-songs.mjs` — mijenjaj obje zajedno.
+- Isprobavanje igre: `?igra=scratch`, `?igra=tap`, `?igra=hold`. Stara pjesma: `?t=<date>`.
 
 ## Kad korisnik kaže „dodaj pjesmu” (glavni posao)
 
 Npr. „dodaj za sutra Lover od Taylor Swift, podsjetila me jer smo je pjevali u autu”.
 
-1. Odredi datum: ako nije rečen, uzmi **prvi slobodan dan od danas nadalje** (zona Europe/Zagreb).
-   „Sutra”, „petak” itd. pretvori u `YYYY-MM-DD`.
-2. Nađi službeni Spotify link pjesme (WebSearch: `"<naslov>" <izvođač> site:open.spotify.com/track`).
-   Uzmi samo `https://open.spotify.com/track/<id>` bez `?si=` parametra. Ako nisi siguran da je
-   to prava pjesma (originalna verzija, pravi izvođač), **izostavi `spotify`** — stranica će
-   tada sama ponuditi Spotify pretragu. Nikad ne izmišljaj ID.
-3. Poruku (`note`) piše korisnik. Smiješ je samo lagano ispraviti (pravopis, interpunkcija);
-   ne dodaji sadržaj ni patetiku koju nije rekao. Ako poruke nema, pitaj za nju.
-4. Dodaj unos u `public/songs.js` sortirano po datumu, u istom formatu kao ostali.
-5. Pokreni `node scripts/check-songs.mjs` i popravi greške.
-6. Commitaj (`Pjesma za YYYY-MM-DD: Naslov — Izvođač`). Pushaj samo ako korisnik to traži
-   ili je to već prije odobrio u ovoj sesiji.
+1. **Vrijeme** (`date`): ako nije rečeno, prvi slobodan dan od danas nadalje (Europe/Zagreb),
+   kao `"YYYY-MM-DD"`. „Odmah / sad” → današnji datum s trenutnim vremenom
+   `"YYYY-MM-DD HH:MM"` (tako nova pjesma zamijeni današnju i ona opet dobije igru).
+2. **Spotify link**: potraži (WebSearch: `"<naslov>" <izvođač> site:open.spotify.com/track`).
+   Upiši samo `https://open.spotify.com/track/<id>` bez `?si=`. Ako nisi siguran da je prava
+   verzija, **izostavi `spotify`** — stranica tada nudi pretragu. Nikad ne izmišljaj ID.
+3. **Poruka** (`note`) je korisnikova. Smiješ ispraviti pravopis; ne dodaji sadržaj ni
+   patetiku. Ako je nema, pitaj.
+4. **Trag** (`hint`): ako ga korisnik nije dao, predloži 2–3 emojija koji asociraju na pjesmu
+   ili na njegovu poruku, ali ne odaju naslov. `ps` dodaj samo ako ga korisnik kaže.
+5. Dodaj unos u `public/songs.js` sortirano po vremenu, u istom formatu kao ostali.
+6. Pokreni `node scripts/check-songs.mjs` i popravi greške.
+7. Commitaj (`Pjesma za YYYY-MM-DD: Naslov — Izvođač`). Pushaj samo ako korisnik to traži
+   ili je to već odobrio u ovoj sesiji.
 
-Ako korisnik da više pjesama odjednom, rasporedi ih po redu na uzastopne slobodne dane.
+Više pjesama odjednom → rasporedi ih redom na uzastopne slobodne dane.
 
 ## Lokalno
 
