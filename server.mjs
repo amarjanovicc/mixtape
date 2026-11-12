@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Backend za Mixtape: sučelje za unos pjesama + lokalni pregled stranice.
 //
-//   node server.mjs        →  http://localhost:4321        (stranica)
+//   node server.mjs        ->  http://localhost:4321        (stranica)
 //                             http://localhost:4321/admin  (unos pjesama)
 //
 // Bez ovisnosti. Sluša samo na 127.0.0.1 — sučelje nije zaštićeno lozinkom,
@@ -35,9 +35,9 @@ const CONFIG_FIELDS = ["to", "from", "whatsapp", "timeZone", "noteLead"];
 const DEFAULT_CONFIG = { to: "", from: "", whatsapp: "", timeZone: "Europe/Zagreb", noteLead: "podsjetila me na tebe jer…" };
 
 const HEADER = `/*
- * ♥ Mixtape — sadržaj
+ * Mixtape — sadržaj
  *
- * Ovu datoteku piše sučelje za unos (node server.mjs → http://localhost:4321/admin).
+ * Ovu datoteku piše sučelje za unos (node server.mjs -> http://localhost:4321/admin).
  * Možeš je uređivati i ručno; polja su opisana u README.md.
  * Nakon ručne promjene pokreni:  node scripts/check-songs.mjs
  */
@@ -120,14 +120,14 @@ async function writeData(data) {
   }
 }
 
-// ---------- lookup: link → naslov, izvođač, omot, isječak ----------
+// ---------- lookup: link -> naslov, izvođač, omot, isječak ----------
 
 async function get(url, as) {
   const res = await fetch(url, {
     signal: AbortSignal.timeout(8000),
     headers: { "User-Agent": "Mozilla/5.0 (mixtape-admin)", "Accept-Language": "en" },
   });
-  if (!res.ok) throw new Error(`${new URL(url).hostname} → ${res.status}`);
+  if (!res.ok) throw new Error(`${new URL(url).hostname} -> ${res.status}`);
   return as === "json" ? res.json() : res.text();
 }
 

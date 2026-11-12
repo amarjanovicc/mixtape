@@ -1,18 +1,18 @@
-# Mixtape — pjesma dana 💌
+# Mixtape — pjesma dana
 
-Ona skenira QR kod (uvijek isti) → otvori se kaseta sa skrivenom pjesmom koja te podsjetila na nju.
+Ona skenira QR kod (uvijek isti) pa otvori se kaseta sa skrivenom pjesmom koja te podsjetila na nju.
 
 **Zašto se isplati otvoriti svaki dan:**
 
-- 🎮 **Pjesma je skrivena** — vidi samo trag (npr. `🚗🌊`) i mora je otkriti: jedan dan grebe **srećku** sa srebrnom folijom, drugi puni srce tapkanjem, treći drži gumb dok se kaseta premotava.
-- 🔊 Nakon otkrivanja **pjesma krene svirati**, uz konfete i tvoju poruku rukopisom.
-- 📼 **Kaseta je pravi player**: povuče je prstom ili drži ⏪ / ⏩ i kolutovi se vrte unazad i unaprijed dok se zvuk premotava.
-- 🎚️ **Zvučni efekti**: dok premotava, pjesma se čuje ubrzano unazad (kao kad rukom vratiš ploču), srećka šušti pod prstom i zazvoni kad dobije, tipke kazetofona klikću. Gumb 🔊 gore desno sve utiša.
-- 😍 Reagira emojijem → otključa se **tajni P.S.** i gumb „javi mu” koji ti pošalje njenu reakciju (WhatsApp).
-- ⏳ Odbrojavanje do sljedeće pjesme i niz „🔥 5 dana zaredom”.
-- 📼 „Tvoja kaseta” — raste svaki dan; sve dosadašnje pjesme s njenim reakcijama.
+- **Pjesma je skrivena** — vidi samo trag (npr. „naša prva vožnja”) i mora je otkriti: jedan dan grebe **srećku** sa srebrnom folijom, drugi puni srce tapkanjem, treći drži gumb dok se kaseta premotava.
+- Nakon otkrivanja **pjesma krene svirati**, uz konfete i tvoju poruku rukopisom.
+- **Kaseta je pravi player**: povuče je prstom ili drži tipke za premotavanje i kolutovi se vrte unazad i unaprijed dok se zvuk premotava.
+- **Zvučni efekti**: dok premotava, pjesma se čuje ubrzano unazad (kao kad rukom vratiš ploču), srećka šušti pod prstom i zazvoni kad dobije, tipke kazetofona klikću. Gumb zvučnika gore desno sve utiša.
+- Reagira emojijem pa otključa se **tajni P.S.** i gumb „javi mu” koji ti pošalje njenu reakciju (WhatsApp).
+- Odbrojavanje do sljedeće pjesme i niz „5 dana zaredom”.
+- „Tvoja kaseta” — raste svaki dan; sve dosadašnje pjesme s njenim reakcijama.
 
-Čisti HTML/CSS/JS, bez servera, ovisnosti i build koraka.
+Čisti HTML/CSS/JS, bez ovisnosti i build koraka. Na stranici nema emojija: sve su vlastite SVG ikone.
 
 ## Dodaj pjesmu (sučelje)
 
@@ -22,15 +22,15 @@ node server.mjs
 
 Otvori http://localhost:4321/admin:
 
-1. Zalijepi **Spotify ili YouTube link** → *Dohvati*. Naslov, izvođač, omot i službeni isječak od 30 s popune se sami.
+1. Zalijepi **Spotify ili YouTube link** pa *Dohvati*. Naslov, izvođač, omot i službeni isječak od 30 s popune se sami.
 2. Odaberi dan (i vrijeme, ako želiš), napiši poruku, trag i tajni P.S.
 3. Po želji učitaj **vlastiti zvuk** (mp3, m4a, ogg, wav) — sprema se u `public/audio/` i svira umjesto isječka.
 4. *Spremi pjesmu*, pa *Objavi* (provjera + git commit + push, ako repo ima `origin`).
 
 Uvijek se prikazuje najnovija pjesma čije je vrijeme došlo:
 
-- **jednom dnevno** → pjesme s datumima unaprijed, mijenjaju se u ponoć;
-- **kad god** → dan + vrijeme; čim to vrijeme prođe, ona dobije novu igru i novu pjesmu.
+- **jednom dnevno** pa pjesme s datumima unaprijed, mijenjaju se u ponoć;
+- **kad god** pa dan + vrijeme; čim to vrijeme prođe, ona dobije novu igru i novu pjesmu.
 
 ### O zvuku
 
@@ -48,7 +48,7 @@ Polja se mogu uređivati i ručno u [`public/songs.js`](public/songs.js): `date`
 
 1. U sučelju pod *Postavke* upiši njeno ime, svoj potpis i WhatsApp broj, obriši primjere i dodaj svoje pjesme.
 2. Napravi repo na GitHubu i pushaj na `main`.
-3. Na GitHubu: **Settings → Pages → Source: GitHub Actions**. Svaki push provjeri pjesme i objavi stranicu na `https://<korisnik>.github.io/<repo>/`.
+3. Na GitHubu: **Settings pa Pages pa Source: GitHub Actions**. Svaki push provjeri pjesme i objavi stranicu na `https://<korisnik>.github.io/<repo>/`.
    (Pages iz privatnog repoa traži plaćeni plan — alternativa je Netlify/Cloudflare Pages s folderom `public`.)
 4. Otvori [`tools/qr.html`](tools/qr.html), upiši adresu stranice, preuzmi PNG i isprintaj.
 

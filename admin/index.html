@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Mixtape · unos pjesama</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📼</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect x='1.5' y='4.500' width='21' height='15' rx='3' fill='%23ff7aa8'/><rect x='4.500' y='7' width='15' height='4' rx='1' fill='%23fff8ee'/><circle cx='8.500' cy='14.800' r='2' fill='%232a1830'/><circle cx='15.500' cy='14.800' r='2' fill='%232a1830'/></svg>">
   <style>
     :root {
       --bg: #17101c; --panel: #221829; --line: #3a2c44; --ink: #fff3e6; --muted: #b9a5b6;
@@ -13,6 +13,7 @@
     }
     * { box-sizing: border-box; }
     [hidden] { display: none !important; }
+    .icon { display: inline-block; width: 1em; height: 1em; vertical-align: -0.14em; }
     body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
     .wrap { max-width: 1040px; margin: 0 auto; padding: 20px 16px 60px; }
     header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 18px; }
@@ -73,9 +74,9 @@
 <body>
   <div class="wrap">
     <header>
-      <h1>📼 Mixtape · unos pjesama</h1>
+      <h1><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.800" stroke-linecap="round" stroke-linejoin="round"><rect x="2.500" y="5.500" width="19" height="13" rx="2.500"/><circle cx="8.500" cy="12" r="1.800"/><circle cx="15.500" cy="12" r="1.800"/><path d="M10.300 12h3.400M7 18.500l1.500-2.500h7l1.500 2.500"/></g></svg> Mixtape · unos pjesama</h1>
       <span class="sp"></span>
-      <a href="/" target="_blank" rel="noopener">otvori stranicu ↗</a>
+      <a href="/" target="_blank" rel="noopener">otvori stranicu <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M14 5h5v5M19 5l-8 8M11 7H6v11h11v-5"/></svg></a>
       <button class="primary" id="publish" type="button">Objavi</button>
     </header>
     <p class="msg" id="top-msg" hidden></p>
@@ -126,7 +127,7 @@
           <textarea id="note"></textarea>
 
           <div class="row">
-            <div><label for="hint">Trag <small>(prije otkrivanja)</small></label><input id="hint" placeholder="🚗🌊"></div>
+            <div><label for="hint">Trag <small>(prije otkrivanja)</small></label><input id="hint" placeholder="naša prva vožnja"></div>
             <div><label for="ps">Tajni P.S. <small>(nakon reakcije)</small></label><input id="ps"></div>
           </div>
 
@@ -230,7 +231,7 @@
         sorted.forEach(function (s) {
           var li = el("li");
           if (s.cover) li.appendChild(el("img", { src: s.cover, alt: "", loading: "lazy" }));
-          else li.appendChild(el("span", { class: "noimg" }, "♪"));
+          else li.appendChild(el("span", { class: "noimg" }));
           var info = el("div", { class: "info" });
           info.appendChild(el("b", null, s.title + (s.artist ? " — " + s.artist : "")));
           var sub = el("span", null, s.date + " · ");

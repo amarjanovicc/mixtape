@@ -10,7 +10,14 @@
   };
   var STORE = "pjesma-dana:v2";
   var GAMES = ["scratch", "tap", "hold"];
-  var REACTIONS = ["🥹", "😍", "💃", "😂", "😭"];
+  var REACTIONS = [
+    { id: "love", icon: "heart", label: "Obožavam" },
+    { id: "fire", icon: "flame", label: "Vatra" },
+    { id: "dance", icon: "music", label: "Pleše mi se" },
+    { id: "laugh", icon: "smile", label: "Nasmijala me" },
+    { id: "cry", icon: "tear", label: "Rasplakala me" },
+  ];
+  var SVG_NS = "http://www.w3.org/2000/svg";
   var WHEN = /^(\d{4}-\d{2}-\d{2})(?:[T ](\d{2}:\d{2}))?$/;
 
   var data = window.DAILY_SONG || {};
@@ -26,6 +33,29 @@
     Object.keys(attrs || {}).forEach(function (k) { node.setAttribute(k, attrs[k]); });
     if (text != null) node.textContent = text;
     return node;
+  }
+
+  // Na stranici nema emojija ni znakova: sve su SVG ikone iz <defs> u index.html.
+  function icon(name) {
+    var svg = document.createElementNS(SVG_NS, "svg");
+    var use = document.createElementNS(SVG_NS, "use");
+    svg.setAttribute("class", "icon");
+    svg.setAttribute("aria-hidden", "true");
+    use.setAttribute("href", "#i-" + name);
+    svg.appendChild(use);
+    return svg;
+  }
+  // setContent(el, "tekst", icon("heart"), ...) — zamijeni sadržaj tekstom i ikonama
+  function setContent(node) {
+    node.textContent = "";
+    for (var i = 1; i < arguments.length; i++) {
+      var part = arguments[i];
+      node.appendChild(typeof part === "string" ? document.createTextNode(part) : part);
+    }
+  }
+  function reactionById(id) {
+    for (var i = 0; i < REACTIONS.length; i++) if (REACTIONS[i].id === id) return REACTIONS[i];
+    return null;
   }
 
   // ---------- storage ----------
@@ -134,10 +164,11 @@
     var r = originEl.getBoundingClientRect();
     var cx = r.left + r.width / 2;
     var cy = r.top + r.height / 2;
-    var glyphs = ["♥", "♪", "✦", "♫", "♥"];
+    var glyphs = ["heart", "music", "sparkle", "music", "heart"];
     var colors = ["var(--accent)", "var(--accent-2)", "var(--cream)"];
     for (var i = 0; i < count; i++) {
-      var b = el("span", { class: "bit", "aria-hidden": "true" }, glyphs[i % glyphs.length]);
+      var b = el("span", { class: "bit", "aria-hidden": "true" });
+      b.appendChild(icon(glyphs[i % glyphs.length]));
       var angle = Math.random() * Math.PI * 2;
       var dist = 80 + Math.random() * 150;
       b.style.left = cx - 11 + "px";
@@ -160,10 +191,10 @@
 
   function renderSong(song, trackNo, label) {
     document.documentElement.style.setProperty("--hue", hueFor(song.title + (song.artist || "")));
-    document.title = "Mixtape 💌 #" + pad(trackNo);
+    document.title = "Mixtape #" + pad(trackNo);
 
     $("brand").textContent = config.to ? "mixtape za " + config.to : "mixtape za tebe";
-    $("tape-line1").textContent = config.to ? "za " + config.to + " ♥" : "za tebe ♥";
+    setContent($("tape-line1"), config.to ? "za " + config.to : "za tebe", icon("heart"));
     $("tape-line2").textContent = "pjesma #" + pad(trackNo) + " · " + formatDate(song.day, { day: "numeric", month: "long" });
 
     $("label").textContent = label;
@@ -193,10 +224,12 @@
 
     var q = encodeURIComponent([song.title, song.artist].filter(Boolean).join(" "));
     var links = $("links");
-    links.appendChild(el("a", {
+    var spotifyBtn = el("a", {
       class: "btn btn-primary", target: "_blank", rel: "noopener",
       href: song.spotify || "https://open.spotify.com/search/" + q,
-    }, "▶ Spotify"));
+    });
+    setContent(spotifyBtn, icon("play"), "Spotify");
+    links.appendChild(spotifyBtn);
     links.appendChild(el("a", {
       class: "btn btn-ghost", target: "_blank", rel: "noopener",
       href: song.youtube || "https://www.youtube.com/results?search_query=" + q,
@@ -216,16 +249,18 @@
     var row = $("react-row");
     var tell = $("tell");
 
-    function apply(emoji) {
+    function apply(id) {
+      var r = reactionById(id);
+      if (!r) return; // stara ili nepoznata vrijednost
       row.classList.add("chosen");
       Array.prototype.forEach.call(row.children, function (b) {
-        b.setAttribute("aria-pressed", String(b.textContent === emoji));
+        b.setAttribute("aria-pressed", String(b.getAttribute("data-id") === id));
       });
       if (song.ps) {
         $("ps").textContent = song.ps;
         $("ps").hidden = false;
       }
-      var text = emoji + " " + song.title + (song.artist ? " — " + song.artist : "");
+      var text = r.label + ": " + song.title + (song.artist ? " — " + song.artist : "");
       var phone = String(config.whatsapp || "").replace(/\D/g, "");
       if (phone) {
         tell.href = "https://wa.me/" + phone + "?text=" + encodeURIComponent(text);
@@ -241,15 +276,16 @@
       }
     }
 
-    REACTIONS.forEach(function (emoji) {
-      var b = el("button", { type: "button", "aria-pressed": "false", "aria-label": "Reakcija " + emoji }, emoji);
+    REACTIONS.forEach(function (r) {
+      var b = el("button", { type: "button", "aria-pressed": "false", "aria-label": r.label, title: r.label, "data-id": r.id });
+      b.appendChild(icon(r.icon));
       b.addEventListener("click", function () {
-        state.reactions[song.at] = emoji;
+        state.reactions[song.at] = r.id;
         saveState();
-        apply(emoji);
+        apply(r.id);
         confetti(b, 8);
         buzz(15);
-        renderShelfReaction(song.at, emoji);
+        renderShelfReaction(song.at, r.id);
       });
       row.appendChild(b);
     });
@@ -264,7 +300,7 @@
     if (!isLatest) return;
     out.hidden = false;
     if (!nextSong) {
-      out.textContent = "nova pjesma stiže uskoro 💌";
+      out.textContent = "nova pjesma stiže uskoro";
       return;
     }
     var target = Date.parse(nextSong.at + ":00Z");
@@ -276,7 +312,7 @@
       var left = Math.floor((target - Date.parse(nowWall() + "Z")) / 1000);
       if (left <= 0) {
         clearInterval(timer);
-        out.textContent = "nova pjesma je stigla ✨ ";
+        out.textContent = "nova pjesma je stigla — ";
         out.appendChild(el("a", { href: "./" }, "otvori"));
         return;
       }
@@ -299,7 +335,10 @@
       info.appendChild(el("div", { class: "t" }, s.title));
       if (s.artist) info.appendChild(el("div", { class: "a" }, s.artist));
       a.appendChild(info);
-      a.appendChild(el("span", { class: "r", "data-at": s.at }, state.reactions[s.at] || ""));
+      var rc = el("span", { class: "r", "data-at": s.at });
+      var rx = reactionById(state.reactions[s.at]);
+      if (rx) rc.appendChild(icon(rx.icon));
+      a.appendChild(rc);
       a.appendChild(el("span", { class: "d" }, formatDate(s.day, { day: "numeric", month: "numeric" })));
       var li = el("li");
       li.appendChild(a);
@@ -308,9 +347,10 @@
     $("shelf-count").textContent = "· " + released.length;
   }
 
-  function renderShelfReaction(at, emoji) {
+  function renderShelfReaction(at, id) {
     var cell = document.querySelector('.shelf .r[data-at="' + at + '"]');
-    if (cell) cell.textContent = emoji;
+    var r = reactionById(id);
+    if (cell && r) setContent(cell, icon(r.icon));
   }
 
   function touchStreak(today) {
@@ -323,7 +363,7 @@
     var d = today;
     while (state.days.indexOf(d) !== -1) { n++; d = shiftDay(d, -1); }
     if (n >= 2) {
-      $("streak").textContent = "🔥 " + n + " dana zaredom";
+      setContent($("streak"), icon("flame"), n + " dana zaredom");
       $("streak").hidden = false;
     }
   }
@@ -336,7 +376,7 @@
   var fx = (function () {
     var AC = window.AudioContext || window.webkitAudioContext;
     var ctx = null, master = null, noiseBuf = null;
-    var raw = null, buf = null, rev = null;       // preuzeti bajtovi → dekodirano → obrnuto
+    var raw = null, buf = null, rev = null;       // preuzeti bajtovi -> dekodirano -> obrnuto
     var scrubSrc = null, scrubGain = null, scrubDir = 0;
     var whirr = null, scr = null, scrTimer = 0;
 
@@ -495,7 +535,7 @@
           src.start();
           scr = { src: src, f: f, g: g };
         }
-        var v = Math.min(1, speed / 1.6);                    // px/ms → 0..1
+        var v = Math.min(1, speed / 1.6);                    // px/ms -> 0..1
         scr.g.gain.setTargetAtTime(0.05 + v * 0.3, ctx.currentTime, 0.012);
         scr.f.frequency.setTargetAtTime(2400 + v * 3200, ctx.currentTime, 0.02);
         clearTimeout(scrTimer);
@@ -574,7 +614,7 @@
 
     function syncButton() {
       var on = isPlaying();
-      playBtn.textContent = on ? "⏸" : "▶";
+      setContent(playBtn, icon(on ? "pause" : "play"));
       playBtn.setAttribute("aria-label", on ? "Pauza" : "Pusti");
     }
 
@@ -596,7 +636,7 @@
     function play() {
       if (!hasAudio) { virtualPlaying = true; return; }
       var pr = audio.play();
-      if (pr && pr.catch) pr.catch(function () { syncButton(); }); // preglednik traži dodir: ostaje gumb ▶
+      if (pr && pr.catch) pr.catch(function () { syncButton(); }); // preglednik traži dodir: ostaje gumb za puštanje
     }
 
     function holdSeek(btn, dir) {
@@ -807,8 +847,8 @@
     $("reveal").classList.add("ticket");
     $("ticket-head").hidden = false;
     $("ticket-foot").hidden = false;
-    $("ticket-no").textContent = "№ " + String(ticketNo).padStart(4, "0");
-    $("label").textContent = "♥ ♥ ♥ · dobitak";
+    $("ticket-no").textContent = "br. " + String(ticketNo).padStart(4, "0");
+    setContent($("label"), icon("heart"), icon("heart"), icon("heart"), " dobitak");
     canvas.hidden = false;
     text.textContent = "ogrebi srećku prstom";
 
@@ -846,7 +886,14 @@
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.font = "800 " + 15 * dpr + "px Nunito, system-ui, sans-serif";
-    ctx.fillText("🪙 OGREBI OVDJE", W / 2, H / 2 + dpr);
+    ctx.fillText("OGREBI OVDJE", W / 2 + 12 * dpr, H / 2 + dpr);
+    // novčić lijevo od natpisa (nacrtan, ne emoji)
+    var cx0 = W / 2 - 70 * dpr, cy0 = H / 2;
+    ctx.fillStyle = "#c9a23a";
+    ctx.beginPath(); ctx.arc(cx0, cy0, 10 * dpr, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = "#8a6a14";
+    ctx.lineWidth = 1.5 * dpr;
+    ctx.beginPath(); ctx.arc(cx0, cy0, 6.500 * dpr, 0, Math.PI * 2); ctx.stroke();
 
     ctx.globalCompositeOperation = "destination-out";
     ctx.lineCap = "round";
@@ -949,7 +996,7 @@
 
     var muteBtn = $("mute");
     var paintMute = function () {
-      muteBtn.textContent = state.muted ? "🔇" : "🔊";
+      setContent(muteBtn, icon(state.muted ? "volume-off" : "volume"));
       muteBtn.setAttribute("aria-pressed", String(state.muted));
       muteBtn.setAttribute("aria-label", state.muted ? "Uključi zvuk" : "Isključi zvuk");
     };
@@ -1005,7 +1052,7 @@
     ["stage", "after", "shelf"].forEach(function (id) { if ($(id)) $(id).hidden = true; });
     if ($("empty")) {
       $("empty-title").textContent = "Ups, nešto je zapelo";
-      $("empty-text").textContent = "osvježi stranicu za koji tren 💗";
+      $("empty-text").textContent = "osvježi stranicu za koji tren";
       $("empty").hidden = false;
     }
   }
