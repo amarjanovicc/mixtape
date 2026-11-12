@@ -13,6 +13,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Courier+Prime:wght@400;700&family=Fraunces:ital,opsz,wght@0,9..144,700;1,9..144,400&display=swap">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icon-180.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Mixtape">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -37,6 +41,9 @@
       <symbol id="i-smile" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path fill="currentColor" d="M7.500 13h9a4.500 4.500 0 0 1-9 0z"/><circle cx="9" cy="9.500" r="1.200" fill="currentColor"/><circle cx="15" cy="9.500" r="1.200" fill="currentColor"/></symbol>
       <symbol id="i-tear" viewBox="0 0 24 24"><path fill="currentColor" d="M12 3c3.300 4.200 6 7.400 6 11a6 6 0 0 1-12 0c0-3.600 2.700-6.800 6-11z"/></symbol>
       <symbol id="i-cassette" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.800" stroke-linecap="round" stroke-linejoin="round"><rect x="2.500" y="5.500" width="19" height="13" rx="2.500"/><circle cx="8.500" cy="12" r="1.800"/><circle cx="15.500" cy="12" r="1.800"/><path d="M10.300 12h3.400M7 18.500l1.500-2.500h7l1.500 2.500"/></g></symbol>
+      <symbol id="i-box" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h16v10.500H4zM2.500 4.500h19V9h-19zM9.500 13h5"/></g></symbol>
+      <symbol id="i-gift" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.500 11.500h15v9h-15zM3 7.500h18v4H3zM12 7.500v13M12 7.500c-1.500-4-6-3.500-5-1 .6 1.300 3 1 5 1zM12 7.500c1.500-4 6-3.500 5-1-.6 1.300-3 1-5 1z"/></g></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round" d="M4.500 12.500l5 5 10-11"/></symbol>
     </defs>
   </svg>
 
@@ -49,6 +56,7 @@
       </span>
     </header>
 
+    <div class="view" id="view-today">
     <a class="back" id="back" href="./" hidden><svg class="icon" aria-hidden="true"><use href="#i-arrow-left"/></svg> na najnoviju</a>
 
     <section class="stage" id="stage" hidden>
@@ -63,6 +71,7 @@
           <span class="spool" id="spool-r"><i class="reel"></i></span>
         </div>
         <i class="screw s1"></i><i class="screw s2"></i>
+        <i class="tape-sticker" id="tape-sticker"></i>
       </div>
 
       <div class="deck" id="deck" hidden>
@@ -99,11 +108,16 @@
         <p class="game-text" id="game-text"></p>
         <button class="pump" id="pump" type="button" aria-label="Tapni srce" hidden><svg class="icon" aria-hidden="true"><use href="#i-heart"/></svg></button>
         <button class="hold" id="hold" type="button" hidden><span>drži</span></button>
+        <div class="guess" id="guess" hidden>
+          <button class="btn btn-primary" id="guess-play" type="button"><svg class="icon" aria-hidden="true"><use href="#i-rewind"/></svg>pusti unazad</button>
+          <div class="guess-opts" id="guess-opts"></div>
+        </div>
         <button class="skip" id="skip" type="button">samo otvori</button>
       </div>
     </section>
 
     <section class="after" id="after" hidden>
+      <button class="collect" id="collect" type="button"></button>
       <blockquote class="note" id="note-wrap" hidden>
         <p class="note-lead" id="note-lead"></p>
         <p class="note-text" id="note"></p>
@@ -133,11 +147,27 @@
       <p class="artist" id="empty-text">vrati se malo kasnije</p>
     </section>
 
-    <section class="shelf" id="shelf" hidden>
-      <h2>Tvoja kaseta <span id="shelf-count"></span></h2>
-      <ol id="shelf-list"></ol>
-    </section>
+    </div>
+
+    <div class="view" id="view-box" hidden>
+      <section class="box">
+        <h2>Kutija s kasetama <span id="box-count"></span></h2>
+        <div class="crate"><div class="crate-grid" id="box-grid"></div></div>
+        <p class="box-tip" id="box-tip"></p>
+      </section>
+
+      <section class="rewards" id="rewards" hidden>
+        <h2>Nagrade za niz</h2>
+        <p class="box-tip" id="reward-streak"></p>
+        <div class="coupons" id="reward-list"></div>
+      </section>
+    </div>
   </main>
+
+  <nav class="tabs" id="tabs" aria-label="Pogledi" hidden>
+    <button type="button" data-view="today" aria-current="true"><svg class="icon" aria-hidden="true"><use href="#i-cassette"/></svg><span>Danas</span></button>
+    <button type="button" data-view="box"><svg class="icon" aria-hidden="true"><use href="#i-box"/></svg><span>Kutija</span><b class="badge" id="box-badge" hidden></b></button>
+  </nav>
 
   <noscript><p class="noscript">Uključi JavaScript da vidiš današnju pjesmu.</p></noscript>
 

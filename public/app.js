@@ -9,7 +9,7 @@
     noteLead: "podsjetila me na tebe jer…",
   };
   var STORE = "pjesma-dana:v2";
-  var GAMES = ["scratch", "tap", "hold"];
+  var GAMES = ["scratch", "tap", "hold", "guess"];
   var REACTIONS = [
     { id: "love", icon: "heart", label: "Obožavam" },
     { id: "fire", icon: "flame", label: "Vatra" },
@@ -53,6 +53,8 @@
       node.appendChild(typeof part === "string" ? document.createTextNode(part) : part);
     }
   }
+  // 1 dan, 2 dana, 21 dan
+  function days(n) { return n + (n % 10 === 1 && n % 100 !== 11 ? " dan" : " dana"); }
   function reactionById(id) {
     for (var i = 0; i < REACTIONS.length; i++) if (REACTIONS[i].id === id) return REACTIONS[i];
     return null;
@@ -68,6 +70,8 @@
       reactions: s.reactions && typeof s.reactions === "object" ? s.reactions : {},
       days: Array.isArray(s.days) ? s.days : [],
       muted: s.muted === true,
+      collected: s.collected && typeof s.collected === "object" ? s.collected : {},
+      best: Number(s.best) || 0,
     };
   }
   function saveState() {
@@ -153,10 +157,20 @@
 
   // Jedna ravna boja po pjesmi, iz male palete tiskarskih boja (uvijek ista za istu pjesmu).
   var INKS = ["#ef6a4c", "#f0b429", "#43b6a3", "#6f9fe0", "#f08aa5", "#86c267"];
-  function inkFor(text) {
+  var STICKERS = ["heart", "star", "music", "sparkle", "flame"];
+  // Svaka kaseta je drugačija, ali uvijek ista za istu pjesmu: boja, uzorak naljepnice,
+  // oblik prozorčića, naljepnica i nagib izvode se iz njenog datuma i naslova.
+  function designFor(song) {
+    var text = song.at + song.title;
     var h = 0;
     for (var i = 0; i < text.length; i++) h = (h * 31 + text.charCodeAt(i)) >>> 0;
-    return INKS[h % INKS.length];
+    return {
+      color: INKS[h % INKS.length],
+      pattern: (h >>> 3) % 4,
+      window: (h >>> 5) % 2,
+      sticker: STICKERS[(h >>> 7) % STICKERS.length],
+      tilt: ((h >>> 11) % 7) - 3,
+    };
   }
 
   // ---------- confetti ----------
@@ -192,7 +206,11 @@
   // ---------- render: song ----------
 
   function renderSong(song, trackNo, label) {
-    document.documentElement.style.setProperty("--accent", inkFor(song.title + (song.artist || "")));
+    var look = designFor(song);
+    document.documentElement.style.setProperty("--accent", look.color);
+    $("tape").classList.add("w" + look.window);
+    document.querySelector(".tape-label").classList.add("p" + look.pattern);
+    setContent($("tape-sticker"), icon(look.sticker));
     document.title = "Mixtape #" + pad(trackNo);
 
     $("brand").textContent = config.to ? "mixtape za " + config.to : "mixtape za tebe";
@@ -287,7 +305,7 @@
         apply(r.id);
         confetti(b, 8);
         buzz(15);
-        renderShelfReaction(song.at, r.id);
+        refreshBox();
       });
       row.appendChild(b);
     });
@@ -324,50 +342,153 @@
     tick();
   }
 
-  // ---------- render: shelf + streak ----------
+  // ---------- render: kutija, nagrade, niz ----------
 
-  function renderShelf(released, current) {
-    var list = $("shelf-list");
-    released.slice().reverse().forEach(function (s) {
-      var n = released.indexOf(s) + 1;
-      var a = el("a", { href: s === released[released.length - 1] ? "./" : "?t=" + encodeURIComponent(s.at) });
-      if (s === current) a.setAttribute("aria-current", "true");
-      a.appendChild(el("span", { class: "n" }, pad(n)));
-      var info = el("span", { class: "s" });
-      info.appendChild(el("div", { class: "t" }, s.title));
-      if (s.artist) info.appendChild(el("div", { class: "a" }, s.artist));
-      a.appendChild(info);
-      var rc = el("span", { class: "r", "data-at": s.at });
-      var rx = reactionById(state.reactions[s.at]);
-      if (rx) rc.appendChild(icon(rx.icon));
-      a.appendChild(rc);
-      a.appendChild(el("span", { class: "d" }, formatDate(s.day, { day: "numeric", month: "numeric" })));
-      var li = el("li");
-      li.appendChild(a);
-      list.appendChild(li);
-    });
-    $("shelf-count").textContent = "· " + released.length;
+  var refreshBox = function () {};   // postavlja main(); poziva se kad se nešto promijeni
+
+  function miniTape(song, n, isCurrent, href) {
+    var look = designFor(song);
+    var a = el("a", { class: "mini p" + look.pattern + " w" + look.window, href: href });
+    a.style.setProperty("--c", look.color);
+    a.style.setProperty("--tilt", look.tilt * 0.6 + "deg");
+    if (isCurrent) a.setAttribute("aria-current", "true");
+    var label = el("span", { class: "mini-label" });
+    label.appendChild(el("b", null, song.title));
+    label.appendChild(el("span", null, "#" + pad(n) + (song.artist ? " · " + song.artist : "")));
+    a.appendChild(label);
+    var win = el("span", { class: "mini-win" });
+    win.appendChild(el("i"));
+    win.appendChild(el("i"));
+    a.appendChild(win);
+    var st = el("span", { class: "sticker" });
+    st.appendChild(icon(look.sticker));
+    a.appendChild(st);
+    var rx = reactionById(state.reactions[song.at]);
+    if (rx) {
+      var badge = el("span", { class: "rx", title: rx.label });
+      badge.appendChild(icon(rx.icon));
+      a.appendChild(badge);
+    }
+    return a;
   }
 
-  function renderShelfReaction(at, id) {
-    var cell = document.querySelector('.shelf .r[data-at="' + at + '"]');
-    var r = reactionById(id);
-    if (cell && r) setContent(cell, icon(r.icon));
+  function slot(n, text, iconName, href) {
+    var a = el("a", { class: "slot", href: href });
+    a.appendChild(icon(iconName));
+    a.appendChild(el("b", null, "#" + pad(n)));
+    a.appendChild(el("span", null, text));
+    return a;
+  }
+
+  // Kutija: spremljene kasete kao male kasete, ostalo kao prazna mjesta.
+  // Naslov neotvorene pjesme ne smije se vidjeti ni ovdje.
+  function renderBox(released, current) {
+    var grid = $("box-grid");
+    var latest = released[released.length - 1];
+    var have = 0;
+    grid.textContent = "";
+    released.slice().reverse().forEach(function (s) {
+      var n = released.indexOf(s) + 1;
+      var href = s === latest ? "./" : "?t=" + encodeURIComponent(s.at);
+      var opened = Boolean(state.opened[s.at]);
+      if (state.collected[s.at]) {
+        have++;
+        grid.appendChild(miniTape(s, n, s === current, href));
+      } else if (s === latest && !opened) {
+        grid.appendChild(slot(n, "čeka te danas", "lock", href));
+      } else {
+        grid.appendChild(slot(n, opened ? "nije spremljena" : "propuštena", "cassette", href));
+      }
+    });
+    $("box-count").textContent = have + "/" + released.length;
+    $("box-tip").textContent = have === released.length
+      ? "Sve su na broju. Dodirni kasetu da je opet poslušaš."
+      : "Prazna mjesta čekaju: otvori pjesmu pa je spremi u kutiju.";
+    var missing = released.length - have;
+    $("box-badge").textContent = String(have);
+    $("box-badge").hidden = !have;
+    return missing;
+  }
+
+  // Nagrade za niz: kuponi koji se otključaju nakon N dana zaredom (najbolji niz se pamti).
+  function renderRewards(streak) {
+    var rewards = (Array.isArray(config.rewards) ? config.rewards : []).filter(function (r) {
+      return r && Number(r.days) > 0 && r.text;
+    }).sort(function (a, b) { return a.days - b.days; });
+    if (!rewards.length) return;
+    var list = $("reward-list");
+    list.textContent = "";
+    $("reward-streak").textContent = "Tvoj niz: " + days(streak) +
+      (state.best > streak ? " (najdulji: " + days(state.best) + ")" : "") + ".";
+    rewards.forEach(function (r) {
+      var open = state.best >= r.days;
+      var c = el("div", { class: "coupon " + (open ? "open" : "locked") });
+      c.appendChild(icon(open ? "gift" : "lock"));
+      c.appendChild(el("b", null, days(r.days) + " zaredom"));
+      c.appendChild(el("p", null, open ? r.text : "Još " + days(r.days - state.best) + " do iznenađenja."));
+      list.appendChild(c);
+    });
+    $("rewards").hidden = false;
+  }
+
+  // ---------- pogledi: Danas / Kutija ----------
+
+  var VIEWS = ["today", "box"];
+  var currentView = "today";
+  function showView(name, animate) {
+    if (VIEWS.indexOf(name) === -1 || name === currentView) return;
+    var dir = VIEWS.indexOf(name) > VIEWS.indexOf(currentView) ? "enter-right" : "enter-left";
+    currentView = name;
+    VIEWS.forEach(function (v) {
+      var node = $("view-" + v);
+      node.hidden = v !== name;
+      node.classList.remove("enter-left", "enter-right");
+      if (v === name && animate !== false && !reducedMotion) node.classList.add(dir);
+    });
+    Array.prototype.forEach.call($("tabs").querySelectorAll("button"), function (b) {
+      b.setAttribute("aria-current", String(b.getAttribute("data-view") === name));
+    });
+    window.scrollTo(0, 0);
+  }
+
+  function initViews() {
+    var tabs = $("tabs");
+    tabs.hidden = false;
+    tabs.addEventListener("click", function (e) {
+      var b = e.target.closest("button");
+      if (b) { fx.click(); showView(b.getAttribute("data-view")); }
+    });
+    // povlačenje prstom lijevo/desno mijenja pogled (osim preko kasete, srećke i tipki)
+    var sx = 0, sy = 0, ok = false;
+    document.addEventListener("touchstart", function (e) {
+      var t = e.touches[0];
+      sx = t.clientX; sy = t.clientY;
+      ok = e.touches.length === 1 && !e.target.closest(".tape, .scratch, .deck, .game, .tabs, iframe");
+    }, { passive: true });
+    document.addEventListener("touchend", function (e) {
+      if (!ok) return;
+      var t = e.changedTouches[0];
+      var dx = t.clientX - sx, dy = t.clientY - sy;
+      if (Math.abs(dx) < 70 || Math.abs(dy) > 50) return;
+      showView(dx < 0 ? "box" : "today");
+    }, { passive: true });
   }
 
   function touchStreak(today) {
     if (state.days.indexOf(today) === -1) {
       state.days.push(today);
       state.days = state.days.sort().slice(-400);
-      saveState();
     }
     var n = 0;
     var d = today;
     while (state.days.indexOf(d) !== -1) { n++; d = shiftDay(d, -1); }
+    if (n > state.best) state.best = n;
+    saveState();
     if (n >= 2) {
-      setContent($("streak"), icon("flame"), n + " dana zaredom");
+      setContent($("streak"), icon("flame"), days(n) + " zaredom");
       $("streak").hidden = false;
     }
+    return n;
   }
 
   // ---------- fx: zvučni efekti (Web Audio, bez datoteka) ----------
@@ -381,6 +502,14 @@
     var raw = null, buf = null, rev = null;       // preuzeti bajtovi -> dekodirano -> obrnuto
     var scrubSrc = null, scrubGain = null, scrubDir = 0;
     var whirr = null, scr = null, scrTimer = 0;
+    var loadState = "none";   // none | loading | ready | failed
+    var waiters = [], clip = null;
+    function settle(st) {
+      loadState = st;
+      var w = waiters;
+      waiters = [];
+      w.forEach(function (cb) { cb(st === "ready"); });
+    }
 
     function ready() {
       if (!AC) return false;
@@ -414,8 +543,9 @@
             data.reverse();
             rev.getChannelData(c).set(data);
           }
-        }, function () {});
-      } catch (e) {}
+          settle("ready");
+        }, function () { settle("failed"); });
+      } catch (e) { settle("failed"); }
     }
 
     function noise() {
@@ -470,16 +600,46 @@
       // preuzmi zvuk za premotavanje (mali isječci; cijele pjesme bi pojele memoriju mobitela)
       load: function (url) {
         if (!AC || !window.fetch) return;
+        loadState = "loading";
         fetch(url).then(function (r) {
           if (!r.ok) throw new Error("fetch");
           return r.arrayBuffer();
         }).then(function (ab) {
-          if (ab.byteLength > 3 * 1024 * 1024) return;
+          if (ab.byteLength > 3 * 1024 * 1024) { settle("failed"); return; }
           raw = ab;
           decode();
-        }).catch(function () {});
+        }).catch(function () { settle("failed"); });
       },
       unlock: ready,
+      // javi kad je zvuk spreman za puštanje unazad (ili da neće biti)
+      onBuffer: function (cb) {
+        ready();
+        if (buf) return cb(true);
+        if (loadState !== "loading") return cb(false);
+        var done = false;
+        var once = function (ok) { if (!done) { done = true; cb(ok); } };
+        waiters.push(once);
+        setTimeout(function () { once(false); }, 7000);
+      },
+      // pusti nekoliko sekundi pjesme unatrag, normalnom brzinom (igra "pogodi unazad")
+      reverseClip: function (seconds, onEnd) {
+        if (!ready() || !rev) return false;
+        if (clip) { try { clip.onended = null; clip.stop(); } catch (e) {} }
+        var src = ctx.createBufferSource(), g = ctx.createGain();
+        src.buffer = rev;
+        g.gain.value = 0.95;
+        src.connect(g); g.connect(master);
+        var off = Math.max(0, Math.min(rev.duration - seconds, rev.duration * 0.35));
+        src.onended = function () { if (clip === src) clip = null; if (onEnd) onEnd(); };
+        src.start(0, off, seconds);
+        clip = src;
+        return true;
+      },
+      stopClip: function () {
+        if (!clip) return;
+        try { clip.onended = null; clip.stop(); } catch (e) {}
+        clip = null;
+      },
       setMuted: function (m) { if (master) master.gain.setTargetAtTime(m ? 0 : 1, ctx.currentTime, 0.02); },
 
       // dir: -1 unazad, +1 unaprijed; rate: koliko puta brže; pos: sekunda u pjesmi
@@ -623,7 +783,7 @@
     function loop(t) {
       var dt = last ? Math.min((t - last) / 1000, 0.1) : 0;
       last = t;
-      var rate = seekDir ? seekDir * 9 : boost ? 8 : (isPlaying() && !dragging ? 1 : 0);
+      var rate = seekDir ? seekDir * 9 : boost ? 8 * boost : (isPlaying() && !dragging ? 1 : 0);
       if (rate && !reducedMotion) angle += rate * 150 * dt;
       if (seekDir) {
         seekBy(seekDir * SEEK_RATE * dt);
@@ -740,13 +900,14 @@
         syncButton();
       },
       boost: function (on) { boost = on ? 1 : 0; fx.whirr(on); },
+      spin: function (speed) { boost = speed; },   // tiho vrti kolutove (negativno = unazad)
       setMuted: function (m) { if (audio) audio.muted = m; },
     };
   })();
 
   // ---------- games ----------
 
-  function startGame(type, song, ticketNo, onDone) {
+  function startGame(type, song, ticketNo, decoys, onDone) {
     var game = $("game");
     var text = $("game-text");
     var finished = false;
@@ -757,7 +918,8 @@
       finished = true;
       cleanup();
       game.hidden = true;
-      $("stage").classList.remove("gaming");
+      $("stage").classList.remove("gaming", "guessing");
+      document.body.classList.remove("in-game");
       if (type === "scratch" && $("reveal").classList.contains("ticket")) fx.win(); else fx.reveal();
       onDone();
     }
@@ -768,7 +930,50 @@
     }
     game.hidden = false;
     $("stage").classList.add("gaming");
+    document.body.classList.add("in-game");   // igra ima cijeli ekran: kartice na dnu se sklone
     $("skip").addEventListener("click", finish);
+
+    if (type === "guess") {
+      var veilG = $("veil");
+      var listen = $("guess-play");
+      var opts = $("guess-opts");
+      veilG.hidden = false;
+      $("guess").hidden = false;
+      $("stage").classList.add("guessing");
+      text.textContent = "poslušaj unazad pa pogodi";
+      var say = function (t) { setContent(listen, icon("rewind"), t); };
+      listen.addEventListener("click", function () {
+        say("učitavam…");
+        fx.onBuffer(function (ok) {
+          if (finished) return;
+          if (!ok) { say("ne da se pustiti — pogodi napamet"); listen.disabled = true; return; }
+          say("svira unazad…");
+          deck.spin(-0.35);
+          fx.reverseClip(5, function () { deck.spin(0); if (!finished) say("pusti opet"); });
+        });
+      });
+      // točan naslov + dva kriva, promiješano
+      var titles = [song.title].concat(decoys).sort(function () { return Math.random() - 0.5; });
+      titles.forEach(function (t) {
+        var b = el("button", { class: "btn btn-ghost", type: "button" }, t);
+        b.addEventListener("click", function () {
+          if (t === song.title) return finish();
+          b.disabled = true;
+          b.classList.add("wrong");
+          buzz(60);
+          fx.blip(-6);
+          text.textContent = "nije ta — probaj opet";
+        });
+        opts.appendChild(b);
+      });
+      cleanup = function () {
+        fx.stopClip();
+        deck.spin(0);
+        $("guess").hidden = true;
+        veilG.classList.add("gone");
+      };
+      return;
+    }
 
     if (type === "tap") {
       var veil = $("veil");
@@ -1014,15 +1219,48 @@
     renderSong(current, trackNo, label);
     deck.init(current);
     renderReactions(current);
-    renderShelf(released, current);
-    touchStreak(today);
+    var streak = touchStreak(today);
+    refreshBox = function () { renderBox(released, current); };
+    refreshBox();
+    renderRewards(streak);
+    initViews();
+
+    // spremanje kasete u kutiju
+    var collectBtn = $("collect");
+    var paintCollect = function () {
+      var done = Boolean(state.collected[current.at]);
+      collectBtn.classList.toggle("done", done);
+      collectBtn.disabled = done;
+      if (done) setContent(collectBtn, icon("check"), "u kutiji je");
+      else setContent(collectBtn, icon("box"), "spremi kasetu u kutiju");
+    };
+    collectBtn.addEventListener("click", function () {
+      if (state.collected[current.at]) return;
+      state.collected[current.at] = Date.now();
+      saveState();
+      fx.click();
+      fx.reveal();
+      buzz([15, 30, 15]);
+      paintCollect();
+      refreshBox();
+      var badge = $("box-badge");
+      badge.classList.remove("pop");
+      void badge.offsetWidth;
+      badge.classList.add("pop");
+      if (reducedMotion) return;
+      // kaseta odleti prema kutiji pa se vrati na mjesto
+      var tape = $("tape");
+      tape.classList.remove("nudge");
+      tape.classList.add("fly");
+      setTimeout(function () { tape.classList.remove("fly"); }, 900);
+    });
+    paintCollect();
     $("back").hidden = isLatest;
     $("stage").hidden = false;
 
     function showAfter(celebrate) {
       deck.start(celebrate);
       $("after").hidden = false;
-      $("shelf").hidden = released.length < 2; // tek nakon otkrivanja, da popis ne oda pjesmu
       renderNext(upcoming[0], isLatest);
       if (celebrate) {
         confetti($("reveal"), 26);
@@ -1030,7 +1268,7 @@
       }
     }
 
-    // ?igra=scratch|tap|hold — ponovno odigraj otkrivanje (za isprobavanje)
+    // ?igra=scratch|tap|hold|guess — ponovno odigraj otkrivanje (za isprobavanje)
     var forced = new URLSearchParams(location.search).get("igra");
     if (GAMES.indexOf(forced) === -1) forced = null;
 
@@ -1040,9 +1278,18 @@
     }
 
     var type = forced || (GAMES.indexOf(current.reveal) !== -1 ? current.reveal : GAMES[(trackNo - 1) % GAMES.length]);
-    startGame(type, current, trackNo, function () {
+    // "pogodi unazad" treba zvuk i dva druga naslova za krive odgovore; inače srećka
+    var decoys = [];
+    released.forEach(function (s) {
+      if (s.title !== current.title && decoys.indexOf(s.title) === -1) decoys.push(s.title);
+    });
+    decoys = decoys.sort(function () { return Math.random() - 0.5; }).slice(0, 2);
+    if (type === "guess" && (decoys.length < 2 || !(current.audio || current.preview))) type = "scratch";
+
+    startGame(type, current, trackNo, decoys, function () {
       state.opened[current.at] = Date.now();
       saveState();
+      refreshBox();
       showAfter(true);
     });
   }
@@ -1051,7 +1298,7 @@
     main();
   } catch (err) {
     console.error(err);
-    ["stage", "after", "shelf"].forEach(function (id) { if ($(id)) $(id).hidden = true; });
+    ["stage", "after", "view-box", "tabs"].forEach(function (id) { if ($(id)) $(id).hidden = true; });
     if ($("empty")) {
       $("empty-title").textContent = "Ups, nešto je zapelo";
       $("empty-text").textContent = "osvježi stranicu za koji tren";

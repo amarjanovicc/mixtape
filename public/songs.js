@@ -11,7 +11,21 @@ window.DAILY_SONG = {
     "from": "",
     "whatsapp": "",
     "timeZone": "Europe/Zagreb",
-    "noteLead": "podsjetila me na tebe jer…"
+    "noteLead": "podsjetila me na tebe jer…",
+    "rewards": [
+      {
+        "days": 1,
+        "text": "Primjer nagrade: kupon za kavu po izboru."
+      },
+      {
+        "days": 7,
+        "text": "Primjer nagrade: doručak u krevet."
+      },
+      {
+        "days": 30,
+        "text": "Primjer nagrade: izlet iznenađenja."
+      }
+    ]
   },
   "songs": [
     {

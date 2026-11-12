@@ -10,7 +10,10 @@ Ona skenira QR kod (uvijek isti) pa otvori se kaseta sa skrivenom pjesmom koja t
 - **Zvučni efekti**: dok premotava, pjesma se čuje ubrzano unazad (kao kad rukom vratiš ploču), srećka šušti pod prstom i zazvoni kad dobije, tipke kazetofona klikću. Gumb zvučnika gore desno sve utiša.
 - Reagira emojijem pa otključa se **tajni P.S.** i gumb „javi mu” koji ti pošalje njenu reakciju (WhatsApp).
 - Odbrojavanje do sljedeće pjesme i niz „5 dana zaredom”.
-- „Tvoja kaseta” — raste svaki dan; sve dosadašnje pjesme s njenim reakcijama.
+- **Kutija s kasetama**: svaku otvorenu kasetu sprema u kutiju. Svaka izgleda drugačije, a propušteni dani ostaju prazna mjesta.
+- **Pogodi unazad**: četvrta igra, čuje nekoliko sekundi pjesme unatrag i bira između tri naslova.
+- **Nagrade za niz**: kuponi koje upišeš u sučelju (npr. 7 dana: doručak u krevet) otključaju se kad otvara dovoljno dana zaredom.
+- Stranicu može dodati na početni zaslon kao aplikaciju.
 
 Čisti HTML/CSS/JS, bez ovisnosti i build koraka. Na stranici nema emojija: sve su vlastite SVG ikone.
 
@@ -54,7 +57,7 @@ Polja se mogu uređivati i ručno u [`public/songs.js`](public/songs.js): `date`
 
 ## Isprobavanje
 
-`node server.mjs` pa http://localhost:4321. Igru možeš ponovno odigrati s `?igra=scratch`, `?igra=tap` ili `?igra=hold`.
+`node server.mjs` pa http://localhost:4321. Igru možeš ponovno odigrati s `?igra=scratch`, `?igra=tap`, `?igra=hold` ili `?igra=guess`.
 
 ## Napomene
 

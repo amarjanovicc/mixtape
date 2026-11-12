@@ -6,18 +6,29 @@ otvoriti to svaki dan, ne samo lijepo.
 
 ## Kako stranica radi (za nju)
 
-1. Kaseta + skrivena pjesma. Prije otkrivanja vidi samo trag (`hint`) i mora odigrati
-   mini-igru: **srećka** sa srebrnom folijom (`scratch`), **napuni srce** (`tap`) ili
-   **drži gumb** (`hold`). Igre se izmjenjuju po rednom broju pjesme; `reveal` to nadjača.
-2. Otkrivanje: konfeti, **zvuk krene sam** (otkrivanje je dodir, pa preglednik to dopušta),
-   poruka rukopisom. Kaseta je pravi player: tipke za premotavanje i puštanje (drži za premotavanje) i
-   povlačenje kasete prstom vrte kolutove i stvarno premotavaju zvuk, i unazad.
-3. Reakcija ikonom: pojavi se tajni `ps` i gumb „javi mu” (WhatsApp ako je
-   `config.whatsapp` postavljen, inače dijeljenje iz mobitela).
-4. Odbrojavanje do sljedeće pjesme, niz „N dana zaredom”, i „Tvoja kaseta” — popis svih
-   dosadašnjih pjesama s njenim reakcijama.
+Dva pogleda, jahači na dnu ekrana (ili povlačenje prstom lijevo/desno): **Danas** i **Kutija**.
 
-Stanje (otvoreno, reakcije, niz) živi samo u `localStorage` njenog mobitela — nema servera.
+**Danas**
+1. Kaseta + skrivena pjesma. Prije otkrivanja vidi samo trag (`hint`) i mora odigrati mini-igru:
+   **srećka** (`scratch`), **napuni srce** (`tap`), **drži gumb** (`hold`) ili **pogodi unazad**
+   (`guess`: čuje 5 s pjesme unatrag i bira između tri naslova; treba zvuk i barem dvije druge
+   objavljene pjesme, inače se igra srećka). Igre se izmjenjuju po rednom broju pjesme; `reveal`
+   to nadjača. Dok traje igra, jahači su skriveni.
+2. Otkrivanje: konfeti, **zvuk krene sam** (otkrivanje je dodir, pa preglednik to dopušta).
+   Kaseta je pravi player: tipke i povlačenje kasete stvarno premotavaju zvuk, i unazad.
+3. Gumb **„spremi kasetu u kutiju”**, pa poruka rukopisom, reakcija ikonom (otključa tajni `ps`
+   i gumb „javi mu”), cijela pjesma (Spotify/YouTube), odbrojavanje do sljedeće.
+
+**Kutija**
+- Spremljene kasete kao male kasete; nespremljene su prazna mjesta („nije spremljena”,
+  „propuštena”, „čeka te danas”). **Svaka kaseta izgleda drugačije** (`designFor` u `app.js`:
+  boja, uzorak naljepnice, oblik prozorčića, naljepnica, nagib — izvedeno iz datuma i naslova).
+- **Nagrade za niz** (`config.rewards = [{ days, text }]`): kuponi koji se otključaju kad
+  najdulji niz dosegne N dana; zaključani pokazuju samo koliko još dana treba.
+
+Stanje (otvoreno, spremljeno, reakcije, niz) živi samo u `localStorage` njenog mobitela.
+Stranica se može dodati na početni zaslon (`manifest.webmanifest`, `icon-*.png`); nema
+service workera, namjerno, da nikad ne vidi staru verziju.
 
 ## Struktura
 
@@ -47,7 +58,7 @@ Stanje (otvoreno, reakcije, niz) živi samo u `localStorage` njenog mobitela —
   stvoriti tek na dodir. Sve mora poštovati gumb za utišavanje (`state.muted`).
 - **Mobile-first**: dok traje igra sve stane na jedan ekran (`.stage.gaming`), a kontrole su
   dolje pod palcem; dodirne mete su najmanje 44 px. Nakon otkrivanja redoslijed je:
-  kaseta i tipke pa pjesma pa poruka pa reakcija pa P.S. pa cijela pjesma pa odbrojavanje pa popis.
+  kaseta i tipke, pjesma, spremanje u kutiju, poruka, reakcija, P.S., cijela pjesma, odbrojavanje.
 - `server.mjs` sluša samo na 127.0.0.1, provjerava `Host` i traži zaglavlje `X-Mixtape` za
   sve što mijenja podatke. Nema lozinke — ne izlagati ga na internet.
 - **Nikad emojiji ni ukrasni znakovi** (srca, zvjezdice, strelice, kvačice, „№” i sl.) — nigdje:
@@ -65,13 +76,13 @@ Stanje (otvoreno, reakcije, niz) živi samo u `localStorage` njenog mobitela —
   ne „kartica”.
 - Tekst na stranici je hrvatski, kratak i topao.
 - Sadržaj ide kroz `textContent`, nikad `innerHTML`.
-- **Nikad ne otkrij pjesmu prije igre**: popis „Tvoja kaseta”, `<title>` i sl. ne smiju
+- **Nikad ne otkrij pjesmu prije igre**: Kutija, `<title>` i sl. ne smiju
   sadržavati naslov neotvorene pjesme. Buduće pjesme se ne prikazuju nigdje.
 - Svaka igra mora imati izlaz „samo otvori” i raditi na dodir. Animacije poštuju
   `prefers-reduced-motion`. Dizajn se provjerava na ≈375 px širine.
 - Vrijeme se uspoređuje kao „zidni sat” u `config.timeZone` (tekst `YYYY-MM-DDTHH:MM`);
   ista logika je u `app.js` i `check-songs.mjs` — mijenjaj obje zajedno.
-- Isprobavanje igre: `?igra=scratch`, `?igra=tap`, `?igra=hold`. Stara pjesma: `?t=<date>`.
+- Isprobavanje igre: `?igra=scratch`, `?igra=tap`, `?igra=hold`, `?igra=guess`. Stara pjesma: `?t=<date>`.
 
 ## Kad korisnik kaže „dodaj pjesmu” (glavni posao)
 

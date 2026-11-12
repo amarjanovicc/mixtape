@@ -65,6 +65,7 @@
     ul.songs .info { flex: 1; min-width: 0; }
     ul.songs .info b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     ul.songs .info span { font-size: .82rem; color: var(--muted); }
+    .reward { display: grid; grid-template-columns: 70px 1fr auto; gap: 8px; margin-bottom: 8px; align-items: center; }
     .tag { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: .72rem; font-weight: 700; border: 1px solid var(--line); }
     .tag.now { color: var(--accent-ink); background: var(--accent); border-color: var(--accent); }
     .tag.wait { color: var(--warn); }
@@ -118,6 +119,7 @@
                 <option value="scratch">srećka</option>
                 <option value="tap">napuni srce</option>
                 <option value="hold">drži gumb</option>
+                <option value="guess">pogodi unazad</option>
               </select>
             </div>
           </div>
@@ -157,6 +159,10 @@
           </div>
           <label for="c-whatsapp">Tvoj WhatsApp broj <small>(s pozivnim, samo znamenke)</small></label>
           <input id="c-whatsapp" inputmode="numeric" placeholder="385911234567">
+          <label>Nagrade za niz <small>(otključaju se kad otvara N dana zaredom)</small></label>
+          <div id="rewards"></div>
+          <button class="small" type="button" id="add-reward">Dodaj nagradu</button>
+          <p class="hint">Npr. 7 dana: „Kupon za doručak u krevet”. Dok je ne otključa, vidi samo koliko joj još dana treba.</p>
           <div class="actions"><button type="submit">Spremi postavke</button></div>
           <p class="msg" id="config-msg" hidden></p>
         </form>
@@ -402,12 +408,31 @@
         $("c-to").value = state.config.to || "";
         $("c-from").value = state.config.from || "";
         $("c-whatsapp").value = state.config.whatsapp || "";
+        $("rewards").textContent = "";
+        (state.config.rewards || []).forEach(addRewardRow);
       }
+
+      function addRewardRow(r) {
+        var row = el("div", { class: "reward" });
+        var days = el("input", { type: "number", min: "1", max: "999", placeholder: "dana", "aria-label": "Broj dana" });
+        var text = el("input", { type: "text", placeholder: "što dobiva", "aria-label": "Nagrada" });
+        var del = el("button", { class: "small danger", type: "button" }, "Ukloni");
+        days.value = r && r.days ? r.days : "";
+        text.value = r && r.text ? r.text : "";
+        del.addEventListener("click", function () { row.remove(); });
+        row.appendChild(days); row.appendChild(text); row.appendChild(del);
+        $("rewards").appendChild(row);
+      }
+      $("add-reward").addEventListener("click", function () { addRewardRow(); });
 
       $("config-form").addEventListener("submit", function (e) {
         e.preventDefault();
         var config = Object.assign({}, state.config, {
           to: $("c-to").value, from: $("c-from").value, whatsapp: $("c-whatsapp").value,
+          rewards: Array.prototype.map.call($("rewards").children, function (row) {
+            var inputs = row.querySelectorAll("input");
+            return { days: Number(inputs[0].value), text: inputs[1].value };
+          }),
         });
         api("PUT", "/api/data", { config: config, songs: state.songs }).then(function (data) {
           state = data;
