@@ -34,6 +34,10 @@
       "destination": "/api/songs"
     },
     {
+      "source": "/media/:file",
+      "destination": "/api/media?f=:file"
+    },
+    {
       "source": "/admin",
       "destination": "/admin/index.html"
     }

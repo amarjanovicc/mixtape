@@ -67,9 +67,9 @@ service workera, namjerno, da nikad ne vidi staru verziju.
   - `admin/index.html` — sučelje za unos (prijava lozinkom; radi i uživo i lokalno)
 - `api/` — Vercel funkcije: `songs.js` (javni sadržaj kao JS, samo objavljene pjesme), `data.js`
   (čitanje/spremanje, traži prijavu), `lookup.js` (podaci iz linka), `audio.js` (vlastiti zvuk,
-  do 4 MB), `login.js`
+  do 4 MB), `media.js` (zvuk za nju: `/media/<ime>`, s Range), `login.js`
 - `lib/` — `core.mjs` (čista logika: provjera podataka, dohvat linka, javni pogled), `store.mjs`
-  (Vercel Blob; lokalno datoteka), `http.mjs` (prijava, zaštita, tijelo zahtjeva)
+  (PRIVATNI Vercel Blob: `mixtape/data.json` i `mixtape/audio/`; lokalno datoteka), `http.mjs` (prijava, zaštita, tijelo zahtjeva)
 - `data/songs.js` — **početni sadržaj** (dok u Blobu ništa nije spremljeno) i sadržaj lokalnog servera
 - `server.mjs` — lokalni server (bez lozinke, 127.0.0.1): stranica, `/admin`, ista sučelja API-ja
 - `scripts/check-songs.mjs` — provjera `data/songs.js`, pokreće se i kao Vercel build

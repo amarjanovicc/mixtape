@@ -26,7 +26,7 @@ Zatim *Spremi pjesmu*. Uz pjesmu koja trenutno svira je gumb **Resetiraj**: ona 
 
 Ostalo je skriveno pod **Više opcija**: trag prije otkrivanja, tajni P.S., odabir igre, izbor isječka i vlastiti zvuk (mp3, m4a, ogg, wav, do 4 MB). Njeno ime, tvoj potpis, WhatsApp, likovi za naljepnice (kosa, ten, životinje) i same naljepnice su pod **Postavke**.
 
-Kako je to složeno: pjesme i zvukovi su u Vercel Blobu, a njena stranica ih dobiva preko `/songs.js` (funkcija `api/songs.js`). **Pjesme čije vrijeme još nije došlo nikad ne napuštaju server**, pa ih nitko ne može pročitati iz koda stranice; vidi se samo odbrojavanje do sljedeće. Dok pohrana ne postoji, stranica prikazuje početni sadržaj iz `data/songs.js`.
+Kako je to složeno: pjesme i zvukovi su u **privatnom** Vercel Blobu (ništa nije javno dostupno izravno), a njena stranica ih dobiva samo kroz funkcije: sadržaj preko `/songs.js` (`api/songs.js`), zvuk preko `/media/<ime>` (`api/media.js`). **Pjesme čije vrijeme još nije došlo nikad ne napuštaju server**, pa ih nitko ne može pročitati iz koda stranice; vidi se samo odbrojavanje do sljedeće. Dok pohrana ne postoji, stranica prikazuje početni sadržaj iz `data/songs.js`.
 
 Uvijek se prikazuje najnovija pjesma čije je vrijeme došlo:
 
@@ -50,7 +50,7 @@ Polja pjesme (vidi i početni sadržaj u [`data/songs.js`](data/songs.js)): `dat
 ## Prvo postavljanje
 
 1. Repozitorij je na GitHubu (privatan), a Vercel objavljuje svaki push na `main`. Postavke su u `vercel.json` (izlazni folder `public`, funkcije u `api/`, prije objave provjera početnog sadržaja).
-2. U Vercelu, projekt `mixtape`: **Storage, Create, Blob** (poveži s projektom) i **Settings, Environment Variables, `ADMIN_PASSWORD`** (dugačka lozinka). Nakon toga *Redeploy*.
+2. U Vercelu, projekt `mixtape`: **Storage, Create, Blob, Private** (poveži s projektom, uz read-write token) i **Settings, Environment Variables, `ADMIN_PASSWORD`** (dugačka lozinka). Nakon toga *Redeploy*.
 3. Otvori `/admin`, prijavi se, u *Postavke* upiši njeno ime, svoj potpis i WhatsApp, obriši primjere i dodaj svoje pjesme.
 4. Otvori [`tools/qr.html`](tools/qr.html), adresa je već upisana; preuzmi PNG i isprintaj.
 
