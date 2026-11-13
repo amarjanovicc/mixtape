@@ -62,9 +62,12 @@
 
     <section class="stage" id="stage" hidden>
       <div class="tape" id="tape">
-        <div class="tape-label">
-          <span class="tape-line" id="tape-line1"></span>
-          <span class="tape-line small" id="tape-line2"></span>
+        <!-- naljepnica je ujedno i srećka: ispod folije piše koja je pjesma -->
+        <div class="tape-label" id="tape-label">
+          <h1 class="tape-line" id="tape-line1"></h1>
+          <p class="tape-line small" id="tape-line2"></p>
+          <canvas class="scratch" id="scratch" hidden></canvas>
+          <div class="veil" id="veil" hidden><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg></div>
         </div>
         <div class="tape-window">
           <span class="spool" id="spool-l"><i class="reel"></i></span>
@@ -73,6 +76,7 @@
         </div>
         <i class="screw s1"></i><i class="screw s2"></i>
         <i class="tape-sticker" id="tape-sticker"></i>
+        <span class="tape-meta" id="tape-meta"></span>
       </div>
 
       <div class="deck" id="deck" hidden>
@@ -87,24 +91,6 @@
         <button class="skip intro-only" id="rewind-skip" type="button">samo pusti</button>
       </div>
       <audio id="audio" preload="none"></audio>
-
-      <div class="reveal-shadow">
-      <div class="reveal" id="reveal">
-        <div class="ticket-head" id="ticket-head" hidden><span><svg class="icon" aria-hidden="true"><use href="#i-star"/></svg> SREĆKA <svg class="icon" aria-hidden="true"><use href="#i-star"/></svg></span><span id="ticket-no"></span></div>
-        <div class="reveal-body" id="reveal-body">
-          <div class="reveal-content">
-            <img class="cover" id="cover" alt="" width="84" height="84" hidden>
-            <p class="eyebrow" id="label"></p>
-            <h1 class="title" id="title"></h1>
-            <p class="artist" id="artist"></p>
-          </div>
-          <canvas class="scratch" id="scratch" hidden></canvas>
-          <div class="veil" id="veil" hidden><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg></div>
-          <span class="stamp" id="stamp" aria-hidden="true" hidden>dobitak <svg class="icon" aria-hidden="true"><use href="#i-heart"/></svg></span>
-        </div>
-        <p class="ticket-foot" id="ticket-foot" hidden>svaka srećka dobiva</p>
-      </div>
-      </div>
 
       <div class="game" id="game" hidden>
         <p class="hint" id="hint" hidden></p>

@@ -205,7 +205,7 @@
 
   // ---------- render: song ----------
 
-  function renderSong(song, trackNo, label) {
+  function renderSong(song, trackNo) {
     var look = designFor(song);
     document.documentElement.style.setProperty("--accent", look.color);
     $("tape").classList.add("w" + look.window);
@@ -214,18 +214,11 @@
     document.title = "Mixtape #" + pad(trackNo);
 
     $("brand").textContent = config.to ? "mixtape za " + config.to : "mixtape za tebe";
-    setContent($("tape-line1"), config.to ? "za " + config.to : "za tebe", icon("heart"));
-    $("tape-line2").textContent = "pjesma #" + pad(trackNo) + " · " + formatDate(song.day, { day: "numeric", month: "long" });
-
-    $("label").textContent = label;
-    $("title").textContent = song.title;
-    $("artist").textContent = song.artist || "";
-    $("artist").hidden = !song.artist;
-    if (song.cover) {
-      $("cover").src = song.cover;
-      $("cover").hidden = false;
-      $("cover").addEventListener("error", function () { this.hidden = true; });
-    }
+    // naljepnica kasete: naslov i izvođač (do otkrivanja ih pokriva folija)
+    $("tape-line1").textContent = song.title;
+    $("tape-line2").textContent = song.artist || "";
+    $("tape-line2").hidden = !song.artist;
+    $("tape-meta").textContent = "#" + pad(trackNo) + " · " + formatDate(song.day, { day: "numeric", month: "long" });
 
     var player = $("player");
     var sp = spotifyEmbed(song.spotify);
@@ -972,7 +965,7 @@
     function initDrag() {
       tape.classList.add("live");
       tape.addEventListener("pointerdown", function (e) {
-        if (!intro && !hasAudio) return;
+        if (!intro && (!hasAudio || $("stage").classList.contains("gaming"))) return;
         dragging = true;
         dragX = e.clientX;
         dragT = performance.now();
@@ -1081,7 +1074,7 @@
       game.hidden = true;
       $("stage").classList.remove("gaming", "guessing");
       document.body.classList.remove("in-game");
-      if (type === "scratch" && $("reveal").classList.contains("ticket")) fx.win(); else fx.reveal();
+      if (type === "scratch") fx.win(); else fx.reveal();
       onDone();
     }
 
@@ -1140,13 +1133,8 @@
     var canvas = $("scratch");
     var ctx = canvas.getContext && canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) { $("veil").hidden = false; cleanup = function () { $("veil").classList.add("gone"); }; text.textContent = "dodirni „samo otvori”"; return; }
-    $("reveal").classList.add("ticket");
-    $("ticket-head").hidden = false;
-    $("ticket-foot").hidden = false;
-    $("ticket-no").textContent = "br. " + String(ticketNo).padStart(4, "0");
-    setContent($("label"), icon("heart"), icon("heart"), icon("heart"), " dobitak");
     canvas.hidden = false;
-    text.textContent = "ogrebi srećku prstom";
+    text.textContent = "ogrebi naljepnicu na kaseti";
 
     var box = canvas.getBoundingClientRect();
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -1173,7 +1161,7 @@
       for (var rx = -W; rx < W; rx += 78 * dpr) ctx.fillText("OGREBI", rx + ((ry / (22 * dpr)) % 2 ? 39 * dpr : 0), ry);
     }
     ctx.restore();
-    var pw = 190 * dpr, ph = 40 * dpr;
+    var pw = 150 * dpr, ph = 30 * dpr;
     ctx.fillStyle = "rgba(245,246,248,0.9)";
     ctx.beginPath();
     if (ctx.roundRect) ctx.roundRect((W - pw) / 2, (H - ph) / 2, pw, ph, ph / 2); else ctx.rect((W - pw) / 2, (H - ph) / 2, pw, ph);
@@ -1181,20 +1169,20 @@
     ctx.fillStyle = "#3d4250";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.font = "800 " + 15 * dpr + "px \"Courier Prime\", monospace";
-    ctx.fillText("OGREBI OVDJE", W / 2 + 12 * dpr, H / 2 + dpr);
+    ctx.font = "800 " + 13 * dpr + "px \"Courier Prime\", monospace";
+    ctx.fillText("OGREBI", W / 2 + 12 * dpr, H / 2 + dpr);
     // novčić lijevo od natpisa (nacrtan, ne emoji)
-    var cx0 = W / 2 - 70 * dpr, cy0 = H / 2;
+    var cx0 = W / 2 - 46 * dpr, cy0 = H / 2;
     ctx.fillStyle = "#c9a23a";
-    ctx.beginPath(); ctx.arc(cx0, cy0, 10 * dpr, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx0, cy0, 8 * dpr, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = "#8a6a14";
     ctx.lineWidth = 1.5 * dpr;
-    ctx.beginPath(); ctx.arc(cx0, cy0, 6.500 * dpr, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx0, cy0, 5 * dpr, 0, Math.PI * 2); ctx.stroke();
 
     ctx.globalCompositeOperation = "destination-out";
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
-    ctx.lineWidth = 30 * dpr;
+    ctx.lineWidth = 24 * dpr;
 
     var drawing = false, px = 0, py = 0, moves = 0, lastMove = 0;
     function pos(e) {
@@ -1226,7 +1214,7 @@
         return clear / total;
       } catch (e) { return 1; }
     }
-    function check() { if (cleared() > 0.6) finish(); }
+    function check() { if (cleared() > 0.55) finish(); }
 
     canvas.addEventListener("pointerdown", function (e) {
       drawing = true;
@@ -1263,8 +1251,7 @@
     cleanup = function () {
       fx.scratchEnd();
       canvas.classList.add("gone");
-      $("reveal").classList.add("won");   // sjaj preko listića
-      $("stamp").hidden = false;          // pečat "dobitak"
+      $("tape-label").classList.add("won");   // sjaj preleti naljepnicu
     };
   }
 
@@ -1288,7 +1275,6 @@
     var current = released.find(function (s) { return s.at === wanted; }) || latest;
     var isLatest = current === latest;
     var trackNo = released.indexOf(current) + 1;
-    var label = !isLatest ? "Iz arhive" : current.day === today ? "Pjesma dana" : "Zadnja pjesma";
 
     var muteBtn = $("mute");
     var paintMute = function () {
@@ -1305,7 +1291,7 @@
     });
     paintMute();
 
-    renderSong(current, trackNo, label);
+    renderSong(current, trackNo);
     deck.init(current);
     renderReactions(current);
     var streak = touchStreak(today);
@@ -1357,7 +1343,7 @@
       renderNext(upcoming[0], isLatest);
       peek.soon(celebrate ? 2600 : 1400);   // nakon slavlja, kad se ekran smiri
       if (celebrate) {
-        confetti($("reveal"), 26);
+        confetti($("tape"), 26);
         buzz([20, 40, 30]);
       }
     }

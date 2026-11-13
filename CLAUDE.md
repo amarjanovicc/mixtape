@@ -10,11 +10,14 @@ Dva pogleda, jahači na dnu ekrana (ili povlačenje prstom lijevo/desno): **Dana
 
 ### Ritual (pogled Danas) — svaki korak ima jasan razlog
 
-1. **Srećka: koja je pjesma?** Vidi samo trag (`hint`) i grebe srebrnu foliju. Ritual je
-   svaki dan isti (to ga čini navikom), a iznenađenje je sadržaj. Svaka peta pjesma je
-   umjesto toga **pogodi unazad** (`guess`: 5 s pjesme unatrag, tri naslova; treba zvuk i dvije
-   druge objavljene pjesme, inače srećka). `reveal` u pjesmi to nadjača. Uvijek postoji
-   „samo otvori”.
+1. **Naljepnica kasete je srećka: koja je pjesma?** Kaseta i srećka su jedan predmet.
+   Naljepnicu prekriva srebrna folija; vidi samo trag (`hint`) i grebe je prstom. Ispod
+   rukom piše naslov i izvođač, pa svaka kaseta nosi ime svoje pjesme (i u Kutiji). Nema
+   zasebnog listića ni kartice s naslovom. Ritual je svaki dan isti, a iznenađenje je sadržaj.
+   Svaka peta pjesma je umjesto toga **pogodi unazad** (`guess`: naljepnica je pod lokotom,
+   5 s pjesme unatrag, tri naslova; treba zvuk i dvije druge objavljene pjesme, inače srećka).
+   `reveal` u pjesmi to nadjača. Uvijek postoji „samo otvori”. Dok traje igra, povlačenje po
+   kaseti grebe, a ne premotava.
 2. **Kaseta: premotaj je na početak da zasvira.** Kaseta je „na kraju vrpce”; drži tipku za
    unazad ili povuci kasetu ulijevo (oko 2 s). Dok premotava čuje pjesmu ubrzano unatrag,
    a kad dođe do početka pjesma krene. Zato se kaseta vrti: premotaš je da bi je čula.
