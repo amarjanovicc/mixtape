@@ -242,6 +242,13 @@
     } else {
       art.classList.remove("has-cover");
     }
+    // naslovnica ide i na naljepnicu kasete kao mala slika
+    var tcv = $("tape-cover");
+    tcv.hidden = !(song.cover && /^https:\/\//.test(song.cover));
+    if (!tcv.hidden) {
+      tcv.onerror = function () { this.hidden = true; };
+      tcv.src = song.cover.replace(/\/hqdefault\.jpg$/, "/mqdefault.jpg");
+    }
     setContent($("sleeve-icon"), icon(look.sticker));
     $("sleeve-title").textContent = song.title;
     $("sleeve-artist").textContent = song.artist || "";
@@ -1224,11 +1231,11 @@
   // ---------- games ----------
 
   // Kaseta izlazi iz omota: omot se skupi u traku, a kaseta se spusti ispod njega.
-  function revealCassette() {
+  function revealCassette(animate) {
     var sl = $("sleeve"), tp = $("tape");
-    sl.classList.add("done");
     sl.classList.remove("won");
-    tp.hidden = false;   // pojavi se uz animaciju "drop" (spusti se ispod omota)
+    var swap = function () { sl.hidden = true; tp.hidden = false; };   // kaseta se spusti uz animaciju "drop"
+    if (animate && !reducedMotion) { sl.classList.add("done"); setTimeout(swap, 380); } else swap();
   }
 
   function startGame(type, song, ticketNo, decoys, onDone) {
@@ -1245,7 +1252,7 @@
       $("stage").classList.remove("gaming", "guessing");
       document.body.classList.remove("in-game");
       if (type === "scratch") fx.win(); else fx.reveal();
-      revealCassette();
+      revealCassette(true);
       onDone();
     }
 
@@ -1553,7 +1560,7 @@
     if (GAMES.indexOf(forced) === -1) forced = null;
 
     if (!forced && (!isLatest || state.opened[current.at])) {
-      revealCassette();
+      revealCassette(false);
       showAfter(false);
       return;
     }

@@ -166,11 +166,10 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
     linear-gradient(112deg, rgba(255, 255, 255, 0.34) 0 14%, transparent 14% 100%),
     linear-gradient(112deg, transparent 58%, rgba(255, 255, 255, 0.16) 58% 66%, transparent 66% 100%);
 }
-/* kad kaseta izađe, omot ostaje iza nje (kao da ju je izvukla iz kutije): vidi se naslovnica i hrbat */
-.sleeve.done { width: 80%; margin: 4px auto -84px; transform: rotate(1.8deg); }
-.sleeve.done .sleeve-tag { display: none; }
-.sleeve.done .sleeve-icon { font-size: 52px; }
-.tape { z-index: 2; }
+/* kad se omot ogrebe, nestane, a na njegovo mjesto se spusti kaseta (naslovnica ide na njezinu naljepnicu) */
+.sleeve.done { pointer-events: none; animation: sleeve-away 0.38s var(--ease-out) forwards; }
+@keyframes sleeve-away { to { opacity: 0; transform: rotate(1.3deg) scale(0.94) translateY(-12px); } }
+.tape-cover { flex: none; width: 46px; height: 46px; border: 2px solid var(--ink); border-radius: 3px; object-fit: cover; background: var(--paper); }
 
 /* ---------- kaseta ---------- */
 
