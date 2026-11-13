@@ -134,6 +134,10 @@ service workera, namjerno, da nikad ne vidi staru verziju.
   `prefers-reduced-motion`. Dizajn se provjerava na ≈375 px širine.
 - Vrijeme se uspoređuje kao „zidni sat” u `config.timeZone` (tekst `YYYY-MM-DDTHH:MM`);
   ista logika je u `app.js` i `check-songs.mjs` — mijenjaj obje zajedno.
+- **Svježina stranice** (`checkFresh` u `app.js`): mobilni preglednici vraćaju stranicu iz memorije
+  (gumb natrag) ili je zamrznu u pozadini, pa bi vidjela staro stanje (npr. resetiranu pjesmu).
+  Zato `pageshow` iz memorije radi reload, a nakon povratka iz pozadine se `/songs.js` usporedi
+  s učitanim i po promjeni se stranica učita opet.
 - U adminu nema `confirm()`: potvrde su u samoj stranici (dvostruki klik), jer ga mobilni preglednici znaju ugušiti.
 - Isprobavanje igre: `?igra=scratch`, `?igra=guess`. Stara pjesma: `?t=<date>`.
 

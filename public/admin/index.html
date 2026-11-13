@@ -455,6 +455,7 @@
         var ok = clearLocal(todaySong);
         msg("today-msg", ok ? "Resetirano na ovom uređaju. Otvori stranicu i ogrebi ponovno." : "Ne mogu očistiti ovaj uređaj.", ok ? "ok" : "err");
         $("today-open").hidden = !ok;
+        $("today-open").querySelector("a").href = "/?r=" + Date.now();
       });
 
       // Potvrda je u samoj stranici (dvostruki klik), ne u confirm(): mobilni preglednici
@@ -485,6 +486,7 @@
           clearLocal(s);
           renderSongs();
           $("today-open").hidden = false;
+          $("today-open").querySelector("a").href = "/?r=" + mark;     // uvijek svježe učitavanje
           if (!state.live) return msg("today-msg", "Resetirano. Klikni Objavi da ona to vidi.", "ok");
           // provjeri da je oznaka stvarno na živoj stranici
           return fetch("/songs.js?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.text(); }).then(function (js) {

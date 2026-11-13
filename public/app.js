@@ -1538,6 +1538,31 @@
     $("rewind-skip").addEventListener("click", deck.skipIntro);
   }
 
+  // ---------- svježina: povratak na stranicu ----------
+  //
+  // Mobilni preglednici zamrznu stranicu u pozadini ili je vrate iz memorije (gumb natrag,
+  // povratak s admina). Tada se ne izvrši ništa, pa ona i dalje vidi staro stanje, npr. pjesmu
+  // koju si joj upravo resetirao. Zato: povratak iz memorije = ponovno učitavanje, a nakon
+  // povratka iz pozadine provjeri je li se sadržaj promijenio pa tek tada učitaj opet.
+  var loadedJson = JSON.stringify(data);
+  var hiddenAt = 0, checking = false;
+  function checkFresh() {
+    if (checking || !window.fetch || location.protocol === "file:") return;
+    checking = true;
+    fetch("songs.js?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.ok ? r.text() : ""; }).then(function (text) {
+      if (!text) return;
+      var w = {};
+      try { new Function("window", text)(w); } catch (e) { return; }
+      if (w.DAILY_SONG && JSON.stringify(w.DAILY_SONG) !== loadedJson) location.reload();
+    }).catch(function () {}).then(function () { checking = false; });
+  }
+  window.addEventListener("pageshow", function (e) { if (e.persisted) location.reload(); });
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "hidden") { hiddenAt = Date.now(); return; }
+    if (hiddenAt && Date.now() - hiddenAt > 2000) checkFresh();
+  });
+  window.addEventListener("focus", function () { if (hiddenAt && Date.now() - hiddenAt > 2000) checkFresh(); });
+
   try {
     main();
   } catch (err) {
