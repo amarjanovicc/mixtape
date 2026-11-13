@@ -105,6 +105,10 @@
     .tag.now { background: var(--accent); } .tag.wait { background: var(--sticky); }
     .acts { display: flex; gap: 6px; flex: none; }
     .empty { margin: 0; color: var(--muted); }
+    .today-song { margin: 0 0 12px; font-weight: 700; overflow-wrap: anywhere; }
+    .today-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+    .today-actions button { flex: 1 1 160px; }
+    .today-open { margin: 10px 0 0; }
     .reward { display: grid; grid-template-columns: 44px 76px 1fr auto; gap: 8px; margin-bottom: 8px; align-items: center; }
     .reward .who, .cast .who { display: grid; place-items: center; min-height: 44px; }
     .cast, .pet { display: grid; grid-template-columns: 64px 1fr; gap: 10px; align-items: center; margin-bottom: 12px; }
@@ -150,6 +154,18 @@
       <button class="primary" id="publish" type="button">Objavi</button>
     </section>
     <pre class="log" id="publish-log" hidden></pre>
+
+    <section class="card" id="today" hidden>
+      <h2>Danas svira</h2>
+      <p class="today-song" id="today-song"></p>
+      <div class="today-actions">
+        <button class="primary" id="reset-all" type="button">Resetiraj pjesmu</button>
+        <button id="reset-local" type="button">Samo na ovom uređaju</button>
+      </div>
+      <p class="help">Reset briše otvaranje, spremanje u kutiju i reakciju za ovu pjesmu, pa se opet grebe od početka. Kod nje se primijeni kad sljedeći put otvori stranicu. Niz dana ostaje.</p>
+      <p class="msg" id="today-msg" hidden></p>
+      <p class="today-open" id="today-open" hidden><a href="/" target="_blank" rel="noopener">Otvori stranicu i ogrebi ponovno</a></p>
+    </section>
 
     <form class="card" id="song-form" autocomplete="off">
       <h2 id="form-title">Nova pjesma</h2>
@@ -396,11 +412,6 @@
           info.appendChild(sub);
           li.appendChild(info);
           var acts = el("div", { class: "acts" });
-          if (s === current) {
-            var rs = el("button", { class: "small", type: "button", title: "Ona će ovu pjesmu ponovno otkrivati" }, "Resetiraj");
-            rs.addEventListener("click", function () { resetSong(s); });
-            acts.appendChild(rs);
-          }
           var edit = el("button", { class: "small", type: "button" }, "Uredi");
           edit.addEventListener("click", function () { startEdit(s); });
           var del = el("button", { class: "small danger", type: "button", "aria-label": "Obriši " + s.title }, "Obriši");
@@ -409,8 +420,56 @@
           li.appendChild(acts);
           list.appendChild(li);
         });
+        renderToday(current);
         renderPublish();
       }
+
+      // ---------- današnja pjesma: reset ----------
+
+      var todaySong = null;
+      function renderToday(current) {
+        todaySong = current || null;
+        $("today").hidden = !current;
+        if (!current) return;
+        $("today-song").textContent = current.title + (current.artist ? " — " + current.artist : "");
+      }
+
+      // Stranica i sučelje su na istoj adresi, pa sučelje može očistiti i napredak na ovom uređaju.
+      function clearLocal(song) {
+        try {
+          var raw = localStorage.getItem("pjesma-dana:v2");
+          var st = raw ? JSON.parse(raw) : {};
+          var k = at(song);
+          ["opened", "collected", "reactions"].forEach(function (f) { if (st[f]) delete st[f][k]; });
+          localStorage.setItem("pjesma-dana:v2", JSON.stringify(st));
+          return true;
+        } catch (e) { return false; }
+      }
+
+      $("reset-local").addEventListener("click", function () {
+        if (!todaySong) return;
+        var ok = clearLocal(todaySong);
+        msg("today-msg", ok ? "Resetirano na ovom uređaju. Otvori stranicu i ogrebi ponovno." : "Ne mogu očistiti ovaj uređaj.", ok ? "ok" : "err");
+        $("today-open").hidden = !ok;
+      });
+
+      $("reset-all").addEventListener("click", function () {
+        var s = todaySong;
+        if (!s) return;
+        if (!confirm("Resetirati \"" + s.title + "\"?\n\nPjesma će se opet otkrivati od početka, na ovom uređaju odmah, a kod nje čim sljedeći put otvori stranicu. Nestaje iz kutije, a reakcija se briše. Niz dana ostaje.")) return;
+        $("reset-all").disabled = true;
+        msg("today-msg", "Resetiram…");
+        var songs = state.songs.map(function (x) { return x.date === s.date ? Object.assign({}, x, { reset: String(Date.now()) }) : x; });
+        api("PUT", "/api/data", { config: state.config, songs: songs }).then(function (data) {
+          state = data;
+          clearLocal(s);
+          renderSongs();
+          msg("today-msg", state.live ? "Resetirano i već je live: kod nje i na ovom uređaju." : "Resetirano. Klikni Objavi da ona to vidi.", "ok");
+          $("today-open").hidden = false;
+        }).catch(function (err) {
+          msg("today-msg", err.message, "err");
+        }).then(function () { $("reset-all").disabled = false; });
+      });
 
       // ---------- obrazac ----------
 
@@ -581,18 +640,6 @@
           msg("form-msg", err.message, "err");
         }).then(function () { $("save").disabled = false; });
       });
-
-      // Reset: pjesma dobije novu oznaku; njena stranica je vidi nakon objave i pjesma joj opet
-      // bude neotkrivena (nestane i iz kutije i njena reakcija). Niz dana ostaje.
-      function resetSong(s) {
-        if (!confirm("Resetirati \"" + s.title + "\"?\n\nOna će je ponovno otkrivati čim otvori stranicu (nakon objave). Pjesma nestaje iz njene kutije, a reakcija se briše. Niz dana ostaje.")) return;
-        var songs = state.songs.map(function (x) { return x === s ? Object.assign({}, x, { reset: String(Date.now()) }) : x; });
-        api("PUT", "/api/data", { config: state.config, songs: songs }).then(function (data) {
-          state = data;
-          renderSongs();
-          msg("form-msg", state.live ? "Pjesma je resetirana i već je live." : "Pjesma je resetirana. Klikni Objavi da ona to vidi.", "ok");
-        }).catch(function (err) { msg("form-msg", err.message, "err"); });
-      }
 
       function removeSong(s) {
         if (!confirm("Obrisati \"" + s.title + "\"?" + (s.audio ? "\nBriše se i spremljeni zvuk." : ""))) return;

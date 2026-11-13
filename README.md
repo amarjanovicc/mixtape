@@ -22,7 +22,7 @@ Otvori **https://mixtape-wine.vercel.app/admin** i prijavi se lozinkom (`ADMIN_P
 2. **Kad se pojavi?** Sljedeći slobodan dan (zadano), odmah, ili odabrani dan.
 3. **Zašto te podsjetila na nju?** Tvoja poruka.
 
-Zatim *Spremi pjesmu*. Uz pjesmu koja trenutno svira je gumb **Resetiraj**: ona je odmah opet otkriva od početka (igra, premotavanje, poruka), a iz kutije joj nestaje dok je ponovno ne spremi. Niz dana ostaje.
+Zatim *Spremi pjesmu*. Pri vrhu je kartica **Danas svira** s gumbom **Resetiraj pjesmu**: današnja pjesma se opet otkriva od početka (grebanje, premotavanje, poruka), na ovom uređaju odmah, a kod nje čim sljedeći put otvori stranicu. Iz kutije joj nestaje dok je ponovno ne spremi. Niz dana ostaje. **Samo na ovom uređaju** briše napredak samo na uređaju s kojeg si ušao u admin (za tvoje isprobavanje, ne dira nju).
 
 Ostalo je skriveno pod **Više opcija**: trag prije otkrivanja, tajni P.S., odabir igre, izbor isječka i vlastiti zvuk (mp3, m4a, ogg, wav, do 4 MB). Njeno ime, tvoj potpis, WhatsApp, likovi za naljepnice (kosa, ten, životinje) i same naljepnice su pod **Postavke**.
 
