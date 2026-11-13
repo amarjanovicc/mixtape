@@ -219,11 +219,15 @@
     $("tape-line1").textContent = song.title;
     $("tape-line2").textContent = song.artist || "";
     $("tape-line2").hidden = !song.artist;
-    var tc = $("tape-cover");
-    tc.hidden = !song.cover;
-    if (song.cover) {
-      tc.onerror = function () { this.hidden = true; };
-      tc.src = song.cover;
+    // omot: naslovnica pjesme preko cijele kasete (a dok se ne učita, vidi se boja pjesme)
+    var tapeEl = $("tape");
+    if (song.cover && /^https:\/\//.test(song.cover)) {
+      // YouTubeov hqdefault ima crne trake gore i dolje; mqdefault je čist 16:9
+      var coverUrl = song.cover.replace(/\/hqdefault\.jpg$/, "/mqdefault.jpg");
+      tapeEl.style.setProperty("--cover", 'url("' + coverUrl.replace(/"/g, "%22") + '")');
+      tapeEl.classList.add("has-cover");
+    } else {
+      tapeEl.classList.remove("has-cover");
     }
     $("tape-meta").textContent = "#" + pad(trackNo) + " · " + formatDate(song.day, { day: "numeric", month: "long" });
 
@@ -1275,12 +1279,13 @@
     var ctx = canvas.getContext && canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) { $("veil").hidden = false; cleanup = function () { $("veil").classList.add("gone"); }; text.textContent = "dodirni „samo otvori”"; return; }
     canvas.hidden = false;
-    text.textContent = "ogrebi naljepnicu na kaseti";
+    text.textContent = "ogrebi omot kasete";
 
-    var box = canvas.getBoundingClientRect();
+    // kaseta je zakrenuta, pa se veličina uzima iz neokrenutih mjera, a dodir se vraća natrag
+    var cw = Math.max(1, canvas.offsetWidth), ch = Math.max(1, canvas.offsetHeight);
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    var W = canvas.width = Math.max(1, Math.round(box.width * dpr));
-    var H = canvas.height = Math.max(1, Math.round(box.height * dpr));
+    var W = canvas.width = Math.round(cw * dpr);
+    var H = canvas.height = Math.round(ch * dpr);
 
     // folija: metalni preljev + zrno + sitni tisak "OGREBI"
     var g = ctx.createLinearGradient(0, 0, W, H);
@@ -1302,7 +1307,7 @@
       for (var rx = -W; rx < W; rx += 78 * dpr) ctx.fillText("OGREBI", rx + ((ry / (22 * dpr)) % 2 ? 39 * dpr : 0), ry);
     }
     ctx.restore();
-    var pw = 150 * dpr, ph = 30 * dpr;
+    var pw = 170 * dpr, ph = 36 * dpr;
     ctx.fillStyle = "rgba(245,246,248,0.9)";
     ctx.beginPath();
     if (ctx.roundRect) ctx.roundRect((W - pw) / 2, (H - ph) / 2, pw, ph, ph / 2); else ctx.rect((W - pw) / 2, (H - ph) / 2, pw, ph);
@@ -1310,10 +1315,10 @@
     ctx.fillStyle = "#3d4250";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.font = "800 " + 13 * dpr + "px \"Courier Prime\", monospace";
-    ctx.fillText("OGREBI", W / 2 + 12 * dpr, H / 2 + dpr);
+    ctx.font = "800 " + 15 * dpr + "px \"Courier Prime\", monospace";
+    ctx.fillText("OGREBI OMOT", W / 2 + 14 * dpr, H / 2 + dpr);
     // novčić lijevo od natpisa (nacrtan, ne emoji)
-    var cx0 = W / 2 - 46 * dpr, cy0 = H / 2;
+    var cx0 = W / 2 - 62 * dpr, cy0 = H / 2;
     ctx.fillStyle = "#c9a23a";
     ctx.beginPath(); ctx.arc(cx0, cy0, 8 * dpr, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = "#8a6a14";
@@ -1323,12 +1328,18 @@
     ctx.globalCompositeOperation = "destination-out";
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
-    ctx.lineWidth = 24 * dpr;
+    ctx.lineWidth = 34 * dpr;
 
     var drawing = false, px = 0, py = 0, moves = 0, lastMove = 0;
+    function tapeAngle() {
+      try { var m = new DOMMatrixReadOnly(getComputedStyle($("tape")).transform); return Math.atan2(m.b, m.a); } catch (e) { return 0; }
+    }
     function pos(e) {
       var r = canvas.getBoundingClientRect();
-      return [(e.clientX - r.left) * (W / r.width), (e.clientY - r.top) * (H / r.height)];
+      var a = tapeAngle();
+      var dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+      var x = dx * Math.cos(a) + dy * Math.sin(a), y = -dx * Math.sin(a) + dy * Math.cos(a);
+      return [(x + cw / 2) * (W / cw), (y + ch / 2) * (H / ch)];
     }
     // neravan rub poteza, kao trag novčića
     function rough(x, y) {
@@ -1355,7 +1366,7 @@
         return clear / total;
       } catch (e) { return 1; }
     }
-    function check() { if (cleared() > 0.55) finish(); }
+    function check() { if (cleared() > 0.4) finish(); }
 
     canvas.addEventListener("pointerdown", function (e) {
       drawing = true;
@@ -1392,7 +1403,7 @@
     cleanup = function () {
       fx.scratchEnd();
       canvas.classList.add("gone");
-      $("tape-label").classList.add("won");   // sjaj preleti naljepnicu
+      $("tape").classList.add("won");   // sjaj preleti kasetu
     };
   }
 

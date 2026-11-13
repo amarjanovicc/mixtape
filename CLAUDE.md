@@ -10,11 +10,12 @@ Dva pogleda, jahači na dnu ekrana (ili povlačenje prstom lijevo/desno): **Dana
 
 ### Ritual (pogled Danas) — svaki korak ima jasan razlog
 
-1. **Naljepnica kasete je srećka: koja je pjesma?** Kaseta i srećka su jedan predmet.
-   Naljepnicu prekriva srebrna folija; vidi samo trag (`hint`) i grebe je prstom. Ispod
-   rukom piše naslov i izvođač, pa svaka kaseta nosi ime svoje pjesme (i u Kutiji). Nema
-   zasebnog listića ni kartice s naslovom. Ritual je svaki dan isti, a iznenađenje je sadržaj.
-   Svaka peta pjesma je umjesto toga **pogodi unazad** (`guess`: naljepnica je pod lokotom,
+1. **Omot kasete je srećka: koja je pjesma?** Naslovnica pjesme je omot preko CIJELE kasete
+   (`--cover` na `.tape`, a bez naslovnice ostaje boja pjesme), a srebrna folija prekriva cijelu
+   kasetu. Vidi samo trag (`hint`) i grebe je prstom; ispod se otkrije kaseta s omotom, naljepnicom
+   s naslovom i izvođačem te donjom pločom s brojem i datumom. Kaseta je zakrenuta pa se dodir
+   vraća natrag za kut (`tapeAngle`/`pos` u `app.js`). Ritual je svaki dan isti, a iznenađenje je
+   sadržaj. Svaka peta pjesma je umjesto toga **pogodi unazad** (`guess`: kaseta je pod lokotom,
    5 s pjesme unatrag, tri naslova; treba zvuk i dvije druge objavljene pjesme, inače srećka).
    `reveal` u pjesmi to nadjača. Uvijek postoji „samo otvori”. Dok traje igra, povlačenje po
    kaseti grebe, a ne premotava.

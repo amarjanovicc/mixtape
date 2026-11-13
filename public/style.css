@@ -106,11 +106,18 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
   border-radius: 12px;
   background: var(--accent);
   box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.3), inset 0 -5px 0 rgba(43, 33, 24, 0.16), 5px 6px 0 var(--ink);
+  overflow: hidden;
   transform: rotate(-2.5deg);
   animation: drop 0.7s var(--ease-out) both;
   touch-action: pan-y;
   user-select: none;
   -webkit-user-select: none;
+}
+/* omot: naslovnica pjesme preko cijele kasete (ako je nema, ostaje boja pjesme) */
+.tape.has-cover {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.08), rgba(43, 33, 24, 0.22)), var(--cover);
+  background-size: cover;
+  background-position: center;
 }
 .tape.live { cursor: grab; }
 .tape.live:active { cursor: grabbing; }
@@ -118,7 +125,9 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
 
 /* gornji rub: oznaka strane i naljepnica */
 .tape-top { flex: 0 0 6%; display: flex; align-items: center; justify-content: space-between; padding: 0 2px; }
-.side { font-family: var(--hand); font-weight: 700; font-size: 1.05rem; line-height: 1; color: var(--sheet); text-shadow: 1px 1px 0 rgba(43, 33, 24, 0.55); }
+/* sitni papirići da se oznake vide na bilo kojem omotu */
+.side, .tape-sticker { font-size: 17px; line-height: 1; padding: 3px 6px; }
+.side { font-family: var(--hand); font-weight: 700; font-size: 1.05rem; line-height: 1; }
 
 .tape-label {
   position: relative;
@@ -134,7 +143,6 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
   font-family: var(--hand);
   overflow: hidden;
 }
-.tape-cover { flex: none; width: 46px; height: 46px; border: 2px solid var(--ink); border-radius: 3px; object-fit: cover; background: var(--paper); }
 .tape-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 /* naslov pjesme rukom na naljepnici: do dva reda */
 .tape-line {
@@ -150,7 +158,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
 }
 .tape-line.small { font-size: 1.1rem; font-weight: 500; color: var(--muted); -webkit-line-clamp: 1; }
 /* dobitak: sjaj preleti naljepnicu */
-.tape-label.won::after {
+.tape.won::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -214,12 +222,12 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  background: rgba(43, 33, 24, 0.2);
+  background: rgba(255, 250, 240, 0.9);
   clip-path: polygon(6% 0, 94% 0, 100% 100%, 0 100%);
 }
-.foot-hole { flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--ink); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.28); }
+.foot-hole { flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--ink); }
 .tape-meta { flex: 1; min-width: 0; text-align: center; font-size: 0.62rem; letter-spacing: 0.03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink); opacity: 0.8; }
-.chev { flex: none; display: inline-flex; font-size: 1.05rem; color: var(--sheet); opacity: 0; transition: opacity 0.3s; filter: drop-shadow(1px 1px 0 rgba(43, 33, 24, 0.7)); }
+.chev { flex: none; display: inline-flex; font-size: 1.05rem; color: var(--ink); opacity: 0; transition: opacity 0.3s; }
 .tape.live .chev { opacity: 1; }
 .tape.live .chev-l .icon { animation: slide-l 1.5s ease-in-out infinite; }
 .tape.live .chev-r .icon { animation: slide-r 1.5s ease-in-out infinite; }
@@ -316,11 +324,12 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
 }
 .artist { margin: 8px 0 0; font-weight: 700; color: var(--muted); }
 
-/* ---------- folija i veo preko naljepnice kasete ---------- */
+/* ---------- folija i veo preko cijele kasete ---------- */
 
 .scratch {
   position: absolute;
   inset: 0;
+  z-index: 3;
   width: 100%;
   height: 100%;
   touch-action: none;
@@ -331,15 +340,17 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
 .veil {
   position: absolute;
   inset: 0;
+  z-index: 3;
   display: grid;
   place-items: center;
-  font-size: 2rem;
+  font-size: 2.4rem;
   color: var(--ink);
   background: repeating-linear-gradient(-45deg, transparent 0 9px, var(--rule) 9px 10.5px), var(--sheet);
   transition: opacity 0.5s, transform 0.5s var(--ease-out);
 }
-.veil .icon { display: block; padding: 8px; box-sizing: content-box; background: var(--sheet); border-radius: 50%; }
+.veil .icon { display: block; padding: 10px; box-sizing: content-box; background: var(--sheet); border-radius: 50%; }
 .gone { opacity: 0; pointer-events: none; }
+.veil.gone { transform: scale(1.1); }
 .flake {
   position: fixed;
   z-index: 10;

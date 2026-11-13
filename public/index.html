@@ -67,13 +67,10 @@
         <div class="tape-top" aria-hidden="true"><span class="side">A</span><i class="tape-sticker" id="tape-sticker"></i></div>
         <!-- naljepnica je ujedno i srećka: ispod folije piše koja je pjesma -->
         <div class="tape-label" id="tape-label">
-          <img class="tape-cover" id="tape-cover" alt="" hidden>
           <div class="tape-text">
             <h1 class="tape-line" id="tape-line1"></h1>
             <p class="tape-line small" id="tape-line2"></p>
           </div>
-          <canvas class="scratch" id="scratch" hidden></canvas>
-          <div class="veil" id="veil" hidden><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg></div>
         </div>
         <div class="tape-window">
           <span class="spool" id="spool-l"><i class="reel"></i></span>
@@ -88,6 +85,9 @@
           <span class="chev chev-r"><svg class="icon" aria-hidden="true"><use href="#i-chev-right"/></svg></span>
           <i class="foot-hole"></i>
         </div>
+        <!-- omot: folija (ili lokot) prekriva cijelu kasetu, pa se grebe cijela -->
+        <canvas class="scratch" id="scratch" hidden></canvas>
+        <div class="veil" id="veil" hidden><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg></div>
       </div>
 
       <div class="deck" id="deck" hidden>
