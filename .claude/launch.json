@@ -8,6 +8,14 @@
         "server.mjs"
       ],
       "port": 4321
+    },
+    {
+      "name": "live-dev",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "scripts/dev-live.mjs"
+      ],
+      "port": 4330
     }
   ]
 }

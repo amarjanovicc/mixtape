@@ -80,6 +80,9 @@ service workera, namjerno, da nikad ne vidi staru verziju.
 - `data/songs.js` — **početni sadržaj** (dok u Blobu ništa nije spremljeno) i sadržaj lokalnog servera
 - `server.mjs` — lokalni server (bez lozinke, 127.0.0.1): stranica, `/admin`, ista sučelja API-ja
 - `scripts/check-songs.mjs` — provjera `data/songs.js`, pokreće se i kao Vercel build
+- `scripts/dev-live.mjs` — lokalno pokreće ISTE funkcije kao Vercel (`node scripts/dev-live.mjs`,
+  http://localhost:4330, lozinka `lokalna-lozinka`, pohrana u `data/.live-dev.json`): za
+  isprobavanje živog toka (prijava, spremanje, reset) prije objave
 - `tools/qr.html` — generator QR koda
 - `vercel.json`, `package.json` (jedina ovisnost: `@vercel/blob`)
 
@@ -131,6 +134,7 @@ service workera, namjerno, da nikad ne vidi staru verziju.
   `prefers-reduced-motion`. Dizajn se provjerava na ≈375 px širine.
 - Vrijeme se uspoređuje kao „zidni sat” u `config.timeZone` (tekst `YYYY-MM-DDTHH:MM`);
   ista logika je u `app.js` i `check-songs.mjs` — mijenjaj obje zajedno.
+- U adminu nema `confirm()`: potvrde su u samoj stranici (dvostruki klik), jer ga mobilni preglednici znaju ugušiti.
 - Isprobavanje igre: `?igra=scratch`, `?igra=guess`. Stara pjesma: `?t=<date>`.
 
 ## Kad korisnik kaže „dodaj pjesmu” (glavni posao)

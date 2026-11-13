@@ -158,6 +158,7 @@
     <section class="card" id="today" hidden>
       <h2>Danas svira</h2>
       <p class="today-song" id="today-song"></p>
+      <p class="help" id="today-last" hidden></p>
       <div class="today-actions">
         <button class="primary" id="reset-all" type="button">Resetiraj pjesmu</button>
         <button id="reset-local" type="button">Samo na ovom uređaju</button>
@@ -432,6 +433,9 @@
         $("today").hidden = !current;
         if (!current) return;
         $("today-song").textContent = current.title + (current.artist ? " — " + current.artist : "");
+        var last = Number(current.reset);
+        $("today-last").hidden = !last;
+        if (last) $("today-last").textContent = "Zadnji reset: " + new Date(last).toLocaleString("hr-HR", { day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" });
       }
 
       // Stranica i sučelje su na istoj adresi, pa sučelje može očistiti i napredak na ovom uređaju.
@@ -453,21 +457,42 @@
         $("today-open").hidden = !ok;
       });
 
+      // Potvrda je u samoj stranici (dvostruki klik), ne u confirm(): mobilni preglednici
+      // i ugrađeni prozori znaju ugušiti confirm(), pa gumb tada izgleda kao da ne radi.
+      var resetArmed = 0;
+      function disarm() {
+        resetArmed = 0;
+        $("reset-all").textContent = "Resetiraj pjesmu";
+      }
+
       $("reset-all").addEventListener("click", function () {
         var s = todaySong;
         if (!s) return;
-        if (!confirm("Resetirati \"" + s.title + "\"?\n\nPjesma će se opet otkrivati od početka, na ovom uređaju odmah, a kod nje čim sljedeći put otvori stranicu. Nestaje iz kutije, a reakcija se briše. Niz dana ostaje.")) return;
+        if (!resetArmed || Date.now() - resetArmed > 8000) {
+          resetArmed = Date.now();
+          $("reset-all").textContent = "Potvrdi reset";
+          msg("today-msg", "Resetirati „" + s.title + "”? Pjesma će se opet otkrivati od početka, na ovom uređaju odmah, a kod nje čim sljedeći put otvori stranicu. Klikni opet za potvrdu.", "warn");
+          setTimeout(function () { if (resetArmed && Date.now() - resetArmed >= 8000) { disarm(); msg("today-msg"); } }, 8200);
+          return;
+        }
+        disarm();
         $("reset-all").disabled = true;
         msg("today-msg", "Resetiram…");
-        var songs = state.songs.map(function (x) { return x.date === s.date ? Object.assign({}, x, { reset: String(Date.now()) }) : x; });
+        var mark = String(Date.now());
+        var songs = state.songs.map(function (x) { return x.date === s.date ? Object.assign({}, x, { reset: mark }) : x; });
         api("PUT", "/api/data", { config: state.config, songs: songs }).then(function (data) {
           state = data;
           clearLocal(s);
           renderSongs();
-          msg("today-msg", state.live ? "Resetirano i već je live: kod nje i na ovom uređaju." : "Resetirano. Klikni Objavi da ona to vidi.", "ok");
           $("today-open").hidden = false;
+          if (!state.live) return msg("today-msg", "Resetirano. Klikni Objavi da ona to vidi.", "ok");
+          // provjeri da je oznaka stvarno na živoj stranici
+          return fetch("/songs.js?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.text(); }).then(function (js) {
+            if (js.indexOf('"reset":"' + mark + '"') !== -1) msg("today-msg", "Resetirano i provjereno: stranica to već vidi. Kod nje se primijeni čim je otvori.", "ok");
+            else msg("today-msg", "Reset je spremljen, ali ga stranica još ne vidi. Pričekaj par sekundi i klikni opet.", "warn");
+          });
         }).catch(function (err) {
-          msg("today-msg", err.message, "err");
+          msg("today-msg", "Reset nije uspio: " + err.message, "err");
         }).then(function () { $("reset-all").disabled = false; });
       });
 
@@ -642,7 +667,12 @@
       });
 
       function removeSong(s) {
-        if (!confirm("Obrisati \"" + s.title + "\"?" + (s.audio ? "\nBriše se i spremljeni zvuk." : ""))) return;
+        if (!window.__delArmed || window.__delArmed.d !== s.date || Date.now() - window.__delArmed.t > 8000) {
+          window.__delArmed = { d: s.date, t: Date.now() };
+          msg("form-msg", "Obrisati „" + s.title + "”?" + (s.audio ? " Briše se i spremljeni zvuk." : "") + " Klikni Obriši još jednom za potvrdu.", "warn");
+          return;
+        }
+        window.__delArmed = null;
         api("PUT", "/api/data", { config: state.config, songs: state.songs.filter(function (x) { return x !== s; }) }).then(function (data) {
           state = data;
           renderSongs();
