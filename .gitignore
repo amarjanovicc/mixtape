@@ -3,3 +3,4 @@ node_modules/
 *.log
 data/.live-dev.json
 node_modules/
+public/songs.js

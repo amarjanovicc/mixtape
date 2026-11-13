@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
-  "buildCommand": "node scripts/check-songs.mjs",
+  "buildCommand": "node scripts/check-songs.mjs && rm -f public/songs.js",
   "outputDirectory": "public",
   "cleanUrls": true,
   "headers": [

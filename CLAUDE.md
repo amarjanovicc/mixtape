@@ -134,6 +134,10 @@ service workera, namjerno, da nikad ne vidi staru verziju.
   `prefers-reduced-motion`. Dizajn se provjerava na ≈375 px širine.
 - Vrijeme se uspoređuje kao „zidni sat” u `config.timeZone` (tekst `YYYY-MM-DDTHH:MM`);
   ista logika je u `app.js` i `check-songs.mjs` — mijenjaj obje zajedno.
+- **`public/songs.js` NE SMIJE postojati.** Vercel prvo poslužuje datoteku iz `public/`, a tek onda
+  primijeni `rewrite` na funkciju, pa bi zaostala statična kopija zasjenila živi sadržaj (stranica bi
+  vječno prikazivala staro: nove pjesme i reset se ne bi vidjeli). Sadržaj je u `data/songs.js`
+  (početni) i u Blobu (živi). Datoteka je u `.gitignore`, a build je briše.
 - **`/songs.js` se nikad ne smije keširati na Vercelovom CDN-u.** Pravilo `headers` u `vercel.json`
   s `public, max-age=0, must-revalidate` na tom putu nadjačalo je `no-store` funkcije pa je CDN
   danima/minutama držao staru kopiju (nova pjesma i reset se nisu vidjeli). Zato `songs.js` nije u
