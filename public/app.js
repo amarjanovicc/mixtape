@@ -602,6 +602,7 @@
     var raw = null, buf = null, rev = null;       // preuzeti bajtovi -> dekodirano -> obrnuto
     var scrubSrc = null, scrubGain = null, scrubDir = 0;
     var whirr = null, scr = null, scrTimer = 0;
+    var keepEl = null, primed = false;
     var loadState = "none";   // none | loading | ready | failed
     var waiters = [], clip = null;
     function settle(st) {
@@ -609,6 +610,44 @@
       var w = waiters;
       waiters = [];
       w.forEach(function (cb) { cb(st === "ready"); });
+    }
+
+    // Mobilni preglednici (iOS Safari prije svih) ušutkaju Web Audio ako: (1) kontekst nije
+    // pokrenut unutar dodira koji preglednik priznaje (touchend/click, ne touchstart), ili
+    // (2) je mobitel na tihom načinu (prekidač zvona). Pjesma se čuje jer je <audio>, a efekti
+    // nisu. Zato: "playback" zvučna sesija gdje postoji, a inače tihi <audio> u petlji.
+    function silentUrl() {
+      var n = 4000, b = new Uint8Array(44 + n * 2), v = new DataView(b.buffer);
+      var w = function (o, t) { for (var i = 0; i < t.length; i++) b[o + i] = t.charCodeAt(i); };
+      w(0, "RIFF"); v.setUint32(4, 36 + n * 2, true); w(8, "WAVEfmt ");
+      v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+      v.setUint32(24, 8000, true); v.setUint32(28, 16000, true); v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+      w(36, "data"); v.setUint32(40, n * 2, true);
+      return URL.createObjectURL(new Blob([b], { type: "audio/wav" }));
+    }
+    function keepAlive() {
+      try { if (navigator.audioSession && navigator.audioSession.type !== "playback") navigator.audioSession.type = "playback"; } catch (e) {}
+      if (navigator.audioSession) return;
+      try {
+        if (!keepEl) {
+          keepEl = new Audio();
+          keepEl.loop = true;
+          keepEl.setAttribute("playsinline", "");
+          keepEl.src = silentUrl();
+        }
+        if (keepEl.paused) { var pr = keepEl.play(); if (pr && pr.catch) pr.catch(function () {}); }
+      } catch (e) {}
+    }
+    // tihi "prazan" zvuk unutar dodira otključa kontekst na iOS-u
+    function prime() {
+      if (!ctx || primed) return;
+      try {
+        var src = ctx.createBufferSource();
+        src.buffer = ctx.createBuffer(1, 1, 22050);
+        src.connect(ctx.destination);
+        src.start(0);
+        primed = true;
+      } catch (e) {}
     }
 
     function ready() {
@@ -626,7 +665,7 @@
         } catch (e) { ctx = null; return false; }
         decode();
       }
-      if (ctx.state === "suspended") { try { ctx.resume(); } catch (e) {} }
+      if (ctx.state !== "running") { try { ctx.resume(); } catch (e) {} }
       return true;
     }
 
@@ -710,7 +749,14 @@
           decode();
         }).catch(function () { settle("failed"); });
       },
-      unlock: ready,
+      // zove se iz svakog dodira (touchstart/touchend/click...): jeftino kad je već sve pokrenuto
+      unlock: function () {
+        var wasRunning = ctx && ctx.state === "running" && primed;
+        ready();
+        if (wasRunning) return;
+        keepAlive();
+        prime();
+      },
       // javi kad je zvuk spreman za puštanje unazad (ili da neće biti)
       onBuffer: function (cb) {
         ready();
@@ -1293,6 +1339,11 @@
     var current = released.find(function (s) { return s.at === wanted; }) || latest;
     var isLatest = current === latest;
     var trackNo = released.indexOf(current) + 1;
+
+    // otključaj zvuk na prvi dodir bilo gdje (mobiteli ne dopuštaju zvuk bez njega)
+    ["touchstart", "touchend", "pointerup", "click", "keydown"].forEach(function (ev) {
+      document.addEventListener(ev, fx.unlock, { capture: true, passive: true });
+    });
 
     var muteBtn = $("mute");
     var paintMute = function () {
