@@ -134,6 +134,11 @@ service workera, namjerno, da nikad ne vidi staru verziju.
   `prefers-reduced-motion`. Dizajn se provjerava na ≈375 px širine.
 - Vrijeme se uspoređuje kao „zidni sat” u `config.timeZone` (tekst `YYYY-MM-DDTHH:MM`);
   ista logika je u `app.js` i `check-songs.mjs` — mijenjaj obje zajedno.
+- **`/songs.js` se nikad ne smije keširati na Vercelovom CDN-u.** Pravilo `headers` u `vercel.json`
+  s `public, max-age=0, must-revalidate` na tom putu nadjačalo je `no-store` funkcije pa je CDN
+  danima/minutama držao staru kopiju (nova pjesma i reset se nisu vidjeli). Zato `songs.js` nije u
+  tom pravilu, a `lib/http.mjs` šalje i `CDN-Cache-Control: no-store`. Provjera: `curl -sI /songs.js`
+  ne smije imati `x-vercel-cache: HIT`.
 - **Svježina stranice** (`checkFresh` u `app.js`): mobilni preglednici vraćaju stranicu iz memorije
   (gumb natrag) ili je zamrznu u pozadini, pa bi vidjela staro stanje (npr. resetiranu pjesmu).
   Zato `pageshow` iz memorije radi reload, a nakon povratka iz pozadine se `/songs.js` usporedi
