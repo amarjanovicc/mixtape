@@ -49,6 +49,8 @@ Sučelje radi samo na tvom računalu (127.0.0.1) i nema lozinku, pa ga ne izlaž
 
 Polja se mogu uređivati i ručno u [`public/songs.js`](public/songs.js): `date`, `title`, `artist`, `hint`, `note`, `ps`, `spotify`, `youtube`, `audio`, `preview`, `cover`, `reveal`. Nakon ručne promjene: `node scripts/check-songs.mjs`.
 
+**Adresa stranice: https://mixtape-wine.vercel.app** (QR kod vodi na nju; ne mijenja se kad dodaješ pjesme).
+
 ## Prvo postavljanje
 
 1. U sučelju pod *Postavke* upiši njeno ime, svoj potpis i WhatsApp broj, obriši primjere i dodaj svoje pjesme.

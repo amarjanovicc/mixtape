@@ -80,6 +80,7 @@
       var currentSvg = "";
 
       try { urlIn.value = localStorage.getItem("qr-url") || ""; } catch (e) {}
+      if (!urlIn.value) urlIn.value = "https://mixtape-wine.vercel.app";
 
       function buildSvg(text) {
         var qr = qrcode(0, "M");
