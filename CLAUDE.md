@@ -19,6 +19,9 @@ Dva pogleda, jahači na dnu ekrana (ili povlačenje prstom lijevo/desno): **Dana
    5 s pjesme unatrag, tri naslova; treba zvuk i dvije druge objavljene pjesme, inače srećka).
    `reveal` u pjesmi to nadjača. Uvijek postoji „samo otvori”. Dok traje igra, povlačenje po
    kaseti grebe, a ne premotava.
+   **Krivi odgovori** su polje `decoys` ("naslov | naslov"): admin ih popuni iz izvođačevih drugih
+   pjesama (iTunes), a mogu se urediti. Bez njih se uzimaju prijašnje pjesme, što je preslabo jer
+   ih je već čula pa pogađa onu koju nije vidjela.
 2. **Kaseta: premotaj je na početak da zasvira.** Kaseta je „na kraju vrpce”; drži tipku za
    unazad ili povuci kasetu ulijevo (oko 2 s). Dok premotava čuje pjesmu ubrzano unatrag,
    a kad dođe do početka pjesma krene. Zato se kaseta vrti: premotaš je da bi je čula.

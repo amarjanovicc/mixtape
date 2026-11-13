@@ -222,6 +222,13 @@
             <option value="guess">Pogodi unazad</option>
           </select>
 
+          <label>Krivi odgovori <small>(igra "pogodi unazad")</small></label>
+          <div class="row">
+            <input id="wrong1" placeholder="Drugi naslov">
+            <input id="wrong2" placeholder="Još jedan naslov">
+          </div>
+          <p class="help">Dvije druge pjesme koje bi je mogle zbuniti. Same se popune iz izvođačevih drugih pjesama. Ako ostanu prazne, koriste se prijašnje pjesme, što je lakše pogoditi jer ih je već čula.</p>
+
           <div id="preview-box" hidden>
             <div class="label">Isječak od 30 s</div>
             <div class="previews" id="previews"></div>
@@ -552,7 +559,10 @@
         $("hint").value = s.hint || "";
         $("ps").value = s.ps || "";
         $("reveal").value = s.reveal || "";
-        $("more").open = Boolean(s.hint || s.ps || s.reveal || s.audio);
+        var dd = String(s.decoys || "").split("|").map(function (x) { return x.trim(); });
+        $("wrong1").value = dd[0] || "";
+        $("wrong2").value = dd[1] || "";
+        $("more").open = Boolean(s.hint || s.ps || s.reveal || s.audio || s.decoys);
         if (s.audio) $("file-hint").textContent = "Trenutno: tvoja datoteka. Odaberi novu samo ako je želiš zamijeniti.";
         showFound();
         showNames(!$("title").value);
@@ -608,6 +618,9 @@
           if (!draft.cover && candidates[0]) draft.cover = candidates[0].cover;
           if (r.title) $("title").value = r.title;
           if (r.artist) $("artist").value = r.artist;
+          var ds = (r.decoys || []).filter(function (t) { return t.toLowerCase() !== String(r.title || "").toLowerCase(); });
+          if (!$("wrong1").value) $("wrong1").value = ds[0] || "";
+          if (!$("wrong2").value) $("wrong2").value = ds[1] || "";
           renderPreviews();
           showFound();
           msg("lookup-msg", (r.notes || []).join("\n"), "warn");
@@ -645,6 +658,7 @@
           hint: $("hint").value, note: $("note").value, ps: $("ps").value,
           spotify: draft.spotify, youtube: draft.youtube, reset: draft.reset,
           audio: draft.audio, preview: draft.preview, cover: draft.cover, reveal: $("reveal").value,
+          decoys: [$("wrong1").value, $("wrong2").value].map(function (x) { return x.trim(); }).filter(Boolean).join(" | "),
         };
         if (!song.title.trim()) return msg("form-msg", "Upiši naslov pjesme.", "err");
 

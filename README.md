@@ -24,7 +24,7 @@ Otvori **https://mixtape-wine.vercel.app/admin** i prijavi se lozinkom (`ADMIN_P
 
 Zatim *Spremi pjesmu*. Pri vrhu je kartica **Danas svira** s gumbom **Resetiraj pjesmu**: današnja pjesma se opet otkriva od početka (grebanje, premotavanje, poruka), na ovom uređaju odmah, a kod nje čim sljedeći put otvori stranicu. Iz kutije joj nestaje dok je ponovno ne spremi. Niz dana ostaje. **Samo na ovom uređaju** briše napredak samo na uređaju s kojeg si ušao u admin (za tvoje isprobavanje, ne dira nju).
 
-Ostalo je skriveno pod **Više opcija**: trag prije otkrivanja, tajni P.S., odabir igre, izbor isječka i vlastiti zvuk (mp3, m4a, ogg, wav, do 4 MB). Njeno ime, tvoj potpis, WhatsApp, likovi za naljepnice (kosa, ten, životinje) i same naljepnice su pod **Postavke**.
+Ostalo je skriveno pod **Više opcija**: trag prije otkrivanja, tajni P.S., odabir igre, krivi odgovori za „pogodi unazad” (sami se popune iz izvođačevih drugih pjesama), izbor isječka i vlastiti zvuk (mp3, m4a, ogg, wav, do 4 MB). Njeno ime, tvoj potpis, WhatsApp, likovi za naljepnice (kosa, ten, životinje) i same naljepnice su pod **Postavke**.
 
 Kako je to složeno: pjesme i zvukovi su u **privatnom** Vercel Blobu (ništa nije javno dostupno izravno), a njena stranica ih dobiva samo kroz funkcije: sadržaj preko `/songs.js` (`api/songs.js`), zvuk preko `/media/<ime>` (`api/media.js`). **Pjesme čije vrijeme još nije došlo nikad ne napuštaju server**, pa ih nitko ne može pročitati iz koda stranice; vidi se samo odbrojavanje do sljedeće. Dok pohrana ne postoji, stranica prikazuje početni sadržaj iz `data/songs.js`.
 

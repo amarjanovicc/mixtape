@@ -21,7 +21,7 @@
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 .icon { display: inline-block; flex: none; width: 1em; height: 1em; vertical-align: -0.14em; }
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; overflow-x: hidden; overscroll-behavior-x: none; }
 html, body { margin: 0; }
 button, a { touch-action: manipulation; }
 

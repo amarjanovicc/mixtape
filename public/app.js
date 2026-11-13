@@ -1535,11 +1535,17 @@
     var auto = trackNo % 5 === 0 ? "guess" : "scratch";
     var type = forced || (GAMES.indexOf(current.reveal) !== -1 ? current.reveal : auto);
     // "pogodi unazad" treba zvuk i dva druga naslova za krive odgovore; inače srećka
-    var decoys = [];
-    released.forEach(function (s) {
-      if (s.title !== current.title && decoys.indexOf(s.title) === -1) decoys.push(s.title);
-    });
-    decoys = decoys.sort(function () { return Math.random() - 0.5; }).slice(0, 2);
+    // krivi odgovori: oni koje si upisao uz pjesmu; inače prijašnje pjesme (lakše za pogoditi)
+    var decoys = String(current.decoys || "").split("|").map(function (x) { return x.trim(); }).filter(function (x) {
+      return x && x.toLowerCase() !== current.title.toLowerCase();
+    }).slice(0, 2);
+    if (decoys.length < 2) {
+      decoys = [];
+      released.forEach(function (s) {
+        if (s.title !== current.title && decoys.indexOf(s.title) === -1) decoys.push(s.title);
+      });
+      decoys = decoys.sort(function () { return Math.random() - 0.5; }).slice(0, 2);
+    }
     if (type === "guess" && (decoys.length < 2 || !(current.audio || current.preview))) type = "scratch";
 
     startGame(type, current, trackNo, decoys, function () {
