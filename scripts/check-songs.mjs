@@ -45,7 +45,7 @@ const normalizeWhen = (s) => {
 
 const SPOTIFY = /^https:\/\/open\.spotify\.com\/(?:intl-[a-z-]+\/)?(track|album|playlist|episode)\/[A-Za-z0-9]{10,}/;
 const YOUTUBE = /(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/|live\/))[A-Za-z0-9_-]{11}/;
-const KNOWN = new Set(["date", "title", "artist", "note", "hint", "ps", "spotify", "youtube", "audio", "preview", "cover", "reveal"]);
+const KNOWN = new Set(["date", "title", "artist", "note", "hint", "ps", "spotify", "youtube", "audio", "preview", "cover", "reveal", "reset"]);
 const REVEALS = new Set(["scratch", "guess"]);
 
 const seen = new Map();

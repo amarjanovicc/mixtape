@@ -370,6 +370,11 @@
           info.appendChild(sub);
           li.appendChild(info);
           var acts = el("div", { class: "acts" });
+          if (s === current) {
+            var rs = el("button", { class: "small", type: "button", title: "Ona će ovu pjesmu ponovno otkrivati" }, "Resetiraj");
+            rs.addEventListener("click", function () { resetSong(s); });
+            acts.appendChild(rs);
+          }
           var edit = el("button", { class: "small", type: "button" }, "Uredi");
           edit.addEventListener("click", function () { startEdit(s); });
           var del = el("button", { class: "small danger", type: "button", "aria-label": "Obriši " + s.title }, "Obriši");
@@ -420,7 +425,7 @@
       function startEdit(s) {
         resetForm();
         editing = s.date;
-        draft = { spotify: s.spotify, youtube: s.youtube, preview: s.preview, cover: s.cover, audio: s.audio };
+        draft = { spotify: s.spotify, youtube: s.youtube, preview: s.preview, cover: s.cover, audio: s.audio, reset: s.reset };
         $("form-title").textContent = "Uređuješ: " + s.title;
         $("save").textContent = "Spremi izmjene";
         $("cancel").hidden = false;
@@ -526,7 +531,7 @@
         var song = {
           date: date, title: $("title").value, artist: $("artist").value,
           hint: $("hint").value, note: $("note").value, ps: $("ps").value,
-          spotify: draft.spotify, youtube: draft.youtube,
+          spotify: draft.spotify, youtube: draft.youtube, reset: draft.reset,
           audio: draft.audio, preview: draft.preview, cover: draft.cover, reveal: $("reveal").value,
         };
         if (!song.title.trim()) return msg("form-msg", "Upiši naslov pjesme.", "err");
@@ -550,6 +555,18 @@
           msg("form-msg", err.message, "err");
         }).then(function () { $("save").disabled = false; });
       });
+
+      // Reset: pjesma dobije novu oznaku; njena stranica je vidi nakon objave i pjesma joj opet
+      // bude neotkrivena (nestane i iz kutije i njena reakcija). Niz dana ostaje.
+      function resetSong(s) {
+        if (!confirm("Resetirati \"" + s.title + "\"?\n\nOna će je ponovno otkrivati čim otvori stranicu (nakon objave). Pjesma nestaje iz njene kutije, a reakcija se briše. Niz dana ostaje.")) return;
+        var songs = state.songs.map(function (x) { return x === s ? Object.assign({}, x, { reset: String(Date.now()) }) : x; });
+        api("PUT", "/api/data", { config: state.config, songs: songs }).then(function (data) {
+          state = data;
+          renderSongs();
+          msg("form-msg", "Pjesma je resetirana. Klikni Objavi da ona to vidi.", "ok");
+        }).catch(function (err) { msg("form-msg", err.message, "err"); });
+      }
 
       function removeSong(s) {
         if (!confirm("Obrisati \"" + s.title + "\"?" + (s.audio ? "\nBriše se i spremljeni zvuk." : ""))) return;

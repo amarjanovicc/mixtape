@@ -30,7 +30,7 @@ const MIME = {
   ".webmanifest": "application/manifest+json", ".mp3": "audio/mpeg", ".m4a": "audio/mp4", ".ogg": "audio/ogg", ".wav": "audio/wav",
 };
 const AUDIO_EXT = new Set([".mp3", ".m4a", ".ogg", ".wav"]);
-const SONG_FIELDS = ["date", "title", "artist", "hint", "note", "ps", "spotify", "youtube", "audio", "preview", "cover", "reveal"];
+const SONG_FIELDS = ["date", "title", "artist", "hint", "note", "ps", "spotify", "youtube", "audio", "preview", "cover", "reveal", "reset"];
 const CONFIG_FIELDS = ["to", "from", "whatsapp", "timeZone", "noteLead"];
 const DEFAULT_CONFIG = { to: "", from: "", whatsapp: "", timeZone: "Europe/Zagreb", noteLead: "podsjetila me na tebe jer…", rewards: [] };
 
@@ -117,6 +117,7 @@ function cleanData(input) {
     seen.add(at);
     s.date = at.endsWith("T00:00") ? at.slice(0, 10) : at.replace("T", " ");
     if (s.reveal && !["scratch", "guess"].includes(s.reveal)) delete s.reveal;
+    if (s.reset && !/^\d{1,15}$/.test(s.reset)) delete s.reset;   // oznaka resetiranja (vrijeme u ms)
     if (s.audio && !/^audio\/[A-Za-z0-9._-]+$/.test(s.audio)) throw bad(`Pjesma ${name}: neispravna putanja zvuka.`);
     for (const k of ["spotify", "youtube", "preview", "cover"]) {
       if (s[k] && !/^https:\/\//.test(s[k])) throw bad(`Pjesma ${name}: ${k} mora biti https link.`);

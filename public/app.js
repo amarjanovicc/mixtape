@@ -72,6 +72,7 @@
       muted: s.muted === true,
       collected: s.collected && typeof s.collected === "object" ? s.collected : {},
       best: Number(s.best) || 0,
+      resets: s.resets && typeof s.resets === "object" ? s.resets : {},
     };
   }
   function saveState() {
@@ -1262,6 +1263,23 @@
     var now = nowWall();
     var today = now.slice(0, 10);
     var released = songs.filter(function (s) { return s.at <= now.slice(0, 16); });
+
+    // Reset iz sučelja za unos: pjesma dobije novu oznaku (`reset`). Kad stranica vidi oznaku
+    // koju još nije primijenila, zaboravi da je pjesma otvorena, spremljena i ocijenjena,
+    // pa je ona opet otkriva. Niz dana i ostale pjesme ostaju kakve jesu.
+    var resetChanged = false;
+    songs.forEach(function (s) {
+      var mark = s.reset || "";
+      if ((state.resets[s.at] || "") === mark) return;
+      state.resets[s.at] = mark;
+      if (mark) {
+        delete state.opened[s.at];
+        delete state.collected[s.at];
+        delete state.reactions[s.at];
+      }
+      resetChanged = true;
+    });
+    if (resetChanged) saveState();
     var upcoming = songs.filter(function (s) { return s.at > now.slice(0, 16); });
 
     if (!released.length) {

@@ -28,6 +28,8 @@ Otvori http://localhost:4321/admin. Obrazac ima tri koraka:
 
 Zatim *Spremi pjesmu*. Žuti okvir na vrhu javi da ima promjena koje ona još ne vidi; *Objavi* ih šalje (provjera, git commit i push ako repo ima `origin`).
 
+Uz pjesmu koja trenutno svira je gumb **Resetiraj**: nakon objave ona tu pjesmu opet otkriva od početka (igra, premotavanje, poruka), a iz kutije joj nestaje dok je ponovno ne spremi. Niz dana ostaje.
+
 Ostalo je skriveno pod **Više opcija**: trag prije otkrivanja, tajni P.S., odabir igre, izbor isječka i vlastiti zvuk (mp3, m4a, ogg, wav, sprema se u `public/audio/`). Njeno ime, tvoj potpis, WhatsApp, likovi za naljepnice (kosa, ten, životinje) i same naljepnice su pod **Postavke**.
 
 Uvijek se prikazuje najnovija pjesma čije je vrijeme došlo:

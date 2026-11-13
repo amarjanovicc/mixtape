@@ -53,6 +53,11 @@ Nakon otkrivanja kaseta ostaje pravi player: tipke i povlačenje premotavaju u o
 - **Spremanje u kutiju je kraj**, da dan završi s osjećajem dovršenosti.
 
 Stanje (otvoreno, spremljeno, reakcije, niz) živi samo u `localStorage` njenog mobitela.
+**Reset pjesme** (gumb „Resetiraj” uz pjesmu koja trenutno svira, u sučelju za unos): pjesma
+dobije polje `reset` (vrijeme u ms). Kad njena stranica vidi oznaku koju još nije primijenila
+(`state.resets`), zaboravi da je pjesma otvorena, spremljena i ocijenjena, pa je ona opet
+otkriva. Niz dana i ostale pjesme ostaju. Radi tek nakon objave, jer stanje živi na njenom
+mobitelu, a ovako ga se može resetirati na daljinu bez servera.
 Stranica se može dodati na početni zaslon (`manifest.webmanifest`, `icon-*.png`); nema
 service workera, namjerno, da nikad ne vidi staru verziju.
 
