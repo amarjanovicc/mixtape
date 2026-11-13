@@ -86,21 +86,33 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
 
 /* ---------- omot (kutija kasete) ---------- */
 
+/* omot i kaseta su jedan paket: kaseta klizi iz omota i natrag u njega */
+.pack { position: relative; display: flex; flex-direction: column; align-items: center; }
+.sleeve-wrap {
+  position: relative;
+  z-index: 3;                 /* omot je ISPRED kasete: ona izlazi iz njega */
+  width: 94%;
+  margin-top: 4px;
+  filter: drop-shadow(5px 6px 0 var(--ink));
+  transform: rotate(1.3deg);
+  animation: rise 0.5s var(--ease-out) both;
+  transition: width 0.5s var(--ease-out), transform 0.5s var(--ease-out);
+}
 .sleeve {
   position: relative;
   display: flex;
-  width: 94%;
-  margin: 4px auto 0;
+  width: 100%;
   aspect-ratio: 1.62;
   border: 2.5px solid var(--ink);
   border-radius: 6px 12px 12px 6px;
   background: var(--accent);
-  box-shadow: 5px 6px 0 var(--ink);
   overflow: hidden;
-  transform: rotate(1.3deg);
-  animation: rise 0.5s var(--ease-out) both;
-  transition: width 0.45s var(--ease-out), margin 0.45s var(--ease-out), transform 0.45s var(--ease-out);
+  /* urez za palac na donjem rubu, kao na pravom omotu: tu se kaseta hvata i izvlači */
+  -webkit-mask: radial-gradient(circle 19px at 55% 100%, transparent 96%, #000 100%);
+  mask: radial-gradient(circle 19px at 55% 100%, transparent 96%, #000 100%);
 }
+/* tamni rub otvora na dnu omota */
+.sleeve-front::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 9px; background: linear-gradient(to top, rgba(43, 33, 24, 0.5), transparent); pointer-events: none; }
 /* hrbat kutije: uspravan natpis, kao na polici */
 .sleeve-spine {
   flex: 0 0 11%;
@@ -166,9 +178,11 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
     linear-gradient(112deg, rgba(255, 255, 255, 0.34) 0 14%, transparent 14% 100%),
     linear-gradient(112deg, transparent 58%, rgba(255, 255, 255, 0.16) 58% 66%, transparent 66% 100%);
 }
-/* kad se omot ogrebe, nestane, a na njegovo mjesto se spusti kaseta (naslovnica ide na njezinu naljepnicu) */
-.sleeve.done { pointer-events: none; animation: sleeve-away 0.38s var(--ease-out) forwards; }
-@keyframes sleeve-away { to { opacity: 0; transform: rotate(1.3deg) scale(0.94) translateY(-12px); } }
+/* otkriveno: omot se smanji i ostane gore kao džep, a kaseta viri iz njegova otvora */
+.pack.out .sleeve-wrap { width: 76%; transform: rotate(-1.2deg); }
+.pack.out .sleeve-tag { display: none; }
+.pack.out .tape { margin-top: -34px; }
+.pack.out .scratch, .pack.out .veil { display: none; }
 .tape-cover { flex: none; width: 46px; height: 46px; border: 2px solid var(--ink); border-radius: 3px; object-fit: cover; background: var(--paper); }
 
 /* ---------- kaseta ---------- */
@@ -180,7 +194,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
 .in-game .wrap { padding-bottom: max(20px, env(safe-area-inset-bottom)); }
 /* pogodi unazad: tri odgovora trebaju mjesta, pa je kaseta manja */
 .stage.guessing { gap: 14px; }
-.stage.guessing .sleeve { width: 78%; }
+.stage.guessing .sleeve-wrap { width: 78%; }
 
 .tape {
   position: relative;
@@ -197,7 +211,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
   box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.3), inset 0 -5px 0 rgba(43, 33, 24, 0.16), 5px 6px 0 var(--ink);
   overflow: hidden;
   transform: rotate(-2.5deg);
-  animation: drop 0.7s var(--ease-out) both;
+  z-index: 2;
   touch-action: pan-y;
   user-select: none;
   -webkit-user-select: none;
@@ -476,7 +490,14 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
 
 /* ---------- nakon otkrivanja ---------- */
 
-.after { display: flex; flex-direction: column; gap: 22px; animation: rise 0.6s var(--ease-out) both; }
+.after { display: flex; flex-direction: column; gap: 22px; }
+/* dijelovi stižu jedan za drugim, ne svi odjednom */
+.after > * { animation: rise 0.55s var(--ease-out) both; }
+.after > :nth-child(2) { animation-delay: 0.14s; }
+.after > :nth-child(3) { animation-delay: 0.26s; }
+.after > :nth-child(4) { animation-delay: 0.38s; }
+.after > :nth-child(5) { animation-delay: 0.5s; }
+.after > :nth-child(6) { animation-delay: 0.62s; }
 
 /* poruka: list iz bilježnice zalijepljen trakom */
 .note {
@@ -723,7 +744,14 @@ body.mini-on .wrap { padding-bottom: calc(150px + env(safe-area-inset-bottom)); 
 .tape-label.p3 { background: radial-gradient(var(--rule) 1.5px, transparent 2px) 0 0 / 12px 12px, var(--sheet); }
 .tape.w1 .tape-window { border-radius: 8px; }
 .tape-sticker { font-size: 17px; line-height: 1; color: var(--sheet); filter: drop-shadow(1px 1px 0 rgba(43, 33, 24, 0.6)); }
-.tape.fly { animation: fly 0.65s cubic-bezier(0.5, 0, 0.8, 0.4) forwards; }
+/* kaseta klizi iz omota / natrag u omot; paket odleti u kutiju */
+.tape.slide-out { animation: slide-out 0.85s cubic-bezier(0.2, 0.9, 0.3, 1.12) both; }
+.tape.tuck { animation: tuck 0.45s ease-in forwards; }
+.tape.kick { animation: kick 0.45s var(--ease-out); }
+.pack.fly { animation: pack-fly 0.6s cubic-bezier(0.5, 0, 0.8, 0.4) forwards; }
+.pack.back { animation: rise 0.5s var(--ease-out) both; }
+.ghost { position: absolute; width: 58px; height: 38px; border: 2px solid var(--ink); border-radius: 6px; background: var(--accent); box-shadow: 2px 3px 0 var(--ink); }
+.ghost::after { content: ""; position: absolute; left: 14%; right: 14%; top: 18%; height: 36%; border: 1.500px solid var(--ink); border-radius: 2px; background: var(--sheet); }
 
 /* spremi u kutiju */
 .collect {
@@ -917,7 +945,10 @@ body.mini-on .wrap { padding-bottom: calc(150px + env(safe-area-inset-bottom)); 
 @keyframes stamp { from { opacity: 0; transform: rotate(11deg) scale(2.4); } to { opacity: 0.85; transform: rotate(11deg) scale(1); } }
 @keyframes enter-left { from { opacity: 0; transform: translateX(-28px); } }
 @keyframes enter-right { from { opacity: 0; transform: translateX(28px); } }
-@keyframes fly { to { transform: translateY(70vh) rotate(18deg) scale(0.15); opacity: 0; } }
+@keyframes slide-out { from { transform: translateY(-66%) scale(0.78) rotate(-1.2deg); } to { transform: rotate(-2.5deg); } }
+@keyframes tuck { to { transform: translateY(-66%) scale(0.78) rotate(-1.2deg); } }
+@keyframes kick { 35% { transform: rotate(-2.5deg) scale(1.045); } }
+@keyframes pack-fly { to { transform: translateY(70vh) rotate(14deg) scale(0.15); opacity: 0; } }
 @keyframes bump-badge { 40% { transform: scale(1.6) rotate(-10deg); } }
 @keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
 @keyframes bob { 50% { transform: translateY(5px); } }

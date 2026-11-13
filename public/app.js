@@ -1010,6 +1010,8 @@
       $("rew").classList.remove("on");
       $("deck").classList.remove("intro");
       tape.classList.remove("rewind-me");
+      tape.classList.add("kick");            // kaseta "sjedne" na početak
+      setTimeout(function () { tape.classList.remove("kick"); }, 460);
       updateMini();
       setContent(hintEl, icon("drag"), " povuci kasetu ili klizač za premotavanje");
       paint();
@@ -1231,11 +1233,25 @@
   // ---------- games ----------
 
   // Kaseta izlazi iz omota: omot se skupi u traku, a kaseta se spusti ispod njega.
-  function revealCassette(animate) {
-    var sl = $("sleeve"), tp = $("tape");
-    sl.classList.remove("won");
-    var swap = function () { sl.hidden = true; tp.hidden = false; };   // kaseta se spusti uz animaciju "drop"
-    if (animate && !reducedMotion) { sl.classList.add("done"); setTimeout(swap, 380); } else swap();
+  // Kaseta klizi iz omota: omot se smanji i ostane gore kao džep, kaseta izađe kroz njegov otvor.
+  function revealCassette(animate, then) {
+    var pack = $("pack"), tp = $("tape");
+    var go = function () {
+      $("sleeve").classList.remove("won");
+      pack.classList.add("out");
+      tp.hidden = false;
+      if (!animate || reducedMotion) { if (then) then(); return; }
+      tp.classList.add("slide-out");
+      fx.whirr(true);
+      setTimeout(function () {
+        tp.classList.remove("slide-out");
+        fx.whirr(false);
+        fx.click();
+        buzz(12);
+        if (then) then();
+      }, 860);
+    };
+    if (animate && !reducedMotion) setTimeout(go, 520); else go();   // prvo sjaj preko omota
   }
 
   function startGame(type, song, ticketNo, decoys, onDone) {
@@ -1252,8 +1268,7 @@
       $("stage").classList.remove("gaming", "guessing");
       document.body.classList.remove("in-game");
       if (type === "scratch") fx.win(); else fx.reveal();
-      revealCassette(true);
-      onDone();
+      revealCassette(true, onDone);
     }
 
     if (song.hint) {
@@ -1365,7 +1380,7 @@
 
     var drawing = false, px = 0, py = 0, moves = 0, lastMove = 0;
     function tapeAngle() {
-      try { var m = new DOMMatrixReadOnly(getComputedStyle($("sleeve")).transform); return Math.atan2(m.b, m.a); } catch (e) { return 0; }
+      try { var m = new DOMMatrixReadOnly(getComputedStyle($("sleeve-wrap")).transform); return Math.atan2(m.b, m.a); } catch (e) { return 0; }
     }
     function pos(e) {
       var r = canvas.getBoundingClientRect();
@@ -1534,11 +1549,34 @@
       void badge.offsetWidth;
       badge.classList.add("pop");
       if (reducedMotion) return;
-      // kaseta odleti prema kutiji pa se vrati na mjesto
-      var tape = $("tape");
-      tape.classList.remove("nudge");
-      tape.classList.add("fly");
-      setTimeout(function () { tape.classList.remove("fly"); }, 900);
+      // mala kaseta poleti od gumba do jahača Kutija (vidi se gdje god bila na stranici)
+      var from = collectBtn.getBoundingClientRect();
+      var tab = document.querySelector('#tabs button[data-view="box"]').getBoundingClientRect();
+      var ghost = el("i", { class: "ghost" });
+      ghost.style.left = from.left + from.width / 2 - 29 + "px";
+      ghost.style.top = from.top + from.height / 2 - 19 + "px";
+      fxLayer().appendChild(ghost);
+      var dx = tab.left + tab.width / 2 - (from.left + from.width / 2), dy = tab.top + tab.height / 2 - (from.top + from.height / 2);
+      if (ghost.animate) {
+        ghost.animate([
+          { transform: "translate(0,0) rotate(0deg) scale(1)", opacity: 1 },
+          { transform: "translate(" + dx * 0.4 + "px," + (dy * 0.4 - 50) + "px) rotate(-14deg) scale(1.1)", opacity: 1, offset: 0.45 },
+          { transform: "translate(" + dx + "px," + dy + "px) rotate(12deg) scale(0.35)", opacity: 0.2 },
+        ], { duration: 720, easing: "cubic-bezier(0.4, 0, 0.6, 1)" }).onfinish = function () { ghost.remove(); };
+      } else ghost.remove();
+      // ako se paket vidi: kaseta se vrati u omot, omot odleti, pa se sve vrati na mjesto
+      var pack = $("pack"), tape = $("tape");
+      if (pack.getBoundingClientRect().bottom > 80) {
+        tape.classList.remove("nudge");
+        tape.classList.add("tuck");
+        setTimeout(function () { pack.classList.add("fly"); }, 470);
+        setTimeout(function () {
+          tape.classList.remove("tuck");
+          pack.classList.remove("fly");
+          pack.classList.add("back");
+          setTimeout(function () { pack.classList.remove("back"); }, 600);
+        }, 1250);
+      }
     });
     paintCollect();
     $("back").hidden = isLatest;

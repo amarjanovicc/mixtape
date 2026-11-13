@@ -13,9 +13,14 @@ Dva pogleda, jahači na dnu ekrana (ili povlačenje prstom lijevo/desno): **Dana
 1. **Omot je srećka: koja je pjesma?** Pjesma je zapakirana u **omot** (kutiju kasete, `.sleeve`):
    hrbat s uspravnim natpisom, naslovnica (ili boja pjesme s ikonom), papirić s naslovom i
    odsjaj plastike. Omot prekriva srebrna folija, a kaseta je još skrivena. Vidi samo trag
-   (`hint`) i grebe omot prstom. Kad se ogrebe, omot **nestane**, a na njegovo mjesto se spusti **samo kaseta**
-   (`revealCassette`) i postaje player; naslovnica ostaje kao mala slika na njezinoj naljepnici.
-   (Omot koji viri iza kasete je izgledao zbunjujuće, pa ga nakon otkrivanja nema.) Omot je zakrenut pa se dodir vraća natrag
+   (`hint`) i grebe omot prstom. Omot ima **urez za palac** na donjem rubu i tamni rub otvora, da se čita kao džep.
+   Kad se ogrebe, omot se smanji i ostane gore ISPRED kasete, a **kaseta isklizne iz njegova
+   otvora** (`revealCassette`, `.pack.out`, `slide-out`) i postaje player. Omot mora ostati
+   ispred kasete (z-index) i imati urez; inače izgleda kao da nešto bez veze viri iz kasete.
+   **Animacije povezuju korake:** sjaj preko omota, izvlačenje kasete uz zvuk motora i klik,
+   „kick” kad se premota na početak, dijelovi ispod stižu jedan za drugim (`.after > *`), a pri
+   spremanju mala kaseta poleti od gumba do jahača Kutija; ako se paket vidi, kaseta se vrati u
+   omot i omot odleti (`tuck`, `pack-fly`). Omot je zakrenut pa se dodir vraća natrag
    za kut (`tapeAngle`/`pos`). Ritual je svaki dan isti, a iznenađenje je sadržaj. Svaka peta
    pjesma je umjesto toga **pogodi unazad** (`guess`: omot je pod lokotom, 5 s pjesme unatrag,
    tri naslova; treba zvuk i dvije druge objavljene pjesme, inače srećka). `reveal` u pjesmi to
