@@ -21,6 +21,7 @@
     h1 { margin: 0; font-family: var(--hand); font-size: 2rem; line-height: 1; display: flex; align-items: center; gap: 8px; }
     h2 { margin: 0 0 12px; font-family: var(--hand); font-size: 1.7rem; line-height: 1; }
     a { color: var(--ink); font-weight: 600; }
+    .hdr-links { display: flex; align-items: center; gap: 14px; }
     header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 
     .card { background: var(--sheet); border: 2px solid var(--ink); border-radius: 6px; box-shadow: 4px 5px 0 var(--ink); padding: 18px 16px; }
@@ -128,8 +129,21 @@
   <div class="wrap">
     <header>
       <h1><svg class="icon" aria-hidden="true"><use href="#i-cassette"/></svg> Mixtape</h1>
-      <a href="/" target="_blank" rel="noopener">Otvori stranicu <svg class="icon" aria-hidden="true"><use href="#i-ext"/></svg></a>
+      <span class="hdr-links">
+        <button class="link" type="button" id="logout" hidden>Odjava</button>
+        <a href="/" target="_blank" rel="noopener">Otvori stranicu <svg class="icon" aria-hidden="true"><use href="#i-ext"/></svg></a>
+      </span>
     </header>
+
+    <form class="card" id="login" hidden>
+      <h2>Prijava</h2>
+      <label for="password">Lozinka</label>
+      <input id="password" type="password" autocomplete="current-password" required>
+      <button class="primary big" type="submit" style="margin-top:14px">Prijavi se</button>
+      <p class="msg" id="login-msg" hidden></p>
+    </form>
+
+    <div id="app" hidden>
 
     <section class="card publish clean" id="publish-card">
       <p id="publish-text">Učitavam…</p>
@@ -198,7 +212,7 @@
 
           <label for="file">Vlastiti zvuk</label>
           <input id="file" type="file" accept=".mp3,.m4a,.ogg,.wav,audio/*">
-          <p class="help" id="file-hint">Glasovna poruka ili vlastita snimka (mp3, m4a, ogg, wav). Svira umjesto isječka.</p>
+          <p class="help" id="file-hint">Glasovna poruka ili vlastita snimka (mp3, m4a, ogg, wav, do 4 MB). Svira umjesto isječka.</p>
         </div>
       </details>
 
@@ -258,6 +272,7 @@
         <p class="msg" id="config-msg" hidden></p>
       </form>
     </details>
+    </div>
   </div>
 
   <script src="/pixel.js"></script>
@@ -271,10 +286,14 @@
       var candidates = [];
 
       function api(method, url, body, raw) {
-        var opts = { method: method, headers: { "X-Mixtape": "1" } };
-        if (body != null) opts.body = raw ? body : JSON.stringify(body);
+        var opts = { method: method, headers: { "X-Mixtape": "1" }, credentials: "same-origin" };
+        if (body != null) {
+          opts.body = raw ? body : JSON.stringify(body);
+          opts.headers["Content-Type"] = raw ? "application/octet-stream" : "application/json";
+        }
         return fetch(url, opts).then(function (res) {
           return res.json().catch(function () { return {}; }).then(function (data) {
+            if (res.status === 401 && url !== "/api/login") showLogin();
             if (!res.ok) throw new Error(data.error || "Greška " + res.status);
             return data;
           });
@@ -317,6 +336,13 @@
 
       function renderPublish() {
         var g = state.git || {};
+        if (state.live) {
+          // objavljena stranica sprema odmah: nema što "objavljivati"
+          $("publish-card").classList.add("clean");
+          $("publish-text").textContent = "Sve što spremiš je odmah live.";
+          $("publish").hidden = true;
+          return;
+        }
         var dirty = Boolean(g.dirty);
         $("publish-card").classList.toggle("clean", !dirty);
         $("publish-text").textContent = dirty
@@ -550,7 +576,7 @@
           state = data;
           renderSongs();
           resetForm();
-          msg("form-msg", "Spremljeno: " + song.title + " (" + pretty(song.date) + "). Ne zaboravi Objavi.", "ok");
+          msg("form-msg", "Spremljeno: " + song.title + " (" + pretty(song.date) + ")." + (state.live ? " Već je live." : " Ne zaboravi Objavi."), "ok");
         }).catch(function (err) {
           msg("form-msg", err.message, "err");
         }).then(function () { $("save").disabled = false; });
@@ -564,7 +590,7 @@
         api("PUT", "/api/data", { config: state.config, songs: songs }).then(function (data) {
           state = data;
           renderSongs();
-          msg("form-msg", "Pjesma je resetirana. Klikni Objavi da ona to vidi.", "ok");
+          msg("form-msg", state.live ? "Pjesma je resetirana i već je live." : "Pjesma je resetirana. Klikni Objavi da ona to vidi.", "ok");
         }).catch(function (err) { msg("form-msg", err.message, "err"); });
       }
 
@@ -706,12 +732,42 @@
 
       // ---------- start ----------
 
-      api("GET", "/api/data").then(function (data) {
-        state = data;
-        resetForm();
-        renderConfig();
-        renderSongs();
-      }).catch(function (err) { $("publish-text").textContent = err.message; });
+      function showLogin(note) {
+        $("app").hidden = true;
+        $("login").hidden = false;
+        $("logout").hidden = true;
+        if (note) msg("login-msg", note, "err");
+      }
+
+      function boot() {
+        return api("GET", "/api/data").then(function (data) {
+          state = data;
+          $("login").hidden = true;
+          $("app").hidden = false;
+          $("logout").hidden = !state.live;
+          resetForm();
+          renderConfig();
+          renderSongs();
+        }).catch(function (err) { $("publish-text").textContent = err.message; });
+      }
+
+      $("login").addEventListener("submit", function (e) {
+        e.preventDefault();
+        msg("login-msg", "Provjeravam…");
+        api("POST", "/api/login", { password: $("password").value }).then(function () {
+          $("password").value = "";
+          msg("login-msg");
+          return boot();
+        }).catch(function (err) { msg("login-msg", err.message, "err"); });
+      });
+      $("logout").addEventListener("click", function () {
+        api("DELETE", "/api/login", {}).then(function () { showLogin(); msg("login-msg"); });
+      });
+
+      api("GET", "/api/login").then(function (st) {
+        if (!st.configured) return showLogin("Lozinka još nije postavljena u Vercelu (Settings, Environment Variables, ADMIN_PASSWORD).");
+        if (st.authed) boot(); else showLogin();
+      }).catch(function () { boot(); });
     })();
   </script>
 </body>

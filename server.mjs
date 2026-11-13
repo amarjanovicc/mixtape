@@ -5,7 +5,7 @@
 //                             http://localhost:4321/admin  (unos pjesama)
 //
 // Bez ovisnosti. Sluša samo na 127.0.0.1 — sučelje nije zaštićeno lozinkom,
-// pa ga ne izlaži na internet. Sprema u public/songs.js i public/audio/.
+// pa ga ne izlaži na internet. Sprema u data/songs.js i public/audio/.
 import http from "node:http";
 import fs from "node:fs/promises";
 import { createReadStream } from "node:fs";
@@ -14,11 +14,12 @@ import vm from "node:vm";
 import crypto from "node:crypto";
 import { execFile } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { AUDIO_EXT, DEFAULT_CONFIG, HttpError, bad, cleanData, dataToJs, lookup, publicData } from "./lib/core.mjs";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(ROOT, "public");
-const ADMIN = path.join(ROOT, "admin");
-const SONGS = path.join(PUBLIC, "songs.js");
+const ADMIN = path.join(PUBLIC, "admin");
+const SONGS = path.join(ROOT, "data", "songs.js");
 const AUDIO = path.join(PUBLIC, "audio");
 const PORT = Number(process.env.PORT) || 4321;
 const MAX_AUDIO = 25 * 1024 * 1024;
@@ -29,10 +30,6 @@ const MIME = {
   ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".webp": "image/webp",
   ".webmanifest": "application/manifest+json", ".mp3": "audio/mpeg", ".m4a": "audio/mp4", ".ogg": "audio/ogg", ".wav": "audio/wav",
 };
-const AUDIO_EXT = new Set([".mp3", ".m4a", ".ogg", ".wav"]);
-const SONG_FIELDS = ["date", "title", "artist", "hint", "note", "ps", "spotify", "youtube", "audio", "preview", "cover", "reveal", "reset"];
-const CONFIG_FIELDS = ["to", "from", "whatsapp", "timeZone", "noteLead"];
-const DEFAULT_CONFIG = { to: "", from: "", whatsapp: "", timeZone: "Europe/Zagreb", noteLead: "podsjetila me na tebe jer…", rewards: [] };
 
 const HEADER = `/*
  * Mixtape — sadržaj
@@ -43,10 +40,6 @@ const HEADER = `/*
  */
 `;
 
-class HttpError extends Error {
-  constructor(status, message) { super(message); this.status = status; }
-}
-const bad = (msg) => new HttpError(400, msg);
 
 // ---------- songs.js ----------
 
@@ -57,7 +50,7 @@ async function readData() {
     vm.runInNewContext(await fs.readFile(SONGS, "utf8"), sandbox, { filename: "songs.js" });
     data = sandbox.window.DAILY_SONG || {};
   } catch (err) {
-    if (err.code !== "ENOENT") throw new HttpError(500, "public/songs.js se ne može pročitati: " + err.message);
+    if (err.code !== "ENOENT") throw new HttpError(500, "data/songs.js se ne može pročitati: " + err.message);
   }
   return {
     config: { ...DEFAULT_CONFIG, ...(data.config || {}) },
@@ -65,68 +58,6 @@ async function readData() {
   };
 }
 
-function normalizeWhen(s) {
-  const m = /^(\d{4}-\d{2}-\d{2})(?:[T ](\d{2}:\d{2}))?$/.exec(typeof s === "string" ? s.trim() : "");
-  if (!m) return null;
-  const at = `${m[1]}T${m[2] || "00:00"}`;
-  const d = new Date(`${at}:00Z`);
-  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 16) === at ? at : null;
-}
-
-function cleanData(input) {
-  if (!input || typeof input !== "object" || !Array.isArray(input.songs)) throw bad("Neispravni podaci.");
-  const config = { ...DEFAULT_CONFIG };
-  for (const k of CONFIG_FIELDS) {
-    const v = input.config?.[k];
-    if (typeof v === "string" && v.trim()) config[k] = v.trim();
-  }
-  config.whatsapp = config.whatsapp.replace(/\D/g, "");
-  // naljepnice: [{ count, text }] — otključaju se kad je u kutiji toliko kaseta
-  const seenCounts = new Set();
-  config.rewards = (Array.isArray(input.config?.rewards) ? input.config.rewards : []).map((r) => ({
-    count: Math.round(Number(r?.count ?? r?.days)), text: String(r?.text ?? "").trim().slice(0, 400),
-  })).filter((r) => r.count >= 1 && r.count <= 999 && !seenCounts.has(r.count) && seenCounts.add(r.count))
-    .sort((a, b) => a.count - b.count);
-  // likovi za pixel-art naljepnice
-  const one = (v, allowed, fallback) => (allowed.includes(v) ? v : fallback);
-  const HAIR = ["crna", "smeda", "plava", "rida", "sijeda"], SKIN = ["svijetla", "srednja", "tamna"];
-  const FUR = ["crna", "bijela", "narancasta", "smeda", "siva"], PET = ["macka", "pas", "zec"];
-  const person = (p, long) => ({ hair: one(p?.hair, HAIR, "smeda"), long: p?.long == null ? long : Boolean(p.long), skin: one(p?.skin, SKIN, "svijetla") });
-  const cast = input.config?.cast || {};
-  config.cast = {
-    her: person(cast.her, true),
-    him: person(cast.him, false),
-    pets: (Array.isArray(cast.pets) ? cast.pets : []).slice(0, 4).map((a) => ({
-      type: one(a?.type, PET, "macka"), color: one(a?.color, FUR, "siva"), name: String(a?.name ?? "").trim().slice(0, 20),
-    })),
-  };
-  try { new Intl.DateTimeFormat("en-US", { timeZone: config.timeZone }); } catch { throw bad("Vremenska zona nije ispravna."); }
-
-  const seen = new Set();
-  const songs = input.songs.map((raw, i) => {
-    const s = {};
-    for (const k of SONG_FIELDS) {
-      const v = raw?.[k];
-      if (typeof v === "string" && v.trim()) s[k] = v.trim();
-    }
-    const name = s.title ? `„${s.title}”` : `#${i + 1}`;
-    const at = normalizeWhen(s.date);
-    if (!s.title) throw bad(`Pjesma ${name}: nedostaje naslov.`);
-    if (!at) throw bad(`Pjesma ${name}: datum mora biti YYYY-MM-DD ili YYYY-MM-DD HH:MM.`);
-    if (seen.has(at)) throw bad(`Pjesma ${name}: već postoji pjesma za ${s.date}.`);
-    seen.add(at);
-    s.date = at.endsWith("T00:00") ? at.slice(0, 10) : at.replace("T", " ");
-    if (s.reveal && !["scratch", "guess"].includes(s.reveal)) delete s.reveal;
-    if (s.reset && !/^\d{1,15}$/.test(s.reset)) delete s.reset;   // oznaka resetiranja (vrijeme u ms)
-    if (s.audio && !/^audio\/[A-Za-z0-9._-]+$/.test(s.audio)) throw bad(`Pjesma ${name}: neispravna putanja zvuka.`);
-    for (const k of ["spotify", "youtube", "preview", "cover"]) {
-      if (s[k] && !/^https:\/\//.test(s[k])) throw bad(`Pjesma ${name}: ${k} mora biti https link.`);
-    }
-    return { s, at };
-  }).sort((a, b) => a.at.localeCompare(b.at)).map((x) => x.s);
-
-  return { config, songs };
-}
 
 async function writeData(data) {
   const before = await readData();
@@ -140,71 +71,6 @@ async function writeData(data) {
   }
 }
 
-// ---------- lookup: link -> naslov, izvođač, omot, isječak ----------
-
-async function get(url, as) {
-  const res = await fetch(url, {
-    signal: AbortSignal.timeout(8000),
-    headers: { "User-Agent": "Mozilla/5.0 (mixtape-admin)", "Accept-Language": "en" },
-  });
-  if (!res.ok) throw new Error(`${new URL(url).hostname} -> ${res.status}`);
-  return as === "json" ? res.json() : res.text();
-}
-
-const decode = (s) => s.replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#x27;|&#39;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
-const meta = (html, prop) => {
-  const m = new RegExp(`<meta property="${prop}" content="([^"]*)"`).exec(html);
-  return m ? decode(m[1]) : "";
-};
-
-async function lookup(rawUrl) {
-  let u;
-  try { u = new URL(String(rawUrl).trim()); } catch { throw bad("To ne izgleda kao link."); }
-  const host = u.hostname.replace(/^(www|m|music)\./, "");
-  const out = { title: "", artist: "", cover: "", spotify: "", youtube: "", previews: [], notes: [] };
-
-  if (host === "open.spotify.com") {
-    const m = /\/track\/([A-Za-z0-9]{10,})/.exec(u.pathname);
-    if (!m) throw bad("Treba link na pjesmu (open.spotify.com/track/…), ne na album ili playlistu.");
-    out.spotify = `https://open.spotify.com/track/${m[1]}`;
-    try {
-      const html = await get(out.spotify, "text");
-      out.title = meta(html, "og:title");
-      out.artist = meta(html, "og:description").split(" · ")[0] || "";
-      out.cover = meta(html, "og:image");
-    } catch (err) { out.notes.push("Spotify nije odgovorio: " + err.message); }
-  } else if (host === "youtube.com" || host === "youtu.be") {
-    const id = host === "youtu.be" ? u.pathname.slice(1, 12) : u.searchParams.get("v") || (/\/(?:shorts|embed|live)\/([A-Za-z0-9_-]{11})/.exec(u.pathname) || [])[1];
-    if (!id || !/^[A-Za-z0-9_-]{11}$/.test(id)) throw bad("Ne mogu pronaći YouTube video u tom linku.");
-    out.youtube = `https://www.youtube.com/watch?v=${id}`;
-    try {
-      const o = await get(`https://www.youtube.com/oembed?format=json&url=${encodeURIComponent(out.youtube)}`, "json");
-      const full = String(o.title || "");
-      const channel = String(o.author_name || "").replace(/\s*-\s*Topic$|VEVO$/i, "").trim();
-      const strip = (t) => t.replace(/\s*[([][^)\]]*[)\]]/g, "").trim();
-      const dash = full.split(/\s+[-–—]\s+/);
-      if (dash.length >= 2) { out.artist = dash[0].trim(); out.title = strip(dash.slice(1).join(" - ")); }
-      else { out.artist = channel; out.title = strip(full); }
-      out.cover = `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
-    } catch (err) { out.notes.push("YouTube nije odgovorio: " + err.message); }
-  } else {
-    throw bad("Podržani su Spotify i YouTube linkovi.");
-  }
-
-  // službeni isječci od 30 s (iTunes Search API)
-  const term = [out.artist, out.title].filter(Boolean).join(" ");
-  if (term) {
-    try {
-      const r = await get(`https://itunes.apple.com/search?entity=song&limit=5&term=${encodeURIComponent(term)}`, "json");
-      out.previews = (r.results || []).filter((x) => x.previewUrl).map((x) => ({
-        title: x.trackName, artist: x.artistName, album: x.collectionName || "",
-        preview: x.previewUrl, cover: String(x.artworkUrl100 || "").replace("100x100", "600x600"),
-      }));
-    } catch (err) { out.notes.push("Isječak nije pronađen: " + err.message); }
-  }
-  if (!out.previews.length) out.notes.push("Nema službenog isječka za ovu pjesmu — stranica će nuditi samo Spotify/YouTube player.");
-  return out;
-}
 
 // ---------- audio upload ----------
 
@@ -242,7 +108,7 @@ const run = (cmd, args) => new Promise((resolve) => {
 async function gitStatus() {
   const repo = await run("git", ["rev-parse", "--is-inside-work-tree"]);
   if (!repo.ok) return { repo: false, dirty: false, remote: false };
-  const dirty = await run("git", ["status", "--porcelain", "--", "public"]);
+  const dirty = await run("git", ["status", "--porcelain", "--", "public", "data"]);
   const remote = await run("git", ["remote"]);
   return { repo: true, dirty: Boolean(dirty.out), remote: Boolean(remote.out) };
 }
@@ -256,7 +122,7 @@ async function publish() {
   const st = await gitStatus();
   if (!st.repo) return { ok: false, log: log.concat("Ovaj folder nije git repozitorij.").join("\n\n") };
   if (st.dirty) {
-    await run("git", ["add", "--", "public"]);
+    await run("git", ["add", "--", "public", "data"]);
     const c = await run("git", ["commit", "-m", `Pjesme: ažurirano ${new Date().toISOString().slice(0, 16).replace("T", " ")}`]);
     log.push(c.out);
     if (!c.ok) return { ok: false, log: log.join("\n\n") };
@@ -318,6 +184,7 @@ async function handle(req, res) {
 
   if (p.startsWith("/api/")) {
     if (req.method !== "GET" && req.headers["x-mixtape"] !== "1") throw new HttpError(403, "Nedostaje zaglavlje.");
+    if (p === "/api/login" && req.method === "GET") return json(res, 200, { configured: true, authed: true, local: true });
     if (p === "/api/data" && req.method === "GET") return json(res, 200, { ...(await readData()), git: await gitStatus() });
     if (p === "/api/data" && req.method === "PUT") {
       const data = cleanData(JSON.parse((await readBody(req, 2 * 1024 * 1024)).toString("utf8") || "null"));
@@ -334,6 +201,7 @@ async function handle(req, res) {
   }
 
   if (req.method !== "GET" && req.method !== "HEAD") throw new HttpError(405, "Nedopuštena metoda.");
+  if (p === "/songs.js") return serveFile(req, res, path.dirname(SONGS), "songs.js");   // lokalno: cijeli sadržaj
   if (p === "/admin") { res.writeHead(302, { Location: "/admin/" }); return res.end(); }
   if (p.startsWith("/admin/")) return serveFile(req, res, ADMIN, p.slice("/admin".length));
   return serveFile(req, res, PUBLIC, p);

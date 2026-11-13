@@ -14,23 +14,19 @@ Nagrade idu po broju spremljenih kaseta, ne po nizu dana, pa propušten dan niš
 
 Čisti HTML/CSS/JS, bez ovisnosti i build koraka. Na stranici nema emojija: sve su vlastite SVG ikone.
 
-## Dodaj pjesmu (sučelje)
+## Dodaj pjesmu (sučelje, live)
 
-```bash
-node server.mjs
-```
-
-Otvori http://localhost:4321/admin. Obrazac ima tri koraka:
+Otvori **https://mixtape-wine.vercel.app/admin** i prijavi se lozinkom (`ADMIN_PASSWORD` u Vercelu). Sve što spremiš je **odmah live**, bez commita i čekanja objave. Obrazac ima tri koraka:
 
 1. **Zalijepi link** sa Spotifyja ili YouTubea. Naslov, izvođač, omot i službeni isječak od 30 s popune se sami.
 2. **Kad se pojavi?** Sljedeći slobodan dan (zadano), odmah, ili odabrani dan.
 3. **Zašto te podsjetila na nju?** Tvoja poruka.
 
-Zatim *Spremi pjesmu*. Žuti okvir na vrhu javi da ima promjena koje ona još ne vidi; *Objavi* ih šalje (provjera, git commit i push ako repo ima `origin`).
+Zatim *Spremi pjesmu*. Uz pjesmu koja trenutno svira je gumb **Resetiraj**: ona je odmah opet otkriva od početka (igra, premotavanje, poruka), a iz kutije joj nestaje dok je ponovno ne spremi. Niz dana ostaje.
 
-Uz pjesmu koja trenutno svira je gumb **Resetiraj**: nakon objave ona tu pjesmu opet otkriva od početka (igra, premotavanje, poruka), a iz kutije joj nestaje dok je ponovno ne spremi. Niz dana ostaje.
+Ostalo je skriveno pod **Više opcija**: trag prije otkrivanja, tajni P.S., odabir igre, izbor isječka i vlastiti zvuk (mp3, m4a, ogg, wav, do 4 MB). Njeno ime, tvoj potpis, WhatsApp, likovi za naljepnice (kosa, ten, životinje) i same naljepnice su pod **Postavke**.
 
-Ostalo je skriveno pod **Više opcija**: trag prije otkrivanja, tajni P.S., odabir igre, izbor isječka i vlastiti zvuk (mp3, m4a, ogg, wav, sprema se u `public/audio/`). Njeno ime, tvoj potpis, WhatsApp, likovi za naljepnice (kosa, ten, životinje) i same naljepnice su pod **Postavke**.
+Kako je to složeno: pjesme i zvukovi su u Vercel Blobu, a njena stranica ih dobiva preko `/songs.js` (funkcija `api/songs.js`). **Pjesme čije vrijeme još nije došlo nikad ne napuštaju server**, pa ih nitko ne može pročitati iz koda stranice; vidi se samo odbrojavanje do sljedeće. Dok pohrana ne postoji, stranica prikazuje početni sadržaj iz `data/songs.js`.
 
 Uvijek se prikazuje najnovija pjesma čije je vrijeme došlo:
 
@@ -47,26 +43,24 @@ Sučelje **ne skida cijele pjesme** sa Spotifyja ili YouTubea: to bi značilo ja
 
 Sučelje radi samo na tvom računalu (127.0.0.1) i nema lozinku, pa ga ne izlaži na internet. Objavljena stranica ostaje statična.
 
-Polja se mogu uređivati i ručno u [`public/songs.js`](public/songs.js): `date`, `title`, `artist`, `hint`, `note`, `ps`, `spotify`, `youtube`, `audio`, `preview`, `cover`, `reveal`. Nakon ručne promjene: `node scripts/check-songs.mjs`.
+Polja pjesme (vidi i početni sadržaj u [`data/songs.js`](data/songs.js)): `date`, `title`, `artist`, `hint`, `note`, `ps`, `spotify`, `youtube`, `audio`, `preview`, `cover`, `reveal`. Početni sadržaj provjeri s `node scripts/check-songs.mjs`.
 
 **Adresa stranice: https://mixtape-wine.vercel.app** (QR kod vodi na nju; ne mijenja se kad dodaješ pjesme).
 
 ## Prvo postavljanje
 
-1. U sučelju pod *Postavke* upiši njeno ime, svoj potpis i WhatsApp broj, obriši primjere i dodaj svoje pjesme.
-2. Repozitorij je na GitHubu (privatan, jer su u njemu tvoje poruke). Svaki push na `main` Vercel sam objavi.
-3. Vercel: **Add New, Project**, odaberi repozitorij i ostavi sve zadano (postavke su u `vercel.json`: izlazni folder `public`, a prije objave se pokrene provjera pjesama, pa pogrešan unos ne ide uživo).
-4. Otvori [`tools/qr.html`](tools/qr.html), upiši adresu sa Vercela (npr. `https://mixtape.vercel.app`), preuzmi PNG i isprintaj.
-
-Dalje je sve isto: dodaš pjesmu u sučelju, klikneš *Objavi* (commit i push), Vercel za minutu objavi novu verziju.
+1. Repozitorij je na GitHubu (privatan), a Vercel objavljuje svaki push na `main`. Postavke su u `vercel.json` (izlazni folder `public`, funkcije u `api/`, prije objave provjera početnog sadržaja).
+2. U Vercelu, projekt `mixtape`: **Storage, Create, Blob** (poveži s projektom) i **Settings, Environment Variables, `ADMIN_PASSWORD`** (dugačka lozinka). Nakon toga *Redeploy*.
+3. Otvori `/admin`, prijavi se, u *Postavke* upiši njeno ime, svoj potpis i WhatsApp, obriši primjere i dodaj svoje pjesme.
+4. Otvori [`tools/qr.html`](tools/qr.html), adresa je već upisana; preuzmi PNG i isprintaj.
 
 ## Isprobavanje
 
-`node server.mjs` pa http://localhost:4321. Igru možeš ponovno odigrati s `?igra=scratch` ili `?igra=guess`.
+`node server.mjs` pa http://localhost:4321 (lokalna kopija koja piše u `data/songs.js`, bez lozinke; ne dira live). Igru možeš ponovno odigrati s `?igra=scratch` ili `?igra=guess`.
 
 ## Napomene
 
 - „Sada” se računa po zoni `Europe/Zagreb` (`config.timeZone`).
 - Njen niz, reakcije i što je otvorila pamte se samo u njenom mobitelu (bez servera). Ako obriše podatke preglednika ili skenira drugim mobitelom, kreće ispočetka.
 - Spotify player svira cijelu pjesmu ako je prijavljena u Spotify u pregledniku, inače 30 s; gumb *Spotify* uvijek otvara aplikaciju.
-- Sadržaj `songs.js` je dostupan svakome tko zna adresu (i buduće pjesme, ako netko čačka po kodu).
+- Objavljene pjesme vidi svatko tko zna adresu; buduće ne vidi nitko.

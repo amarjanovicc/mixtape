@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-// Provjera public/songs.js: ispravni datumi, nema duplikata, linkovi u dobrom formatu.
+// Provjera data/songs.js (početni sadržaj): ispravni datumi, nema duplikata, linkovi u dobrom formatu.
 // Pokretanje:  node scripts/check-songs.mjs
 import { readFileSync, existsSync } from "node:fs";
 import vm from "node:vm";
 
-const file = new URL("../public/songs.js", import.meta.url);
+const file = new URL("../data/songs.js", import.meta.url);
 const errors = [];
 const warnings = [];
 
@@ -60,7 +60,7 @@ data.songs.forEach((s, i) => {
   if (!s.note) warnings.push(`${where}: nema note — poruka je pola čarolije`);
   if (s.spotify && !SPOTIFY.test(s.spotify)) errors.push(`${where}: spotify link nije oblika https://open.spotify.com/track/...`);
   if (s.youtube && !YOUTUBE.test(s.youtube)) errors.push(`${where}: youtube link nije prepoznat`);
-  if (s.audio && !existsSync(new URL(`../public/${s.audio}`, import.meta.url))) errors.push(`${where}: zvuk ${s.audio} ne postoji u public/`);
+  if (s.audio && !/^https:/.test(s.audio) && !existsSync(new URL(`../public/${s.audio}`, import.meta.url))) errors.push(`${where}: zvuk ${s.audio} ne postoji u public/`);
   if (!s.audio && !s.preview) warnings.push(`${where}: nema zvuka (ni isječka ni vlastite datoteke) — kaseta će se vrtjeti bez glazbe`);
   if (/\p{Extended_Pictographic}/u.test(`${s.hint ?? ""}${s.note ?? ""}${s.ps ?? ""}`)) warnings.push(`${where}: tekst sadrži emoji — stranica koristi samo ikone, napiši riječima`);
   if (s.reveal && !REVEALS.has(s.reveal)) errors.push(`${where}: reveal mora biti "scratch" ili "guess"`);

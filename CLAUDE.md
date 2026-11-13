@@ -63,25 +63,30 @@ service workera, namjerno, da nikad ne vidi staru verziju.
 
 ## Struktura
 
-- `public/` — cijela stranica, objavljuje se kakva jest (bez build koraka)
-  - `songs.js` — **jedini sadržaj**: `config` + popis pjesama (piše ga sučelje za unos)
-  - `audio/` — vlastiti zvukovi učitani kroz sučelje
-  - `index.html`, `style.css`, `app.js` — izgled i logika
-  - `pixel.js` — pixel-art likovi za naljepnice (koristi ga i sučelje za unos)
-- `server.mjs` — backend bez ovisnosti: servira `public/`, sučelje `/admin` i `/api/*`
-  (dohvat podataka iz linka, spremanje `songs.js`, učitavanje zvuka, „Objavi” = provjera + git)
-- `admin/index.html` — sučelje za unos (ne objavljuje se, radi samo lokalno). Mora ostati
-  jednostavno: tri koraka (link, kad, poruka) na vidiku, sve ostalo u „Više opcija” ili
-  „Postavke”. Novo polje ide u skrivene opcije osim ako ga treba svaka pjesma.
-- `scripts/check-songs.mjs` — provjera `songs.js` (datumi, duplikati, linkovi, raspored)
+- `public/` — cijela stranica (statično): `index.html`, `style.css`, `app.js`, `pixel.js`, ikone, manifest
+  - `admin/index.html` — sučelje za unos (prijava lozinkom; radi i uživo i lokalno)
+- `api/` — Vercel funkcije: `songs.js` (javni sadržaj kao JS, samo objavljene pjesme), `data.js`
+  (čitanje/spremanje, traži prijavu), `lookup.js` (podaci iz linka), `audio.js` (vlastiti zvuk,
+  do 4 MB), `login.js`
+- `lib/` — `core.mjs` (čista logika: provjera podataka, dohvat linka, javni pogled), `store.mjs`
+  (Vercel Blob; lokalno datoteka), `http.mjs` (prijava, zaštita, tijelo zahtjeva)
+- `data/songs.js` — **početni sadržaj** (dok u Blobu ništa nije spremljeno) i sadržaj lokalnog servera
+- `server.mjs` — lokalni server (bez lozinke, 127.0.0.1): stranica, `/admin`, ista sučelja API-ja
+- `scripts/check-songs.mjs` — provjera `data/songs.js`, pokreće se i kao Vercel build
 - `tools/qr.html` — generator QR koda
-- `vercel.json` — objava na Vercelu: izlazni folder `public`, build je samo `node scripts/check-songs.mjs` (neispravan unos ne ide uživo), `songs.js` se ne kešira. Push na `main` = objava.
+- `vercel.json`, `package.json` (jedina ovisnost: `@vercel/blob`)
+
+**Uživo je izvor istine Vercel Blob, ne git.** Sadržaj se mijenja u `/admin` i odmah je live;
+`data/songs.js` je samo početno stanje. Nema više gumba „Objavi” uživo (lokalni server ga i dalje ima).
 
 ## Pravila
 
-- Bez frameworka, npm ovisnosti i build koraka. Mora raditi i kad se `public/index.html`
-  otvori direktno iz datoteke. Objavljena stranica je i dalje čisto statična — backend
-  služi samo za unos na korisnikovom računalu.
+- Stranica (`public/`) je čisti HTML/CSS/JS bez frameworka i build koraka. Backend su male
+  Vercel funkcije bez frameworka; jedina ovisnost je `@vercel/blob`.
+- **Sigurnost**: sve u `api/` osim `songs.js` i `login.js` traži prijavu (cookie `mx_admin`,
+  HMAC, HttpOnly/Secure/SameSite=Strict) i zaglavlje `X-Mixtape`; lozinka je samo u Vercel
+  okruženju (`ADMIN_PASSWORD`), nikad u kodu. `api/songs.js` mora ostati jedino što stranica
+  čita i **nikad ne smije poslati pjesme čije vrijeme nije došlo** (`publicData` u `lib/core.mjs`).
 - **Zvuk**: `audio` (datoteka u `public/audio/`) ima prednost pred `preview` (službeni isječak
   od 30 s s iTunesa, svira se s njihovog servera). Ne dodaji skidanje cijelih pjesama sa
   Spotifyja/YouTubea — to bi bilo javno dijeljenje tuđe glazbe; vlastiti zvuk je za ono što
@@ -93,8 +98,7 @@ service workera, namjerno, da nikad ne vidi staru verziju.
 - **Mobile-first**: dok traje igra sve stane na jedan ekran (`.stage.gaming`), a kontrole su
   dolje pod palcem; dodirne mete su najmanje 44 px. Nakon otkrivanja redoslijed je:
   kaseta i tipke, pjesma, spremanje u kutiju, poruka, reakcija, P.S., cijela pjesma, odbrojavanje.
-- `server.mjs` sluša samo na 127.0.0.1, provjerava `Host` i traži zaglavlje `X-Mixtape` za
-  sve što mijenja podatke. Nema lozinke — ne izlagati ga na internet.
+- Lokalni `server.mjs` sluša samo na 127.0.0.1 i nema lozinku — ne izlagati ga na internet.
 - **Nikad emojiji ni ukrasni znakovi** (srca, zvjezdice, strelice, kvačice, „№” i sl.) — nigdje:
   ni na stranici, ni u sučelju, ni u QR alatu, ni u ispisu skripti, ni u primjerima.
   Uvijek SVG ikona: na stranici `icon("ime")` / `<use href="#i-ime">` iz `<defs>` na vrhu
@@ -120,10 +124,10 @@ service workera, namjerno, da nikad ne vidi staru verziju.
 
 ## Kad korisnik kaže „dodaj pjesmu” (glavni posao)
 
-Korisnik to inače radi sam kroz sučelje (`node server.mjs` pa `/admin`). Ako traži od tebe,
+Korisnik to inače radi sam u živom sučelju (`/admin` na objavljenoj adresi, uz lozinku). Ako traži od tebe,
 najlakše je preko istog API-ja dok server radi: `POST /api/lookup {url}` vrati naslov,
 izvođača, omot i isječke, a `PUT /api/data` sprema cijeli `{config, songs}` (zaglavlje
-`X-Mixtape: 1`). Inače uredi `public/songs.js` ručno po koracima ispod.
+`X-Mixtape: 1`). Ta sučelja traže prijavu uživo; lokalno (`node server.mjs`) ne. Ručno se uređuje samo početni sadržaj `data/songs.js`, po koracima ispod.
 
 Npr. „dodaj za sutra Lover od Taylor Swift, podsjetila me jer smo je pjevali u autu”.
 
@@ -137,7 +141,7 @@ Npr. „dodaj za sutra Lover od Taylor Swift, podsjetila me jer smo je pjevali u
    patetiku. Ako je nema, pitaj.
 4. **Trag** (`hint`): ako ga korisnik nije dao, predloži kratak trag riječima (2–4 riječi) koji
    asocira na pjesmu ili na njegovu poruku, ali ne odaje naslov. Bez emojija. `ps` dodaj samo ako ga korisnik kaže.
-5. Dodaj unos u `public/songs.js` sortirano po vremenu, u istom formatu kao ostali.
+5. Dodaj unos u `data/songs.js` sortirano po vremenu, u istom formatu kao ostali.
 6. Pokreni `node scripts/check-songs.mjs` i popravi greške.
 7. Commitaj (`Pjesma za YYYY-MM-DD: Naslov — Izvođač`). Pushaj samo ako korisnik to traži
    ili je to već odobrio u ovoj sesiji.
