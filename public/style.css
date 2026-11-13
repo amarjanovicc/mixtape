@@ -21,7 +21,7 @@
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
 .icon { display: inline-block; flex: none; width: 1em; height: 1em; vertical-align: -0.14em; }
-html { -webkit-text-size-adjust: 100%; overflow-x: hidden; overscroll-behavior-x: none; }
+html { -webkit-text-size-adjust: 100%; overflow-x: hidden; overflow-x: clip; overscroll-behavior-x: none; touch-action: pan-y pinch-zoom; }
 html, body { margin: 0; }
 button, a { touch-action: manipulation; }
 
@@ -37,6 +37,8 @@ body {
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
   overflow-x: hidden;
+  overflow-x: clip;
+  max-width: 100%;
   overscroll-behavior-y: none;
 }
 
@@ -97,7 +99,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
   overflow: hidden;
   transform: rotate(1.3deg);
   animation: rise 0.5s var(--ease-out) both;
-  transition: aspect-ratio 0.4s var(--ease-out);
+  transition: width 0.45s var(--ease-out), margin 0.45s var(--ease-out), transform 0.45s var(--ease-out);
 }
 /* hrbat kutije: uspravan natpis, kao na polici */
 .sleeve-spine {
@@ -164,12 +166,11 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
     linear-gradient(112deg, rgba(255, 255, 255, 0.34) 0 14%, transparent 14% 100%),
     linear-gradient(112deg, transparent 58%, rgba(255, 255, 255, 0.16) 58% 66%, transparent 66% 100%);
 }
-/* kad kaseta izađe, omot ostaje kao uska traka iznad nje */
-.sleeve.done { aspect-ratio: 5.2; }
-.sleeve.done .sleeve-tag { top: 50%; bottom: auto; left: 5%; right: auto; max-width: 62%; padding: 3px 9px 4px; transform: translateY(-50%) rotate(-1deg); }
-.sleeve.done .sleeve-tag b { font-size: 1.15rem; -webkit-line-clamp: 1; }
-.sleeve.done .sleeve-tag span { font-size: 0.9rem; }
-.sleeve.done .sleeve-icon { font-size: 36px; }
+/* kad kaseta izađe, omot ostaje iza nje (kao da ju je izvukla iz kutije): vidi se naslovnica i hrbat */
+.sleeve.done { width: 80%; margin: 4px auto -84px; transform: rotate(1.8deg); }
+.sleeve.done .sleeve-tag { display: none; }
+.sleeve.done .sleeve-icon { font-size: 52px; }
+.tape { z-index: 2; }
 
 /* ---------- kaseta ---------- */
 
@@ -687,7 +688,11 @@ body.mini-on .wrap { padding-bottom: calc(150px + env(safe-area-inset-bottom)); 
 .peek {
   position: fixed;
   z-index: 4;
-  left: 50%;
+  left: 16px;
+  right: 16px;
+  margin: 0 auto;
+  width: max-content;
+  max-width: calc(100% - 32px);
   bottom: calc(66px + env(safe-area-inset-bottom));
   display: inline-flex;
   align-items: center;
@@ -704,11 +709,11 @@ body.mini-on .wrap { padding-bottom: calc(150px + env(safe-area-inset-bottom)); 
   box-shadow: 3px 4px 0 var(--ink);
   opacity: 0;
   pointer-events: none;
-  transform: translate(-50%, 34px) rotate(-2deg);
+  transform: translateY(34px) rotate(-2deg);
   transition: opacity 0.6s, transform 0.6s var(--ease-out);
   cursor: pointer;
 }
-.peek.on { opacity: 1; pointer-events: auto; transform: translate(-50%, 0) rotate(-2deg); }
+.peek.on { opacity: 1; pointer-events: auto; transform: rotate(-2deg); }
 .peek .icon { font-size: 0.8em; animation: bob 1.5s ease-in-out infinite; }
 .in-game .peek { display: none; }
 
@@ -895,6 +900,9 @@ body.mini-on .wrap { padding-bottom: calc(150px + env(safe-area-inset-bottom)); 
 .noscript { text-align: center; padding: 40px 16px; }
 
 /* ---------- konfeti ---------- */
+
+#fx-layer { position: fixed; inset: 0; z-index: 10; overflow: hidden; pointer-events: none; }
+#fx-layer .bit, #fx-layer .flake { position: absolute; }
 
 .bit { position: fixed; z-index: 10; pointer-events: none; font-size: 22px; animation: bit 1.3s var(--ease-out) forwards; }
 

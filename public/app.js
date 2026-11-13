@@ -176,6 +176,19 @@
 
   // ---------- confetti ----------
 
+  // Konfeti i strugotine žive u fiksnom sloju koji reže sve što izađe iz ekrana, da stranica
+  // nikad ne dobije bočno pomicanje (na iPhoneu se inače može pomaknuti udesno).
+  function fxLayer() {
+    var l = document.getElementById("fx-layer");
+    if (!l) {
+      l = document.createElement("div");
+      l.id = "fx-layer";
+      l.setAttribute("aria-hidden", "true");
+      document.body.appendChild(l);
+    }
+    return l;
+  }
+
   function confetti(originEl, count) {
     if (reducedMotion || !originEl) return;
     var r = originEl.getBoundingClientRect();
@@ -195,7 +208,7 @@
       b.style.setProperty("--dy", Math.sin(angle) * dist - 60 + "px");
       b.style.setProperty("--rot", (Math.random() - 0.5) * 240 + "deg");
       b.style.animationDelay = Math.random() * 0.15 + "s";
-      document.body.appendChild(b);
+      fxLayer().appendChild(b);
       b.addEventListener("animationend", function () { this.remove(); });
     }
   }
@@ -1368,7 +1381,7 @@
       f.style.left = e.clientX + (Math.random() - 0.5) * 24 + "px";
       f.style.top = e.clientY + "px";
       f.style.setProperty("--fx", (Math.random() - 0.5) * 60 + "px");
-      document.body.appendChild(f);
+      fxLayer().appendChild(f);
       f.addEventListener("animationend", function () { this.remove(); });
     }
     function cleared() {

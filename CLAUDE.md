@@ -13,8 +13,8 @@ Dva pogleda, jahači na dnu ekrana (ili povlačenje prstom lijevo/desno): **Dana
 1. **Omot je srećka: koja je pjesma?** Pjesma je zapakirana u **omot** (kutiju kasete, `.sleeve`):
    hrbat s uspravnim natpisom, naslovnica (ili boja pjesme s ikonom), papirić s naslovom i
    odsjaj plastike. Omot prekriva srebrna folija, a kaseta je još skrivena. Vidi samo trag
-   (`hint`) i grebe omot prstom. Kad se ogrebe, omot se skupi u usku traku, a **kaseta se spusti
-   ispod njega** (`revealCassette`) i postaje player. Omot je zakrenut pa se dodir vraća natrag
+   (`hint`) i grebe omot prstom. Kad se ogrebe, omot se pomakne **iza** kasete (kao da je izvučena iz kutije: vidi se
+   naslovnica i hrbat), a **kaseta se spusti ispred njega** (`revealCassette`) i postaje player. Omot je zakrenut pa se dodir vraća natrag
    za kut (`tapeAngle`/`pos`). Ritual je svaki dan isti, a iznenađenje je sadržaj. Svaka peta
    pjesma je umjesto toga **pogodi unazad** (`guess`: omot je pod lokotom, 5 s pjesme unatrag,
    tri naslova; treba zvuk i dvije druge objavljene pjesme, inače srećka). `reveal` u pjesmi to
@@ -149,6 +149,9 @@ service workera, namjerno, da nikad ne vidi staru verziju.
   danima/minutama držao staru kopiju (nova pjesma i reset se nisu vidjeli). Zato `songs.js` nije u
   tom pravilu, a `lib/http.mjs` šalje i `CDN-Cache-Control: no-store`. Provjera: `curl -sI /songs.js`
   ne smije imati `x-vercel-cache: HIT`.
+- **Stranica nikad ne smije imati bočno pomicanje** (na iPhoneu se pomaknula udesno): konfeti i
+  strugotine žive u fiksnom sloju koji reže (`#fx-layer`), `.peek` nema `left:50%` + translate,
+  a `html`/`body` imaju `overflow-x: clip` i `touch-action: pan-y pinch-zoom`.
 - **Svježina stranice** (`checkFresh` u `app.js`): mobilni preglednici vraćaju stranicu iz memorije
   (gumb natrag) ili je zamrznu u pozadini, pa bi vidjela staro stanje (npr. resetiranu pjesmu).
   Zato `pageshow` iz memorije radi reload, a nakon povratka iz pozadine se `/songs.js` usporedi
