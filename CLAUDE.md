@@ -10,15 +10,15 @@ Dva pogleda, jahači na dnu ekrana (ili povlačenje prstom lijevo/desno): **Dana
 
 ### Ritual (pogled Danas) — svaki korak ima jasan razlog
 
-1. **Omot kasete je srećka: koja je pjesma?** Naslovnica pjesme je omot preko CIJELE kasete
-   (`--cover` na `.tape`, a bez naslovnice ostaje boja pjesme), a srebrna folija prekriva cijelu
-   kasetu. Vidi samo trag (`hint`) i grebe je prstom; ispod se otkrije kaseta s omotom, naljepnicom
-   s naslovom i izvođačem te donjom pločom s brojem i datumom. Kaseta je zakrenuta pa se dodir
-   vraća natrag za kut (`tapeAngle`/`pos` u `app.js`). Ritual je svaki dan isti, a iznenađenje je
-   sadržaj. Svaka peta pjesma je umjesto toga **pogodi unazad** (`guess`: kaseta je pod lokotom,
-   5 s pjesme unatrag, tri naslova; treba zvuk i dvije druge objavljene pjesme, inače srećka).
-   `reveal` u pjesmi to nadjača. Uvijek postoji „samo otvori”. Dok traje igra, povlačenje po
-   kaseti grebe, a ne premotava.
+1. **Omot je srećka: koja je pjesma?** Pjesma je zapakirana u **omot** (kutiju kasete, `.sleeve`):
+   hrbat s uspravnim natpisom, naslovnica (ili boja pjesme s ikonom), papirić s naslovom i
+   odsjaj plastike. Omot prekriva srebrna folija, a kaseta je još skrivena. Vidi samo trag
+   (`hint`) i grebe omot prstom. Kad se ogrebe, omot se skupi u usku traku, a **kaseta se spusti
+   ispod njega** (`revealCassette`) i postaje player. Omot je zakrenut pa se dodir vraća natrag
+   za kut (`tapeAngle`/`pos`). Ritual je svaki dan isti, a iznenađenje je sadržaj. Svaka peta
+   pjesma je umjesto toga **pogodi unazad** (`guess`: omot je pod lokotom, 5 s pjesme unatrag,
+   tri naslova; treba zvuk i dvije druge objavljene pjesme, inače srećka). `reveal` u pjesmi to
+   nadjača. Uvijek postoji „samo otvori”. Dok traje igra, povlačenje po omotu grebe.
    **Krivi odgovori** su polje `decoys` ("naslov | naslov"): admin ih popuni iz izvođačevih drugih
    pjesama (iTunes), a mogu se urediti. Bez njih se uzimaju prijašnje pjesme, što je preslabo jer
    ih je već čula pa pogađa onu koju nije vidjela.

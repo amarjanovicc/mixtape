@@ -63,6 +63,18 @@
     <a class="back" id="back" href="./" hidden><svg class="icon" aria-hidden="true"><use href="#i-arrow-left"/></svg> na najnoviju</a>
 
     <section class="stage" id="stage" hidden>
+      <!-- OMOT: kutija kasete (hrbat, naslovnica, oznaka). Prekriva ga folija; kad se ogrebe, iz njega izlazi kaseta. -->
+      <div class="sleeve" id="sleeve">
+        <div class="sleeve-spine" aria-hidden="true"><span id="spine-text"></span></div>
+        <div class="sleeve-front">
+          <div class="sleeve-art" id="sleeve-art"><i class="sleeve-icon" id="sleeve-icon"></i></div>
+          <div class="sleeve-tag"><b id="sleeve-title"></b><span id="sleeve-artist"></span></div>
+          <i class="sleeve-sheen"></i>
+        </div>
+        <canvas class="scratch" id="scratch" hidden></canvas>
+        <div class="veil" id="veil" hidden><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg></div>
+      </div>
+
       <div class="tape" id="tape">
         <div class="tape-top" aria-hidden="true"><span class="side">A</span><i class="tape-sticker" id="tape-sticker"></i></div>
         <!-- naljepnica je ujedno i srećka: ispod folije piše koja je pjesma -->
@@ -85,9 +97,6 @@
           <span class="chev chev-r"><svg class="icon" aria-hidden="true"><use href="#i-chev-right"/></svg></span>
           <i class="foot-hole"></i>
         </div>
-        <!-- omot: folija (ili lokot) prekriva cijelu kasetu, pa se grebe cijela -->
-        <canvas class="scratch" id="scratch" hidden></canvas>
-        <div class="veil" id="veil" hidden><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg></div>
       </div>
 
       <div class="deck" id="deck" hidden>

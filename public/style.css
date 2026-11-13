@@ -82,6 +82,95 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
 .streak .icon { margin-right: 4px; }
 .back { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; padding: 4px 0; font-weight: 700; color: var(--ink); }
 
+/* ---------- omot (kutija kasete) ---------- */
+
+.sleeve {
+  position: relative;
+  display: flex;
+  width: 94%;
+  margin: 4px auto 0;
+  aspect-ratio: 1.62;
+  border: 2.5px solid var(--ink);
+  border-radius: 6px 12px 12px 6px;
+  background: var(--accent);
+  box-shadow: 5px 6px 0 var(--ink);
+  overflow: hidden;
+  transform: rotate(1.3deg);
+  animation: rise 0.5s var(--ease-out) both;
+  transition: aspect-ratio 0.4s var(--ease-out);
+}
+/* hrbat kutije: uspravan natpis, kao na polici */
+.sleeve-spine {
+  flex: 0 0 11%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 2.5px solid var(--ink);
+  background: var(--sheet);
+  overflow: hidden;
+}
+.sleeve-spine span {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  max-height: 92%;
+  font-family: var(--hand);
+  font-weight: 700;
+  font-size: 1.15rem;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sleeve-front { position: relative; flex: 1; min-width: 0; }
+.sleeve-art {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background:
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0 8px, transparent 8px 16px),
+    var(--accent);
+  background-size: cover;
+}
+.sleeve-art.has-cover { background-image: var(--cover); background-size: cover; background-position: center; }
+.sleeve-art.has-cover .sleeve-icon { display: none; }
+.sleeve-icon { font-size: 64px; color: var(--sheet); filter: drop-shadow(2px 3px 0 rgba(43, 33, 24, 0.45)); }
+/* oznaka na omotu: papirić s naslovom */
+.sleeve-tag {
+  position: absolute;
+  left: 7%;
+  right: 7%;
+  bottom: 9%;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 10px 7px;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  background: rgba(255, 250, 240, 0.96);
+  font-family: var(--hand);
+  transform: rotate(-1deg);
+  transition: all 0.4s var(--ease-out);
+}
+.sleeve-tag b { font-size: clamp(1.25rem, 6vw, 1.6rem); line-height: 1; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
+.sleeve-tag span { font-size: 1.05rem; color: var(--muted); line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sleeve-tag span:empty { display: none; }
+/* odsjaj prozirne plastike */
+.sleeve-sheen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(112deg, rgba(255, 255, 255, 0.34) 0 14%, transparent 14% 100%),
+    linear-gradient(112deg, transparent 58%, rgba(255, 255, 255, 0.16) 58% 66%, transparent 66% 100%);
+}
+/* kad kaseta izađe, omot ostaje kao uska traka iznad nje */
+.sleeve.done { aspect-ratio: 5.2; }
+.sleeve.done .sleeve-tag { top: 50%; bottom: auto; left: 5%; right: auto; max-width: 62%; padding: 3px 9px 4px; transform: translateY(-50%) rotate(-1deg); }
+.sleeve.done .sleeve-tag b { font-size: 1.15rem; -webkit-line-clamp: 1; }
+.sleeve.done .sleeve-tag span { font-size: 0.9rem; }
+.sleeve.done .sleeve-icon { font-size: 36px; }
+
 /* ---------- kaseta ---------- */
 
 .stage { display: flex; flex-direction: column; gap: 20px; }
@@ -91,7 +180,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
 .in-game .wrap { padding-bottom: max(20px, env(safe-area-inset-bottom)); }
 /* pogodi unazad: tri odgovora trebaju mjesta, pa je kaseta manja */
 .stage.guessing { gap: 14px; }
-.stage.guessing .tape { width: 78%; }
+.stage.guessing .sleeve { width: 78%; }
 
 .tape {
   position: relative;
@@ -112,12 +201,6 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
   touch-action: pan-y;
   user-select: none;
   -webkit-user-select: none;
-}
-/* omot: naslovnica pjesme preko cijele kasete (ako je nema, ostaje boja pjesme) */
-.tape.has-cover {
-  background-image: linear-gradient(rgba(255, 255, 255, 0.08), rgba(43, 33, 24, 0.22)), var(--cover);
-  background-size: cover;
-  background-position: center;
 }
 .tape.live { cursor: grab; }
 .tape.live:active { cursor: grabbing; }
@@ -158,7 +241,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
 }
 .tape-line.small { font-size: 1.1rem; font-weight: 500; color: var(--muted); -webkit-line-clamp: 1; }
 /* dobitak: sjaj preleti naljepnicu */
-.tape.won::after {
+.sleeve.won::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -816,7 +899,7 @@ body.mini-on .wrap { padding-bottom: calc(150px + env(safe-area-inset-bottom)); 
 .bit { position: fixed; z-index: 10; pointer-events: none; font-size: 22px; animation: bit 1.3s var(--ease-out) forwards; }
 
 @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; } }
-@keyframes drop { from { opacity: 0; transform: translateY(-26px) rotate(5deg); } to { opacity: 1; transform: rotate(-2.5deg); } }
+@keyframes drop { from { opacity: 0; transform: translateY(-64px) rotate(2deg) scale(0.94); } to { opacity: 1; transform: rotate(-2.5deg); } }
 @keyframes bit {
   0% { transform: translate(0, 0) scale(0.5) rotate(0deg); opacity: 1; }
   100% { transform: translate(var(--dx), var(--dy)) scale(1.3) rotate(var(--rot)); opacity: 0; }

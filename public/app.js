@@ -219,16 +219,20 @@
     $("tape-line1").textContent = song.title;
     $("tape-line2").textContent = song.artist || "";
     $("tape-line2").hidden = !song.artist;
-    // omot: naslovnica pjesme preko cijele kasete (a dok se ne učita, vidi se boja pjesme)
-    var tapeEl = $("tape");
+    // omot (kutija kasete): naslovnica, hrbat i oznaka s naslovom; bez naslovnice je boja pjesme s ikonom
+    var art = $("sleeve-art");
     if (song.cover && /^https:\/\//.test(song.cover)) {
       // YouTubeov hqdefault ima crne trake gore i dolje; mqdefault je čist 16:9
       var coverUrl = song.cover.replace(/\/hqdefault\.jpg$/, "/mqdefault.jpg");
-      tapeEl.style.setProperty("--cover", 'url("' + coverUrl.replace(/"/g, "%22") + '")');
-      tapeEl.classList.add("has-cover");
+      art.style.setProperty("--cover", 'url("' + coverUrl.replace(/"/g, "%22") + '")');
+      art.classList.add("has-cover");
     } else {
-      tapeEl.classList.remove("has-cover");
+      art.classList.remove("has-cover");
     }
+    setContent($("sleeve-icon"), icon(look.sticker));
+    $("sleeve-title").textContent = song.title;
+    $("sleeve-artist").textContent = song.artist || "";
+    $("spine-text").textContent = song.title + (song.artist ? " — " + song.artist : "");
     $("tape-meta").textContent = "#" + pad(trackNo) + " · " + formatDate(song.day, { day: "numeric", month: "long" });
 
     var player = $("player");
@@ -1206,6 +1210,14 @@
 
   // ---------- games ----------
 
+  // Kaseta izlazi iz omota: omot se skupi u traku, a kaseta se spusti ispod njega.
+  function revealCassette() {
+    var sl = $("sleeve"), tp = $("tape");
+    sl.classList.add("done");
+    sl.classList.remove("won");
+    tp.hidden = false;   // pojavi se uz animaciju "drop" (spusti se ispod omota)
+  }
+
   function startGame(type, song, ticketNo, decoys, onDone) {
     var game = $("game");
     var text = $("game-text");
@@ -1220,6 +1232,7 @@
       $("stage").classList.remove("gaming", "guessing");
       document.body.classList.remove("in-game");
       if (type === "scratch") fx.win(); else fx.reveal();
+      revealCassette();
       onDone();
     }
 
@@ -1279,7 +1292,7 @@
     var ctx = canvas.getContext && canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) { $("veil").hidden = false; cleanup = function () { $("veil").classList.add("gone"); }; text.textContent = "dodirni „samo otvori”"; return; }
     canvas.hidden = false;
-    text.textContent = "ogrebi omot kasete";
+    text.textContent = "ogrebi omot";
 
     // kaseta je zakrenuta, pa se veličina uzima iz neokrenutih mjera, a dodir se vraća natrag
     var cw = Math.max(1, canvas.offsetWidth), ch = Math.max(1, canvas.offsetHeight);
@@ -1332,7 +1345,7 @@
 
     var drawing = false, px = 0, py = 0, moves = 0, lastMove = 0;
     function tapeAngle() {
-      try { var m = new DOMMatrixReadOnly(getComputedStyle($("tape")).transform); return Math.atan2(m.b, m.a); } catch (e) { return 0; }
+      try { var m = new DOMMatrixReadOnly(getComputedStyle($("sleeve")).transform); return Math.atan2(m.b, m.a); } catch (e) { return 0; }
     }
     function pos(e) {
       var r = canvas.getBoundingClientRect();
@@ -1403,7 +1416,7 @@
     cleanup = function () {
       fx.scratchEnd();
       canvas.classList.add("gone");
-      $("tape").classList.add("won");   // sjaj preleti kasetu
+      $("sleeve").classList.add("won");   // sjaj preleti omot
     };
   }
 
@@ -1527,9 +1540,11 @@
     if (GAMES.indexOf(forced) === -1) forced = null;
 
     if (!forced && (!isLatest || state.opened[current.at])) {
+      revealCassette();
       showAfter(false);
       return;
     }
+    $("tape").hidden = true;   // dok se ne otkrije pjesma, vidi se samo omot
 
     // Ritual je uvijek isti (srećka), a svaka peta pjesma je iznenađenje: "pogodi unazad".
     var auto = trackNo % 5 === 0 ? "guess" : "scratch";
