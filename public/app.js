@@ -219,6 +219,12 @@
     $("tape-line1").textContent = song.title;
     $("tape-line2").textContent = song.artist || "";
     $("tape-line2").hidden = !song.artist;
+    var tc = $("tape-cover");
+    tc.hidden = !song.cover;
+    if (song.cover) {
+      tc.onerror = function () { this.hidden = true; };
+      tc.src = song.cover;
+    }
     $("tape-meta").textContent = "#" + pad(trackNo) + " · " + formatDate(song.day, { day: "numeric", month: "long" });
 
     var player = $("player");
@@ -236,6 +242,7 @@
       }));
     }
 
+    $("embed").hidden = !player.children.length;
     var q = encodeURIComponent([song.title, song.artist].filter(Boolean).join(" "));
     var links = $("links");
     var spotifyBtn = el("a", {
@@ -506,7 +513,7 @@
       if (!node) return;
       if (window.scrollY > 50) seen[currentView] = true;
       var show = armed && Boolean(texts[currentView]) && !seen[currentView] && more() &&
-        !document.body.classList.contains("in-game");
+        !document.body.classList.contains("in-game") && !document.body.classList.contains("mini-on");
       if (show) $("peek-text").textContent = texts[currentView];
       node.classList.toggle("on", show);
     }
@@ -890,7 +897,7 @@
   //  - sviranje: tipke i povlačenje premotavaju pjesmu u oba smjera.
 
   var deck = (function () {
-    var tape, audio, spoolL, spoolR, playBtn, timeEl, barFill, hintEl;
+    var tape, audio, spoolL, spoolR, playBtn, timeEl, durEl, seekEl, hintEl;
     var hasAudio = false;
     var virtualPlaying = false; // bez zvuka: kolutovi se samo vrte
     var angle = 0;              // kut kolutova u stupnjevima
@@ -900,6 +907,11 @@
     var dragging = false, dragX = 0, dragT = 0, hushTimer = 0;
     var last = 0;
     var intro = null;           // { rw: 1 -> 0, done }
+    var deckSeen = true;        // jesu li tipke kasete na ekranu
+    function updateMini() {
+      var on = hasAudio && !intro && !$("deck").hidden && !deckSeen;
+      document.body.classList.toggle("mini-on", on);
+    }
     var SEEK_RATE = 7;          // sekundi pjesme po sekundi držanja tipke
     var INTRO_SECONDS = 2.2;    // koliko traje premotavanje cijele vrpce tipkom
 
@@ -923,15 +935,21 @@
       var f = intro ? intro.rw : (d ? audio.currentTime / d : 0.5);
       spoolL.style.setProperty("--fill", (1 - f).toFixed(3)); // lijevi kolut se prazni
       spoolR.style.setProperty("--fill", f.toFixed(3));       // desni se puni
-      barFill.style.transform = "scaleX(" + (intro || d ? f : 0).toFixed(4) + ")";
-      if (intro) timeEl.textContent = "kraj vrpce";
-      else if (hasAudio) timeEl.textContent = fmt(audio.currentTime) + (d ? " / " + fmt(d) : "");
+      var shown = intro || d ? f : 0;
+      seekEl.style.setProperty("--f", shown.toFixed(4));
+      $("mini").querySelector(".mini-bar").style.setProperty("--f", shown.toFixed(4));
+      seekEl.setAttribute("aria-valuenow", String(Math.round(shown * 100)));
+      if (intro) { timeEl.textContent = "kraj"; durEl.textContent = ""; }
+      else if (hasAudio) { timeEl.textContent = fmt(audio.currentTime); durEl.textContent = d ? fmt(d) : ""; }
     }
 
     function syncButton() {
       var on = isPlaying();
       setContent(playBtn, icon(on ? "pause" : "play"));
       playBtn.setAttribute("aria-label", on ? "Pauza" : "Pusti");
+      $("play-cap").textContent = on ? "pauza" : "pusti";
+      setContent($("mini-play"), icon(on ? "pause" : "play"));
+      $("mini-play").setAttribute("aria-label", on ? "Pauza" : "Pusti");
     }
 
     function play() {
@@ -956,7 +974,8 @@
       $("rew").classList.remove("on");
       $("deck").classList.remove("intro");
       tape.classList.remove("rewind-me");
-      setContent(hintEl, icon("drag"), " povuci kasetu ili drži ", icon("rewind"));
+      updateMini();
+      setContent(hintEl, icon("drag"), " povuci kasetu ili klizač za premotavanje");
       paint();
       done();
     }
@@ -1009,8 +1028,59 @@
       btn.addEventListener("keyup", stop);
     }
 
+    // Klizač: dodir skače na to mjesto, povlačenje premotava uz zvuk (kao povlačenje kasete)
+    function initSeek() {
+      var dragging = false, wasPlaying = false, lastT = 0;
+      var frac = function (e) {
+        var r = seekEl.getBoundingClientRect();
+        return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+      };
+      var moveTo = function (f) {
+        var d = duration();
+        if (!d) return;
+        var target = f * d, cur = audio.currentTime, delta = target - cur;
+        var now = performance.now(), dt = Math.max(8, now - lastT) / 1000;
+        lastT = now;
+        angle += delta * 30;
+        if (Math.abs(delta) > 0.02) {
+          fx.scrub(delta < 0 ? -1 : 1, Math.abs(delta) / dt, cur);
+          clearTimeout(hushTimer);
+          hushTimer = setTimeout(fx.hush, 90);
+        }
+        try { audio.currentTime = target; } catch (e) {}
+        paint();
+      };
+      seekEl.addEventListener("pointerdown", function (e) {
+        if (intro || !hasAudio || !duration()) return;
+        e.preventDefault();
+        fx.unlock();
+        dragging = true;
+        wasPlaying = !audio.paused;
+        audio.pause();
+        lastT = performance.now();
+        try { seekEl.setPointerCapture(e.pointerId); } catch (err) {}
+        moveTo(frac(e));
+      });
+      seekEl.addEventListener("pointermove", function (e) { if (dragging) moveTo(frac(e)); });
+      var end = function () {
+        if (!dragging) return;
+        dragging = false;
+        clearTimeout(hushTimer);
+        fx.stopScrub();
+        if (wasPlaying) play();
+      };
+      seekEl.addEventListener("pointerup", end);
+      seekEl.addEventListener("pointercancel", end);
+      seekEl.addEventListener("keydown", function (e) {
+        if (intro || !hasAudio) return;
+        var step = e.key === "ArrowLeft" || e.key === "ArrowDown" ? -3 : e.key === "ArrowRight" || e.key === "ArrowUp" ? 3 : 0;
+        if (e.key === "Home") { audio.currentTime = 0; paint(); e.preventDefault(); }
+        else if (e.key === "End") { audio.currentTime = Math.max(0, duration() - 0.5); paint(); e.preventDefault(); }
+        else if (step) { seekBy(step); paint(); e.preventDefault(); }
+      });
+    }
+
     function initDrag() {
-      tape.classList.add("live");
       tape.addEventListener("pointerdown", function (e) {
         if (!intro && (!hasAudio || $("stage").classList.contains("gaming"))) return;
         dragging = true;
@@ -1059,7 +1129,7 @@
     return {
       init: function (song) {
         tape = $("tape"); audio = $("audio"); spoolL = $("spool-l"); spoolR = $("spool-r");
-        playBtn = $("play"); timeEl = $("time"); barFill = $("bar-fill"); hintEl = $("deck-hint");
+        playBtn = $("play"); timeEl = $("time"); durEl = $("dur"); seekEl = $("seek"); hintEl = $("deck-hint");
         var src = song.audio || song.preview;
         if (src) {
           hasAudio = true;
@@ -1077,15 +1147,30 @@
           if (!hasAudio) { virtualPlaying = !virtualPlaying; syncButton(); return; }
           if (audio.paused) play(); else audio.pause();
         });
+        $("mini-title").textContent = song.title;
+        $("mini-play").addEventListener("click", function () {
+          fx.unlock();
+          fx.click();
+          if (!hasAudio) return;
+          if (audio.paused) play(); else audio.pause();
+        });
+        if (window.IntersectionObserver) {
+          new IntersectionObserver(function (entries) {
+            deckSeen = entries[entries.length - 1].intersectionRatio >= 0.75;
+            updateMini();
+          }, { threshold: [0, 0.75, 1] }).observe(document.querySelector(".deck-keys"));
+        }
         holdSeek($("rew"), -1);
         holdSeek($("ffw"), 1);
         initDrag();
+        initSeek();
         paint();
         requestAnimationFrame(loop);
       },
       // uvod: kaseta je na kraju, treba je premotati na početak
       intro: function (onDone) {
         intro = { rw: 1, done: onDone };
+        tape.classList.add("live");
         $("deck").hidden = false;
         $("deck").classList.add("intro");
         if (!reducedMotion) tape.classList.add("rewind-me");
@@ -1097,6 +1182,7 @@
       // pusti pjesmu (poziva se nakon dodira, pa preglednik dopušta zvuk)
       start: function (teach) {
         $("deck").hidden = !hasAudio;
+        if (hasAudio) tape.classList.add("live");
         if (hasAudio && teach && !reducedMotion) tape.classList.add("nudge");
         play();
         syncButton();

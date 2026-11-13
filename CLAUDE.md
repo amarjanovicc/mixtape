@@ -28,7 +28,14 @@ Dva pogleda, jahači na dnu ekrana (ili povlačenje prstom lijevo/desno): **Dana
    sljedeće naljepnice (uz njenu siluetu); ako se upravo otključala, pokaže se velika, s porukom.
 5. Cijela pjesma (Spotify/YouTube) i odbrojavanje do sljedeće.
 
-Nakon otkrivanja kaseta ostaje pravi player: tipke i povlačenje premotavaju u oba smjera.
+Nakon otkrivanja kaseta ostaje pravi player, a premotavanje se može napraviti na tri
+vidljiva načina: tipke s natpisima („unazad / pusti / naprijed”, drži za premotavanje),
+povlačenje kasete (strelice na donjoj ploči kućišta pokazuju da se povlači lijevo-desno) i
+**klizač** s velikom ručkom i oznakama (dodir skače, povlačenje premotava uz zvuk; radi i s
+tipkovnicom). Na naljepnici kasete je naslov, izvođač i omot pjesme, a na donjoj ploči broj i
+datum. Kad tipke izađu s ekrana (npr. dok čita poruku), pojavi se **mali player** iznad
+jahača (pusti/pauza + traka). Cijela pjesma: poveznice na Spotify/YouTube uvijek vidljive,
+a ugrađeni player je u rastvorljivom „Poslušaj ovdje” (da se ne natječe s kasetom).
 
 ### Kutija
 

@@ -45,6 +45,8 @@
       <symbol id="i-gift" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.500 11.500h15v9h-15zM3 7.500h18v4H3zM12 7.500v13M12 7.500c-1.500-4-6-3.500-5-1 .6 1.300 3 1 5 1zM12 7.500c1.500-4 6-3.500 5-1-.6 1.300-3 1-5 1z"/></g></symbol>
       <symbol id="i-check" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round" d="M4.500 12.500l5 5 10-11"/></symbol>
       <symbol id="i-down" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></symbol>
+      <symbol id="i-chev-left" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.800" stroke-linecap="round" stroke-linejoin="round" d="M12 6l-6 6 6 6M19 6l-6 6 6 6"/></symbol>
+      <symbol id="i-chev-right" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.800" stroke-linecap="round" stroke-linejoin="round" d="M12 6l6 6-6 6M5 6l6 6-6 6"/></symbol>
     </defs>
   </svg>
 
@@ -62,10 +64,14 @@
 
     <section class="stage" id="stage" hidden>
       <div class="tape" id="tape">
+        <div class="tape-top" aria-hidden="true"><span class="side">A</span><i class="tape-sticker" id="tape-sticker"></i></div>
         <!-- naljepnica je ujedno i srećka: ispod folije piše koja je pjesma -->
         <div class="tape-label" id="tape-label">
-          <h1 class="tape-line" id="tape-line1"></h1>
-          <p class="tape-line small" id="tape-line2"></p>
+          <img class="tape-cover" id="tape-cover" alt="" hidden>
+          <div class="tape-text">
+            <h1 class="tape-line" id="tape-line1"></h1>
+            <p class="tape-line small" id="tape-line2"></p>
+          </div>
           <canvas class="scratch" id="scratch" hidden></canvas>
           <div class="veil" id="veil" hidden><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg></div>
         </div>
@@ -74,20 +80,31 @@
           <i class="tape-band"></i>
           <span class="spool" id="spool-r"><i class="reel"></i></span>
         </div>
-        <i class="screw s1"></i><i class="screw s2"></i>
-        <i class="tape-sticker" id="tape-sticker"></i>
-        <span class="tape-meta" id="tape-meta"></span>
+        <!-- donja ploča kućišta: strelice pokazuju da se kaseta može povući ulijevo i udesno -->
+        <div class="tape-foot" aria-hidden="true">
+          <i class="foot-hole"></i>
+          <span class="chev chev-l"><svg class="icon" aria-hidden="true"><use href="#i-chev-left"/></svg></span>
+          <span class="tape-meta" id="tape-meta"></span>
+          <span class="chev chev-r"><svg class="icon" aria-hidden="true"><use href="#i-chev-right"/></svg></span>
+          <i class="foot-hole"></i>
+        </div>
       </div>
 
       <div class="deck" id="deck" hidden>
         <p class="game-text intro-only">premotaj kasetu na početak</p>
         <div class="deck-keys">
-          <button type="button" id="rew" aria-label="Premotaj unazad (drži)"><svg class="icon" aria-hidden="true"><use href="#i-rewind"/></svg></button>
-          <button type="button" id="play" class="deck-play" aria-label="Pusti"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg></button>
-          <button type="button" id="ffw" aria-label="Premotaj unaprijed (drži)"><svg class="icon" aria-hidden="true"><use href="#i-forward"/></svg></button>
+          <div class="key key-rew"><button type="button" id="rew" aria-label="Premotaj unazad (drži)"><svg class="icon" aria-hidden="true"><use href="#i-rewind"/></svg></button><span class="cap">unazad</span></div>
+          <div class="key key-play"><button type="button" id="play" class="deck-play" aria-label="Pusti"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg></button><span class="cap" id="play-cap">pusti</span></div>
+          <div class="key key-ff"><button type="button" id="ffw" aria-label="Premotaj unaprijed (drži)"><svg class="icon" aria-hidden="true"><use href="#i-forward"/></svg></button><span class="cap">naprijed</span></div>
         </div>
-        <div class="bar" aria-hidden="true"><i id="bar-fill"></i></div>
-        <p class="deck-time"><span id="time">0:00</span><em id="deck-hint"></em></p>
+        <div class="seek-row">
+          <span class="seek-time" id="time">0:00</span>
+          <div class="seek" id="seek" role="slider" tabindex="0" aria-label="Pozicija u pjesmi" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <i class="seek-fill"></i><i class="seek-thumb"></i>
+          </div>
+          <span class="seek-time" id="dur"></span>
+        </div>
+        <p class="deck-time"><em id="deck-hint"></em></p>
         <button class="skip intro-only" id="rewind-skip" type="button">samo pusti</button>
       </div>
       <audio id="audio" preload="none"></audio>
@@ -127,8 +144,11 @@
 
       <div class="full">
         <h2>Cijela pjesma</h2>
-        <div class="player" id="player"></div>
         <div class="links" id="links"></div>
+        <details class="embed" id="embed">
+          <summary>Poslušaj ovdje</summary>
+          <div class="player" id="player"></div>
+        </details>
       </div>
 
       <p class="next" id="next" hidden></p>
@@ -159,6 +179,13 @@
 
   <!-- šapat s dna ekrana: daje do znanja da ispod ima još, a ne kaže što -->
   <button class="peek" id="peek" type="button" tabindex="-1"><span id="peek-text"></span><svg class="icon" aria-hidden="true"><use href="#i-down"/></svg></button>
+
+  <!-- mali player: pojavi se kad se tipke kasete izgube s ekrana (npr. dok čita poruku) -->
+  <div class="miniplayer" id="mini">
+    <button type="button" id="mini-play" aria-label="Pusti"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg></button>
+    <span class="mini-title" id="mini-title"></span>
+    <i class="mini-bar"><b></b></i>
+  </div>
 
   <nav class="tabs" id="tabs" aria-label="Pogledi" hidden>
     <button type="button" data-view="today" aria-current="true"><svg class="icon" aria-hidden="true"><use href="#i-cassette"/></svg><span>Danas</span></button>

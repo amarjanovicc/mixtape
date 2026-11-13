@@ -97,12 +97,15 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
   position: relative;
   width: 94%;
   margin: 4px auto 0;
-  aspect-ratio: 1.58;
-  padding: 5.5%;
+  aspect-ratio: 1.46;
+  padding: 5% 5.5% 5.5%;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5%;
   border: 2.5px solid var(--ink);
   border-radius: 12px;
   background: var(--accent);
-  box-shadow: 5px 6px 0 var(--ink);
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.3), inset 0 -5px 0 rgba(43, 33, 24, 0.16), 5px 6px 0 var(--ink);
   transform: rotate(-2.5deg);
   animation: drop 0.7s var(--ease-out) both;
   touch-action: pan-y;
@@ -112,20 +115,27 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
 .tape.live { cursor: grab; }
 .tape.live:active { cursor: grabbing; }
 .tape.nudge { animation: nudge 1.1s var(--ease-out) 0.5s both; }
+
+/* gornji rub: oznaka strane i naljepnica */
+.tape-top { flex: 0 0 6%; display: flex; align-items: center; justify-content: space-between; padding: 0 2px; }
+.side { font-family: var(--hand); font-weight: 700; font-size: 1.05rem; line-height: 1; color: var(--sheet); text-shadow: 1px 1px 0 rgba(43, 33, 24, 0.55); }
+
 .tape-label {
   position: relative;
-  height: 50%;
+  flex: 0 0 39%;
   padding: 0 12px;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 2px;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
   border: 2px solid var(--ink);
   border-radius: 5px;
   background: repeating-linear-gradient(transparent 0 23px, var(--rule) 23px 24px), var(--sheet);
   font-family: var(--hand);
   overflow: hidden;
 }
+.tape-cover { flex: none; width: 46px; height: 46px; border: 2px solid var(--ink); border-radius: 3px; object-fit: cover; background: var(--paper); }
+.tape-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 /* naslov pjesme rukom na naljepnici: do dva reda */
 .tape-line {
   margin: 0;
@@ -139,8 +149,6 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
   overflow-wrap: anywhere;
 }
 .tape-line.small { font-size: 1.1rem; font-weight: 500; color: var(--muted); -webkit-line-clamp: 1; }
-/* sitni tisak na kućištu: broj i datum */
-.tape-meta { position: absolute; left: 0; right: 0; bottom: 5.500%; text-align: center; font-size: 0.62rem; letter-spacing: 0.04em; color: var(--ink); opacity: 0.75; pointer-events: none; }
 /* dobitak: sjaj preleti naljepnicu */
 .tape-label.won::after {
   content: "";
@@ -151,11 +159,12 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
   animation: shine 0.9s ease-out 0.1s forwards;
   pointer-events: none;
 }
+
 .tape-window {
   position: relative;
-  width: 64%;
-  height: 29%;
-  margin: 4.5% auto 0;
+  flex: 0 0 25%;
+  width: 66%;
+  align-self: center;
   padding: 0 6%;
   display: flex;
   align-items: center;
@@ -169,7 +178,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
   --fill: 0.5;
   position: relative;
   z-index: 1;
-  height: 74%;
+  height: 76%;
   aspect-ratio: 1;
   display: grid;
   place-items: center;
@@ -194,21 +203,41 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
     #5b4a3a;
   transform: rotate(var(--a, 0deg));
 }
-.screw { position: absolute; bottom: 7%; width: 7px; height: 7px; border-radius: 50%; border: 1.5px solid var(--ink); background: var(--sheet); }
-.screw.s1 { left: 6%; } .screw.s2 { right: 6%; }
+
+/* donja ploča (trapez) s rupama; strelice kažu da se kaseta povlači lijevo-desno */
+.tape-foot {
+  flex: 1;
+  min-height: 0;
+  margin: 0 7%;
+  padding: 0 8%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  background: rgba(43, 33, 24, 0.2);
+  clip-path: polygon(6% 0, 94% 0, 100% 100%, 0 100%);
+}
+.foot-hole { flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--ink); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.28); }
+.tape-meta { flex: 1; min-width: 0; text-align: center; font-size: 0.62rem; letter-spacing: 0.03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--ink); opacity: 0.8; }
+.chev { flex: none; display: inline-flex; font-size: 1.05rem; color: var(--sheet); opacity: 0; transition: opacity 0.3s; filter: drop-shadow(1px 1px 0 rgba(43, 33, 24, 0.7)); }
+.tape.live .chev { opacity: 1; }
+.tape.live .chev-l .icon { animation: slide-l 1.5s ease-in-out infinite; }
+.tape.live .chev-r .icon { animation: slide-r 1.5s ease-in-out infinite; }
 
 /* ---------- tipke kazetofona ---------- */
 
-.deck { display: flex; flex-direction: column; align-items: center; gap: 8px; animation: rise 0.5s var(--ease-out) both; }
-.deck-keys { display: flex; align-items: flex-start; gap: 8px; padding-bottom: 5px; }
+.deck { display: flex; flex-direction: column; align-items: center; gap: 10px; animation: rise 0.5s var(--ease-out) both; }
+.deck-keys { display: flex; align-items: flex-start; gap: 10px; }
+.key { display: flex; flex-direction: column; align-items: center; gap: 8px; padding-bottom: 5px; }
+.cap { font-size: 0.72rem; font-weight: 700; color: var(--muted); }
 .deck-keys button {
   display: grid;
   place-items: center;
-  width: 68px;
-  height: 54px;
+  width: 76px;
+  height: 56px;
   border: 2px solid var(--ink);
   border-radius: 8px;
-  font-size: 21px;
+  font-size: 22px;
   color: var(--ink);
   background: var(--sheet);
   box-shadow: 0 5px 0 var(--ink);
@@ -221,18 +250,51 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
 }
 /* tipka se stvarno utisne */
 .deck-keys button:active, .deck-keys button.on { transform: translateY(5px); box-shadow: 0 0 0 var(--ink); }
-.deck-keys .deck-play { width: 84px; font-size: 24px; background: var(--accent); }
-.bar { width: 100%; height: 6px; margin-top: 4px; border: 1.5px solid var(--ink); border-radius: 3px; background: var(--sheet); overflow: hidden; }
-.bar i { display: block; height: 100%; background: var(--ink); transform-origin: left; transform: scaleX(0); }
-.deck-time { width: 100%; margin: 0; display: flex; justify-content: space-between; gap: 10px; font-size: 0.78rem; color: var(--muted); }
-.deck-time span { color: var(--ink); font-weight: 700; font-variant-numeric: tabular-nums; }
+.deck-keys .deck-play { width: 92px; font-size: 26px; background: var(--accent); }
+
+/* klizač: vidljiva ručka koju se povlači, tragovi kao na ravnalu */
+.seek-row { width: 100%; display: flex; align-items: center; gap: 10px; }
+.seek-time { flex: none; min-width: 34px; font-size: 0.78rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.seek-time:last-child { text-align: right; color: var(--muted); }
+.seek { --f: 0; position: relative; flex: 1; height: 40px; cursor: pointer; touch-action: none; }
+.seek::before {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 50%;
+  height: 12px;
+  transform: translateY(-50%);
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 calc(10% - 2px), rgba(43, 33, 24, 0.28) calc(10% - 2px) 10%),
+    var(--sheet);
+}
+.seek-fill { position: absolute; left: 0; top: 50%; height: 12px; width: calc(var(--f) * 100%); transform: translateY(-50%); border-radius: 6px 0 0 6px; background: var(--ink); pointer-events: none; }
+.seek-thumb {
+  position: absolute;
+  top: 50%;
+  left: calc(var(--f) * 100%);
+  width: 30px;
+  height: 30px;
+  transform: translate(-50%, -50%);
+  border: 2.5px solid var(--ink);
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 2px 3px 0 var(--ink);
+  pointer-events: none;
+}
+.seek-thumb::after { content: ""; position: absolute; inset: 6px; border-radius: 50%; background: radial-gradient(circle, var(--ink) 0 2.5px, var(--sheet) 3px); }
+.seek:focus-visible { outline: 3px solid var(--ink); outline-offset: 2px; border-radius: 8px; }
+.deck-time { margin: 0; font-size: 0.78rem; color: var(--muted); text-align: center; }
 .deck-time em { font-style: normal; display: inline-flex; align-items: center; gap: 5px; }
 
 /* uvod: premotaj kasetu na početak. Samo je tipka za unazad živa i lagano poziva. */
 .intro-only { display: none; }
 .deck.intro .intro-only { display: block; }
 .deck.intro .deck-keys #play, .deck.intro .deck-keys #ffw { opacity: 0.3; pointer-events: none; box-shadow: none; transform: translateY(5px); }
-.deck.intro .deck-keys #rew { width: 96px; background: var(--accent); animation: call 1.3s ease-in-out infinite; }
+.deck.intro .key:not(.key-rew) .cap { opacity: 0.35; }
+.deck.intro .seek { opacity: 0.55; pointer-events: none; }
+.deck.intro .deck-keys #rew { width: 104px; background: var(--accent); animation: call 1.3s ease-in-out infinite; }
 .deck.intro .deck-keys #rew.on { animation: none; }
 .tape.rewind-me { animation: rewind-me 2.200s ease-in-out 0.6s infinite; }
 
@@ -389,6 +451,9 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
 .ps::before { content: "P.S. "; font-weight: 700; }
 
 .full { display: flex; flex-direction: column; gap: 12px; }
+.embed summary { display: flex; align-items: center; min-height: 44px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; list-style: none; }
+.embed summary::-webkit-details-marker { display: none; }
+.embed .player { margin-top: 8px; }
 .full h2, .shelf h2 { margin: 0; font-family: var(--hand); font-size: 1.5rem; font-weight: 700; line-height: 1; }
 .player:empty { display: none; }
 .player iframe { display: block; width: 100%; border: 0; border-radius: 12px; background: var(--sheet); }
@@ -479,6 +544,49 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
 }
 .badge.pop { animation: bump-badge 0.5s var(--ease-out); }
 
+/* ---------- mali player ---------- */
+
+.miniplayer {
+  position: fixed;
+  z-index: 5;
+  left: 16px;
+  right: 16px;
+  max-width: 408px;
+  margin: 0 auto;
+  bottom: calc(68px + env(safe-area-inset-bottom));
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px 10px 6px;
+  background: var(--sheet);
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  box-shadow: 3px 4px 0 var(--ink);
+  overflow: hidden;
+}
+body.mini-on .miniplayer { display: flex; animation: rise 0.3s var(--ease-out); }
+.miniplayer button {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  font-size: 18px;
+  color: var(--ink);
+  background: var(--accent);
+  box-shadow: 2px 3px 0 var(--ink);
+  cursor: pointer;
+}
+.miniplayer button:active { transform: translate(2px, 3px); box-shadow: none; }
+.mini-title { flex: 1; min-width: 0; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini-bar { --f: 0; position: absolute; left: 0; right: 0; bottom: 0; height: 5px; background: rgba(43, 33, 24, 0.12); }
+.mini-bar b { display: block; height: 100%; width: calc(var(--f) * 100%); background: var(--ink); }
+.in-game .miniplayer { display: none !important; }
+body.mini-on .wrap { padding-bottom: calc(150px + env(safe-area-inset-bottom)); }
+
 /* ---------- šapat: ima još ispod ---------- */
 
 /* papirić koji izviri iznad jahača; nestane čim krene skrolati */
@@ -516,7 +624,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
 .tape-label.p2 { background: linear-gradient(var(--ink) 0 7px, transparent 7px), var(--sheet); }
 .tape-label.p3 { background: radial-gradient(var(--rule) 1.5px, transparent 2px) 0 0 / 12px 12px, var(--sheet); }
 .tape.w1 .tape-window { border-radius: 8px; }
-.tape-sticker { position: absolute; right: 5%; bottom: 14%; font-size: 22px; line-height: 1; color: var(--sheet); transform: rotate(12deg); }
+.tape-sticker { font-size: 17px; line-height: 1; color: var(--sheet); filter: drop-shadow(1px 1px 0 rgba(43, 33, 24, 0.6)); }
 .tape.fly { animation: fly 0.65s cubic-bezier(0.5, 0, 0.8, 0.4) forwards; }
 
 /* spremi u kutiju */
@@ -715,6 +823,8 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
 @keyframes call { 50% { transform: translateY(-4px) rotate(-3deg); } }
 @keyframes rewind-me { 0%, 55%, 100% { transform: rotate(-2.5deg); } 20% { transform: rotate(-2.5deg) translateX(-18px); } 35% { transform: rotate(-2.5deg) translateX(4px); } }
 @keyframes unlock { from { opacity: 0; transform: rotate(-1deg) scale(0.6); } }
+@keyframes slide-l { 50% { transform: translateX(-4px); } }
+@keyframes slide-r { 50% { transform: translateX(4px); } }
 @keyframes flake { to { transform: translate(var(--fx), 90px) rotate(200deg); opacity: 0; } }
 
 @media (prefers-reduced-motion: reduce) {
