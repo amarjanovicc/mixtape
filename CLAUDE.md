@@ -75,7 +75,7 @@ service workera, namjerno, da nikad ne vidi staru verziju.
   „Postavke”. Novo polje ide u skrivene opcije osim ako ga treba svaka pjesma.
 - `scripts/check-songs.mjs` — provjera `songs.js` (datumi, duplikati, linkovi, raspored)
 - `tools/qr.html` — generator QR koda
-- `.github/workflows/pages.yml` — push na `main` pa provjera pa GitHub Pages
+- `vercel.json` — objava na Vercelu: izlazni folder `public`, build je samo `node scripts/check-songs.mjs` (neispravan unos ne ide uživo), `songs.js` se ne kešira. Push na `main` = objava.
 
 ## Pravila
 

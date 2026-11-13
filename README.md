@@ -52,10 +52,11 @@ Polja se mogu uređivati i ručno u [`public/songs.js`](public/songs.js): `date`
 ## Prvo postavljanje
 
 1. U sučelju pod *Postavke* upiši njeno ime, svoj potpis i WhatsApp broj, obriši primjere i dodaj svoje pjesme.
-2. Napravi repo na GitHubu i pushaj na `main`.
-3. Na GitHubu: **Settings pa Pages pa Source: GitHub Actions**. Svaki push provjeri pjesme i objavi stranicu na `https://<korisnik>.github.io/<repo>/`.
-   (Pages iz privatnog repoa traži plaćeni plan — alternativa je Netlify/Cloudflare Pages s folderom `public`.)
-4. Otvori [`tools/qr.html`](tools/qr.html), upiši adresu stranice, preuzmi PNG i isprintaj.
+2. Repozitorij je na GitHubu (privatan, jer su u njemu tvoje poruke). Svaki push na `main` Vercel sam objavi.
+3. Vercel: **Add New, Project**, odaberi repozitorij i ostavi sve zadano (postavke su u `vercel.json`: izlazni folder `public`, a prije objave se pokrene provjera pjesama, pa pogrešan unos ne ide uživo).
+4. Otvori [`tools/qr.html`](tools/qr.html), upiši adresu sa Vercela (npr. `https://mixtape.vercel.app`), preuzmi PNG i isprintaj.
+
+Dalje je sve isto: dodaš pjesmu u sučelju, klikneš *Objavi* (commit i push), Vercel za minutu objavi novu verziju.
 
 ## Isprobavanje
 
