@@ -634,7 +634,13 @@
     }
     function keepAlive() {
       try { if (navigator.audioSession && navigator.audioSession.type !== "playback") navigator.audioSession.type = "playback"; } catch (e) {}
-      if (navigator.audioSession) return;
+      // Uvijek i tihi <audio> u petlji: dok svira običan medij, iOS pušta i Web Audio efekte
+      // (grebanje, premotavanje) čak i na tihom načinu. Samo audioSession nije svugdje dovoljan.
+      try {
+        if (navigator.mediaSession && window.MediaMetadata && !keepEl) {
+          navigator.mediaSession.metadata = new MediaMetadata({ title: "Mixtape", artist: "za tebe" });
+        }
+      } catch (e) {}
       try {
         if (!keepEl) {
           keepEl = new Audio();
@@ -726,7 +732,7 @@
         whirr = { src: src, lfo: lfo, g: g };
       }
       if (!whirr) return;
-      whirr.g.gain.setTargetAtTime(on ? (loud ? 0.2 : 0.06) : 0, ctx.currentTime, 0.04);
+      whirr.g.gain.setTargetAtTime(on ? (loud ? 0.32 : 0.12) : 0, ctx.currentTime, 0.04);
       if (!on) {
         var w = whirr;
         whirr = null;
@@ -756,9 +762,11 @@
           decode();
         }).catch(function () { settle("failed"); });
       },
+      // stranica ode u pozadinu: ugasi tihi medij (baterija, bez duha na zaključanom zaslonu)
+      sleep: function () { try { if (keepEl && !keepEl.paused) keepEl.pause(); } catch (e) {} },
       // zove se iz svakog dodira (touchstart/touchend/click...): jeftino kad je već sve pokrenuto
       unlock: function () {
-        var wasRunning = ctx && ctx.state === "running" && primed;
+        var wasRunning = ctx && ctx.state === "running" && primed && keepEl && !keepEl.paused;
         ready();
         if (wasRunning) return;
         keepAlive();
@@ -813,7 +821,7 @@
           scrubDir = dir;
         }
         scrubSrc.playbackRate.setTargetAtTime(rate, ctx.currentTime, 0.03);
-        scrubGain.gain.setTargetAtTime(0.9, ctx.currentTime, 0.015);
+        scrubGain.gain.setTargetAtTime(1, ctx.currentTime, 0.015);
         setWhirr(true, false);
       },
       // prst miruje na kaseti: zvuk stane, kao ploča pod rukom
@@ -851,7 +859,7 @@
           scr = { src: src, f: f, g: g };
         }
         var v = Math.min(1, speed / 1.6);                    // px/ms -> 0..1
-        scr.g.gain.setTargetAtTime(0.05 + v * 0.3, ctx.currentTime, 0.012);
+        scr.g.gain.setTargetAtTime(0.14 + v * 0.55, ctx.currentTime, 0.012);
         scr.f.frequency.setTargetAtTime(2400 + v * 3200, ctx.currentTime, 0.02);
         clearTimeout(scrTimer);
         scrTimer = setTimeout(function () { if (scr) scr.g.gain.setTargetAtTime(0, ctx.currentTime, 0.03); }, 60);
@@ -1558,7 +1566,7 @@
   }
   window.addEventListener("pageshow", function (e) { if (e.persisted) location.reload(); });
   document.addEventListener("visibilitychange", function () {
-    if (document.visibilityState === "hidden") { hiddenAt = Date.now(); return; }
+    if (document.visibilityState === "hidden") { hiddenAt = Date.now(); fx.sleep(); return; }
     if (hiddenAt && Date.now() - hiddenAt > 2000) checkFresh();
   });
   window.addEventListener("focus", function () { if (hiddenAt && Date.now() - hiddenAt > 2000) checkFresh(); });

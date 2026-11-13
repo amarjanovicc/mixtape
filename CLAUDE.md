@@ -104,7 +104,9 @@ service workera, namjerno, da nikad ne vidi staru verziju.
 - **Zvučni efekti** (`fx` u `app.js`) su sintetizirani kroz Web Audio — nema zvučnih datoteka.
   **Mobiteli:** zvuk se otključava na prvi dodir bilo gdje (`touchstart/touchend/pointerup/click`,
   jer iOS priznaje tek `touchend`/`click`), a efekti zaobilaze tihi način mobitela preko
-  `navigator.audioSession.type = "playback"` (iOS 17+), odnosno tihog `<audio>` u petlji na starijima.
+  `navigator.audioSession.type = "playback"` (iOS 17+) i uvijek tihim `<audio>` u petlji (gasi se kad
+  stranica ode u pozadinu). Prvi potez po foliji može biti nijem: preglednik zvuk otključava tek kad
+  prst napusti ekran.
   Bez toga efekti šute, a pjesma (običan `<audio>`) svira.
   Premotavanje pušta dekodirani isječak unazad/unaprijed (`fx.scrub`); ako se zvuk ne može
   dekodirati (CORS, datoteka veća od 3 MB), ostaje samo šum motora. AudioContext se smije
