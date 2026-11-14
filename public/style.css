@@ -236,6 +236,10 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
 .coin i { animation: call 1.4s ease-in-out infinite; }
 .coin:active i { transform: translate(3px, 4px); box-shadow: none; animation: none; }
 .coin.wiggle i { animation: shake 0.3s 2; }
+.coin { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+/* dok ga drži, novčić je pod prstom (ne na svom mjestu) */
+.coin.held i { visibility: hidden; animation: none; }
+.coin.held span { opacity: 0.4; }
 .coin.taken { pointer-events: none; animation: coin-take 0.4s var(--ease-out) forwards; }
 /* novčić pod prstom dok grebe */
 .coin-cursor { position: absolute; width: 40px; height: 40px; margin: -46px 0 0 -20px; box-shadow: 2px 3px 0 var(--ink); pointer-events: none; }
