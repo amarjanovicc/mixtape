@@ -1014,7 +1014,7 @@ body.mini-on .wrap { padding-bottom: calc(150px + env(safe-area-inset-bottom)); 
 
 /* ---------- ritual: čist početak, bez teksta u premotu ---------- */
 .player-door { position: relative; }
-.pull-hint { display: none; position: absolute; right: 2%; top: 50%; translate: 0 -50%; pointer-events: none; color: var(--ink); z-index: 8; }
+.pull-hint { display: none; position: absolute; right: 7%; top: 50%; translate: 0 -50%; pointer-events: none; color: var(--ink); z-index: 8; }
 .player-box.pulling .pull-hint { display: flex; }
 .pull-hint .icon { width: 30px; height: 30px; animation: slide-l 1.1s ease-in-out infinite; }
 .pull-hint .icon + .icon { animation-delay: 0.18s; margin-left: -14px; }

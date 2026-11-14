@@ -22,7 +22,7 @@ isprobano i odbačeno: korisniku se nije svidjelo. Ne vraćati ga.)
    pravi dodir (klik), ne na povlačenje, pa bi grebanje inače bilo nijemo. Bez novčića folija
    se ne grebe, a novčić se zatrese. (Pečat „dodirni pa grebi” preko folije je isproban i
    odbačen.) Svaka peta pjesma je umjesto toga **pogodi unazad** (`guess`: omot pod lokotom,
-   5 s pjesme unatrag, tri naslova). `reveal` to nadjača. Uvijek postoji „samo otvori”.
+   5 s pjesme unatrag, tri naslova). `reveal` to nadjača. Uvijek postoji „samo otvori”. Početni ekran je prazan: samo omot, novčić i poruka „uhvati novčić i ogrebi omot”; trag se pojavi tek nakon ~16 poteza (ili u „pogodi unazad” nakon slušanja), a „samo otvori” nakon 10 s. Treba ogrebati oko 60 % folije.
    **Krivi odgovori** su polje `decoys` ("naslov | naslov"), admin ih popuni iz izvođačevih
    drugih pjesama.
 2. **Kaseta izađe iz omota.** Omot se otvori kao knjiga (`.sleeve.open`, vidi se ležište),
@@ -31,7 +31,7 @@ isprobano i odbačeno: korisniku se nije svidjelo. Ne vraćati ga.)
    klizač su ispod kasete.
 3. **Premotaj je na početak da zasvira.** Kaseta je „na kraju vrpce”; drži tipku za unazad ili
    povuci kasetu ulijevo (oko 2 s). Čuje pjesmu ubrzano unatrag, a na početku pjesma krene.
-   Uvijek postoji „samo pusti”. Tijekom koraka 1–3 jahači su skriveni.
+   Uvijek postoji „samo pusti”. Bez teksta: samo animirane strelice uz kasetu; „samo pusti” se pojavi nakon ~9 s. Tijekom koraka 1–3 jahači su skriveni.
 4. **Poruka** rukopisom, pa **reakcija** ikonom; tek nakon reakcije ispod nje se pojave tajni
    `ps` i poveznica „javi mu”.
 5. **Spremi kasetu u kutiju** — završetak. Ispod piše koliko još do sljedeće naljepnice; ako se
