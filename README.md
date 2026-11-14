@@ -1,66 +1,121 @@
 # Mixtape — pjesma dana
 
-Ona skenira QR kod (uvijek isti) pa otvori se kaseta sa skrivenom pjesmom koja te podsjetila na nju.
+Mala web stranica za jednu osobu. Ona skenira **uvijek isti QR kod** i otvori se kaseta s pjesmom dana i porukom „podsjetila me na tebe jer…”. Cilj nije samo da bude lijepa, nego da joj bude zabavno otvoriti je svaki dan.
 
-**Kako izgleda njen dan:**
+Čisti HTML/CSS/JS bez frameworka i build koraka. Backend su malene Vercel funkcije; jedina ovisnost je `@vercel/blob`. Sadržaj se mijenja kroz vlastito admin sučelje, bez commita i bez čekanja.
 
-1. **Omot je srećka.** Pjesma je u omotu (uspravna kutija kasete s hrptom i naslovnicom) pod srebrnom folijom. Uzme novčić koji leži ispod i njime ogrebe omot. Svaka peta pjesma je umjesto toga "pogodi unazad".
-2. **Kaseta.** Omot se otvori i kaseta izleti iz njega. Premota je na početak (drži tipku ili povuče kasetu), čuje pjesmu ubrzano unatrag, i onda pjesma zasvira.
-3. **Poruka.** Tvoja poruka rukopisom, pa reakcija ikonom koja otključa tajni P.S. i gumb "javi mu".
-4. **Kutija.** Kasetu spremi u kutiju. Svaka izgleda drugačije, a propušteni dani ostaju prazna mjesta koja može naknadno popuniti.
-5. **Naljepnice.** Kad skupi dovoljno kaseta, otključa pixel-art naljepnicu: nju, tebe, vaše životinje i na kraju vas dvoje, svaku s tvojom porukom. Zaključane vidi kao siluete.
+- Tekst na stranici je na hrvatskom.
+- Izgled je papir, tinta i ljepljiva traka (spomenar), a sve su ikone vlastiti SVG, bez emojija.
+- Izrađeno za mobitel (provjereno do 320 px širine).
 
-Nagrade idu po broju spremljenih kaseta, ne po nizu dana, pa propušten dan ništa ne oduzima. Zvuk se može utišati, a stranicu može dodati na početni zaslon.
+## Kako izgleda njen dan
 
-Čisti HTML/CSS/JS, bez ovisnosti i build koraka. Na stranici nema emojija: sve su vlastite SVG ikone.
+1. **Omot je srećka.** Na ekranu je samo omot kasete pod srebrnom folijom i novčić. Uhvati novčić, povuče ga na omot i ogrebe oko 60 % folije. Svaka peta pjesma je umjesto toga „pogodi unazad”: pet sekundi pjesme unatrag i tri naslova. Uvijek postoji „samo otvori”.
+2. **Kaseta izleti iz omota.** Omot se otvori kao knjiga, kaseta se spusti na njegovo mjesto, a omot odleti.
+3. **Premotavanje.** Kaseta je „na kraju vrpce”: drži tipku za unazad ili povuče kasetu ulijevo. Čuje ubrzani zvuk premotavanja, a na početku pjesma zasvira.
+4. **Poruka i reakcija.** Poruka rukopisom, pa reakcija ikonom. Tek nakon reakcije pojave se tajni P.S., „javi mu” i „pošalji mu svoju pjesmu”.
+5. **Kutija.** Kaseta se sprema u kutiju. Svaka izgleda drugačije, a propušteni dani su prazna mjesta koja može popuniti kasnije.
+6. **Naljepnice.** Kad u kutiji ima dovoljno kaseta, otključava pixel-art likove (ona, on, njihove životinje, „nas dvoje”) uz poruku. Zaključani su siluete.
 
-## Dodaj pjesmu (sučelje, live)
+Povremeno je kaseta **rijetka** (zlatna folija i žig), kao rijetke karte u igrama s paketima.
 
-Otvori **https://mixtape-wine.vercel.app/admin** i prijavi se lozinkom (`ADMIN_PASSWORD` u Vercelu). Sve što spremiš je **odmah live**, bez commita i čekanja objave. Obrazac ima tri koraka:
+Nagrade se računaju po broju spremljenih kaseta, ne po nizu dana, pa propušten dan ništa ne oduzima. Stranicu može dodati na početni zaslon.
 
-1. **Zalijepi link** sa Spotifyja ili YouTubea. Naslov, izvođač, omot i službeni isječak od 30 s popune se sami.
-2. **Kad se pojavi?** Sljedeći slobodan dan (zadano), odmah, ili odabrani dan.
-3. **Zašto te podsjetila na nju?** Tvoja poruka.
+## Kako je složeno
 
-Zatim *Spremi pjesmu*. Pri vrhu je kartica **Danas svira** s gumbom **Resetiraj pjesmu**: današnja pjesma se opet otkriva od početka (grebanje, premotavanje, poruka), na ovom uređaju odmah, a kod nje čim sljedeći put otvori stranicu. Iz kutije joj nestaje dok je ponovno ne spremi. Niz dana ostaje. **Samo na ovom uređaju** briše napredak samo na uređaju s kojeg si ušao u admin (za tvoje isprobavanje, ne dira nju).
+```
+  admin (/admin)  --PUT-->  Vercel funkcije (api/)  -->  privatni Vercel Blob
+                                   |                      data.json + zvukovi
+  njena stranica  <--/songs.js--  api/songs.js  (samo pjesme čije je vrijeme došlo)
+                  <--/media/x---  api/media.js  (zvuk, s podrškom za Range)
+```
 
-Ostalo je skriveno pod **Više opcija**: trag prije otkrivanja, tajni P.S., odabir igre, krivi odgovori za „pogodi unazad” (sami se popune iz izvođačevih drugih pjesama), izbor isječka i vlastiti zvuk (mp3, m4a, ogg, wav, do 4 MB). Njeno ime, tvoj potpis, WhatsApp, likovi za naljepnice (kosa, ten, životinje) i same naljepnice su pod **Postavke**.
+- **Izvor istine je Blob, ne git.** `data/songs.js` je samo početni sadržaj dok u Blobu ništa nije spremljeno (i sadržaj lokalnog servera).
+- **Buduće pjesme nikad ne napuštaju server.** `api/songs.js` šalje samo objavljene pjesme i anonimno „sljedeću” za odbrojavanje.
+- **Njeno stanje** (otvoreno, spremljeno, reakcije, niz) živi samo u `localStorage` njenog mobitela. Nema korisničkih računa ni servera za njene podatke.
 
-Kako je to složeno: pjesme i zvukovi su u **privatnom** Vercel Blobu (ništa nije javno dostupno izravno), a njena stranica ih dobiva samo kroz funkcije: sadržaj preko `/songs.js` (`api/songs.js`), zvuk preko `/media/<ime>` (`api/media.js`). **Pjesme čije vrijeme još nije došlo nikad ne napuštaju server**, pa ih nitko ne može pročitati iz koda stranice; vidi se samo odbrojavanje do sljedeće. Dok pohrana ne postoji, stranica prikazuje početni sadržaj iz `data/songs.js`.
+### Struktura
 
-Uvijek se prikazuje najnovija pjesma čije je vrijeme došlo:
+| Putanja | Što je |
+| --- | --- |
+| `public/` | cijela stranica: `index.html`, `style.css`, `app.js`, `pixel.js`, ikone, manifest |
+| `public/admin/index.html` | admin sučelje (prijava lozinkom) |
+| `api/` | Vercel funkcije: `songs`, `data`, `lookup`, `audio`, `media`, `login` |
+| `lib/` | `core.mjs` (čista logika), `store.mjs` (Blob / lokalna datoteka), `http.mjs` (prijava, zaštita) |
+| `data/songs.js` | početni sadržaj (u ovom repou samo primjeri) |
+| `server.mjs` | lokalni server za isprobavanje |
+| `scripts/` | `check-songs.mjs` (provjera sadržaja), `dev-live.mjs` (lokalno pokreće iste funkcije kao Vercel) |
+| `tools/qr.html` | generator QR koda |
 
-- **jednom dnevno** pa pjesme s datumima unaprijed, mijenjaju se u ponoć;
-- **kad god** pa dan + vrijeme; čim to vrijeme prođe, ona dobije novu igru i novu pjesmu.
+## Pokretanje lokalno
 
-### O zvuku
+Treba Node 22.
 
-Sučelje **ne skida cijele pjesme** sa Spotifyja ili YouTubea: to bi značilo javno dijeliti tuđu glazbu s tvoje stranice (a Spotify je ionako zaštićen). Umjesto toga:
+```bash
+npm install
+node server.mjs                 # stranica http://localhost:4321, admin http://localhost:4321/admin
+node scripts/check-songs.mjs    # provjera sadržaja
+node scripts/dev-live.mjs       # iste funkcije kao na Vercelu, http://localhost:4330 (lozinka: lokalna-lozinka)
+```
 
-- **isječak od 30 s** — službeni pretpregled (iTunes), svira sam nakon otkrivanja;
-- **cijela pjesma** — gumbi i player za Spotify/YouTube odmah ispod;
-- **vlastiti zvuk** — za ono što smiješ dijeliti: glasovna poruka, tvoja snimka ili obrada. Glasovna poruka umjesto pjesme zna biti i najbolji dan na kaseti.
+Lokalni `server.mjs` nema lozinku i sluša samo na `127.0.0.1`. **Ne izlaži ga na internet.**
 
-Sučelje radi samo na tvom računalu (127.0.0.1) i nema lozinku, pa ga ne izlaži na internet. Objavljena stranica ostaje statična.
+Za isprobavanje igre: `?igra=scratch` ili `?igra=guess`; za staru pjesmu: `?t=<datum>`.
 
-Polja pjesme (vidi i početni sadržaj u [`data/songs.js`](data/songs.js)): `date`, `title`, `artist`, `hint`, `note`, `ps`, `spotify`, `youtube`, `audio`, `preview`, `cover`, `reveal`. Početni sadržaj provjeri s `node scripts/check-songs.mjs`.
+## Postavljanje (Vercel)
 
-**Adresa stranice: https://mixtape-wine.vercel.app** (QR kod vodi na nju; ne mijenja se kad dodaješ pjesme).
+1. Uvezi repozitorij u Vercel kao novi projekt. Postavke su u `vercel.json` (izlazni folder `public`, funkcije u `api/`, prije objave provjera sadržaja).
+2. U projektu: **Storage, Create, Blob, Private** (poveži s projektom) i **Settings, Environment Variables, `ADMIN_PASSWORD`** (dugačka lozinka). Zatim *Redeploy*.
+3. Otvori `/admin`, prijavi se, u *Postavke* upiši njeno ime, svoj potpis i WhatsApp, obriši primjere i dodaj prve pjesme.
+4. Otvori `tools/qr.html`, upiši adresu svoje stranice, preuzmi PNG i isprintaj. QR se ne mijenja kad dodaješ pjesme.
 
-## Prvo postavljanje
+## Admin
 
-1. Repozitorij je na GitHubu (privatan), a Vercel objavljuje svaki push na `main`. Postavke su u `vercel.json` (izlazni folder `public`, funkcije u `api/`, prije objave provjera početnog sadržaja).
-2. U Vercelu, projekt `mixtape`: **Storage, Create, Blob, Private** (poveži s projektom, uz read-write token) i **Settings, Environment Variables, `ADMIN_PASSWORD`** (dugačka lozinka). Nakon toga *Redeploy*.
-3. Otvori `/admin`, prijavi se, u *Postavke* upiši njeno ime, svoj potpis i WhatsApp, obriši primjere i dodaj svoje pjesme.
-4. Otvori [`tools/qr.html`](tools/qr.html), adresa je već upisana; preuzmi PNG i isprintaj.
+Četiri odjeljka:
 
-## Isprobavanje
+- **Danas:** koliko je dana unaprijed složeno, objava (lokalno) i **Resetiraj pjesmu**: današnja se pjesma opet otkriva od početka na njenom mobitelu kad sljedeći put otvori stranicu (niz dana ostaje).
+- **Raspored:** idućih 14 dana, slobodan dan ima gumb „Dodaj”, a pjesme bez poruke ili linka imaju upozorenje.
+- **Dodaj:** zalijepi link sa Spotifyja ili YouTubea (naslov, izvođač, omot i isječak od 30 s popune se sami), odaberi kad se pojavi i upiši poruku. Pod „Više opcija”: trag, P.S., odabir igre, krivi odgovori, vlastiti zvuk, snimanje glasa u pregledniku.
+- **Postavke:** njeno ime, tvoj potpis, WhatsApp, likovi i naljepnice.
 
-`node server.mjs` pa http://localhost:4321 (lokalna kopija koja piše u `data/songs.js`, bez lozinke; ne dira live). Igru možeš ponovno odigrati s `?igra=scratch` ili `?igra=guess`.
+### Polja pjesme
 
-## Napomene
+| Polje | Značenje |
+| --- | --- |
+| `date` | `YYYY-MM-DD` ili `YYYY-MM-DD HH:MM` (zona `config.timeZone`) |
+| `title`, `artist` | naslov i izvođač |
+| `note` | tvoja poruka („podsjetila me na tebe jer…”) |
+| `hint` | kratak trag prije otkrivanja (ne odaje naslov) |
+| `ps` | tajna poruka, vidi se tek nakon reakcije |
+| `spotify`, `youtube` | poveznice na cijelu pjesmu |
+| `audio`, `preview`, `cover` | vlastiti zvuk, službeni isječak od 30 s, naslovnica |
+| `reveal` | `scratch` ili `guess` (nadjača zadani raspored) |
+| `decoys` | krivi odgovori za „pogodi unazad”, `naslov | naslov` |
 
-- „Sada” se računa po zoni `Europe/Zagreb` (`config.timeZone`).
-- Njen niz, reakcije i što je otvorila pamte se samo u njenom mobitelu (bez servera). Ako obriše podatke preglednika ili skenira drugim mobitelom, kreće ispočetka.
-- Spotify player svira cijelu pjesmu ako je prijavljena u Spotify u pregledniku, inače 30 s; gumb *Spotify* uvijek otvara aplikaciju.
-- Objavljene pjesme vidi svatko tko zna adresu; buduće ne vidi nitko.
+Uvijek se prikazuje najnovija pjesma čije je vrijeme došlo. Datum bez sata mijenja se u ponoć, a datum sa satom čim to vrijeme prođe.
+
+## O glazbi i zvuku
+
+Projekt **ne skida cijele pjesme** sa Spotifyja ili YouTubea: to bi bilo javno dijeljenje tuđe glazbe. Umjesto toga:
+
+- **isječak od 30 s** je službeni pretpregled (iTunes) i svira se s njihovog servera;
+- **cijela pjesma** je poveznica na Spotify ili YouTube;
+- **vlastiti zvuk** (glasovna poruka, tvoja snimka) služi za ono što smiješ dijeliti.
+
+Zvučni efekti su sintetizirani u pregledniku (Web Audio), pa nema zvučnih datoteka. Na iPhoneu se zvuk otključava tek kad prst napusti ekran, pa prvi potez grebanja može biti nijem.
+
+## Sigurnost
+
+- Sve u `api/` osim `songs` i `login` traži prijavu: HMAC kolačić (`HttpOnly`, `Secure`, `SameSite=Strict`), zaglavlje `X-Mixtape` i provjeru izvora.
+- Lozinka je samo u Vercel okruženju (`ADMIN_PASSWORD`), nikad u kodu.
+- Zvuk i podaci su u privatnom Blobu i dostupni samo kroz funkcije.
+- Sadržaj ide kroz `textContent`, nikad `innerHTML`.
+- Stranica nije indeksirana (`noindex`), ali je dostupna svakome tko zna adresu.
+
+## Dizajnerska pravila
+
+Zašto je nešto napravljeno baš tako (nagrade po broju kaseta, kratak trud prije nagrade, jedan ritual umjesto izmjene igara, bez emojija i „AI izgleda”) zapisano je u [`CLAUDE.md`](CLAUDE.md), uz upute za razvoj.
+
+## Licenca
+
+Licenca još nije odabrana. Dok je nema, sva prava pridržana.
