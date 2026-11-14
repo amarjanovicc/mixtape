@@ -305,6 +305,21 @@
         };
         tell.hidden = false;
       }
+      // odgovor pjesmom: ona njemu šalje svoju (link zalijepi sama u razgovor)
+      var reply = $("reply");
+      var rtext = "I mene je jedna pjesma podsjetila na tebe: ";
+      if (phone) {
+        reply.href = "https://wa.me/" + phone + "?text=" + encodeURIComponent(rtext);
+        reply.target = "_blank";
+        reply.rel = "noopener";
+        reply.hidden = false;
+      } else if (navigator.share) {
+        reply.onclick = function (e) {
+          e.preventDefault();
+          navigator.share({ text: rtext }).catch(function () {});
+        };
+        reply.hidden = false;
+      }
     }
 
     REACTIONS.forEach(function (r) {
@@ -393,6 +408,32 @@
 
   // Kutija: spremljene kasete kao male kasete, ostalo kao prazna mjesta.
   // Naslov neotvorene pjesme ne smije se vidjeti ni ovdje.
+  // Cedulja "dodaj na početni zaslon": samo na mobitelu, samo dok stranica nije dodana, i samo dok je ne zatvori.
+  function installTip() {
+    var box = $("install");
+    var standalone = (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone;
+    var done = false;
+    try { done = localStorage.getItem("pjesma-dana:install") === "1"; } catch (e) {}
+    var ua = navigator.userAgent || "";
+    var ios = /iPhone|iPad|iPod/.test(ua);
+    var android = /Android/.test(ua);
+    if (standalone || done || !(ios || android)) { box.hidden = true; return; }
+    var t = $("install-text");
+    t.textContent = "";
+    if (ios) {
+      t.appendChild(document.createTextNode("Dodirni "));
+      t.appendChild(icon("share"));
+      t.appendChild(document.createTextNode(" pa „Dodaj na početni zaslon”."));
+    } else {
+      t.textContent = "Otvori izbornik preglednika pa „Dodaj na početni zaslon”.";
+    }
+    box.hidden = false;
+    $("install-ok").onclick = function () {
+      box.hidden = true;
+      try { localStorage.setItem("pjesma-dana:install", "1"); } catch (e) {}
+    };
+  }
+
   function renderBox(released, current) {
     var grid = $("box-grid");
     var latest = released[released.length - 1];
@@ -416,6 +457,7 @@
       ? "Sve su na broju. Dodirni kasetu da je opet poslušaš."
       : "Prazna mjesta čekaju: otvori pjesmu pa je spremi u kutiju.";
     var missing = released.length - have;
+    installTip();
     $("box-badge").textContent = String(have);
     $("box-badge").hidden = !have;
     return missing;

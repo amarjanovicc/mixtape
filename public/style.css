@@ -1041,3 +1041,23 @@ body.mini-on .wrap { padding-bottom: calc(150px + env(safe-area-inset-bottom)); 
   transform: rotate(4deg); box-shadow: 2px 3px 0 var(--ink); pointer-events: none;
 }
 .mini.rare { outline: 2.5px dashed #c29a38; outline-offset: 2px; }
+
+.tells { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+.install { position: relative; margin: 18px 4px 0; padding: 14px 16px; background: var(--sticky); border: 2px solid var(--ink); border-radius: 3px; transform: rotate(-1deg); box-shadow: 4px 5px 0 var(--ink); }
+.install b { font-family: var(--hand); font-size: 1.4rem; line-height: 1.1; }
+.install p { margin: 6px 0 4px; font-size: 0.9rem; }
+.install .icon { width: 1.1em; height: 1.1em; vertical-align: -0.2em; }
+.install-ok { min-height: 44px; padding: 6px 14px; font: inherit; font-weight: 700; color: var(--ink); background: #fff; border: 2px solid var(--ink); border-radius: 3px; box-shadow: 2px 3px 0 var(--ink); cursor: pointer; }
+.install-ok:active { transform: translate(2px, 3px); box-shadow: none; }
+
+/* uske kasete: naslov i izvođač moraju stati u naljepnicu */
+.tape-line { font-size: clamp(1.05rem, 5.4vw, 1.65rem); line-height: 1.02; }
+.tape-line.small { font-size: clamp(0.9rem, 4.2vw, 1.1rem); }
+@media (max-width: 380px) {
+  .tape-label { flex-basis: 42%; padding: 0 9px; gap: 8px; }
+  .tape-cover { width: 34px; height: 34px; }
+  .tape.rare::after { font-size: 1.05rem; padding: 2px 9px; top: -10px; }
+}
+/* strelice za premot ispod kasete, ne preko naljepnice */
+.pull-hint { right: 8%; top: auto; bottom: -34px; translate: none; }
+.player-box.pulling .player-door { margin-bottom: 34px; }

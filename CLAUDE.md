@@ -63,6 +63,9 @@ na što upućuje (poruka; u Kutiji naljepnice) još ne vidi na ekranu. Ako je po
   oduzeti niti stvarati grižnju savjesti; propuštenu kasetu može otvoriti i spremiti kasnije.
   Niz dana je samo veseli plamen u kutu.
 - **Rijetka kaseta** (`designFor().rare`, otprilike svaka šesta, uvijek ista za istu pjesmu): zlatna folija umjesto srebrne, zlatni žig „rijetka” na kaseti, više konfeta i dulji zvon (`fx.rare`), isprekidan zlatni rub u Kutiji. Razlog: promjenjiva nagrada (kao rijetke karte u igrama s paketima) čini svaki dan malo neizvjesnim. Žig je ravna boja, bez sjaja.
+- **Odgovor pjesmom**: uz „javi mu” stoji „pošalji mu svoju pjesmu” (WhatsApp ili dijeljenje s unaprijed napisanim tekstom; link zalijepi sama). Nema servera ni pohrane njenih pjesama, namjerno.
+- **Cedulja „dodaj na početni zaslon”** u Kutiji: samo na iOS/Android, samo dok stranica nije dodana (`display-mode: standalone`) i dok je ne zatvori.
+- **Uske kasete (320 px)**: naslov na naljepnici je manji, a strelice za premot su ispod kasete, nikad preko naljepnice.
 - **Jedan ritual, ne izmjena četiri igre.** Navika traži isti početak; raznolikost dolazi iz
   pjesme, poruke, izgleda kasete i povremenog „pogodi unazad”.
 - **Trud prije nagrade, ali kratak** (grebanje nekoliko sekundi, premotavanje oko dvije) i

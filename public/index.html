@@ -45,6 +45,7 @@
       <symbol id="i-gift" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.500 11.500h15v9h-15zM3 7.500h18v4H3zM12 7.500v13M12 7.500c-1.500-4-6-3.500-5-1 .6 1.300 3 1 5 1zM12 7.500c1.500-4 6-3.500 5-1-.6 1.300-3 1-5 1z"/></g></symbol>
       <symbol id="i-check" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round" d="M4.500 12.500l5 5 10-11"/></symbol>
       <symbol id="i-down" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.600" stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></symbol>
+      <symbol id="i-share" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 15V3M8 7l4-4 4 4M6 11H5v10h14V11h-1"/></symbol>
       <symbol id="i-chev-left" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.800" stroke-linecap="round" stroke-linejoin="round" d="M12 6l-6 6 6 6M19 6l-6 6 6 6"/></symbol>
       <symbol id="i-chev-right" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2.800" stroke-linecap="round" stroke-linejoin="round" d="M12 6l6 6-6 6M5 6l6 6-6 6"/></symbol>
     </defs>
@@ -159,7 +160,10 @@
         <p class="react-q">kako ti je sjela?</p>
         <div class="react-row" id="react-row"></div>
         <p class="ps" id="ps" hidden></p>
-        <a class="tell" id="tell" href="#" hidden>javi mu <svg class="icon" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+        <div class="tells">
+          <a class="tell" id="tell" href="#" hidden>javi mu <svg class="icon" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+          <a class="tell" id="reply" href="#" hidden>pošalji mu svoju pjesmu <svg class="icon" aria-hidden="true"><use href="#i-music"/></svg></a>
+        </div>
       </div>
 
       <!-- kraj rituala: kaseta ide u kutiju, a to puni put do sljedeće naljepnice -->
@@ -189,6 +193,13 @@
         <h2>Kutija s kasetama <span id="box-count"></span></h2>
         <div class="crate"><div class="crate-grid" id="box-grid"></div></div>
         <p class="box-tip" id="box-tip"></p>
+      </section>
+
+      <!-- cedulja: kako staviti stranicu na početni zaslon (samo dok nije dodana) -->
+      <section class="install" id="install" hidden>
+        <b>Da ti uvijek bude pri ruci</b>
+        <p id="install-text"></p>
+        <button type="button" class="install-ok" id="install-ok">u redu</button>
       </section>
 
       <section class="rewards" id="rewards" hidden>
