@@ -86,89 +86,100 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
 
 /* ---------- omot (kutija kasete) ---------- */
 
-/* omot i kaseta su jedan paket: kaseta klizi iz omota i natrag u njega */
+/* omot i kasetofon su jedan prizor: kaseta izađe iz omota i sjedne u kasetofon */
 .pack { position: relative; display: flex; flex-direction: column; align-items: center; }
+
+/* uspravna kutija kasete, kao kad je uzmeš s police */
 .sleeve-wrap {
   position: relative;
-  z-index: 3;                 /* omot je ISPRED kasete: ona izlazi iz njega */
-  width: 94%;
+  z-index: 6;
+  width: 62%;
   margin-top: 4px;
   filter: drop-shadow(5px 6px 0 var(--ink));
   transform: rotate(1.3deg);
   animation: rise 0.5s var(--ease-out) both;
-  transition: width 0.5s var(--ease-out), transform 0.5s var(--ease-out);
 }
 .sleeve {
   position: relative;
   display: flex;
   width: 100%;
-  aspect-ratio: 1.62;
+  aspect-ratio: 0.66;
+  padding: 5px;                      /* prozirna plastika oko papira */
   border: 2.5px solid var(--ink);
-  border-radius: 6px 12px 12px 6px;
-  background: var(--accent);
+  border-radius: 8px;
+  background: #fffdf6;
   overflow: hidden;
-  /* urez za palac na donjem rubu, kao na pravom omotu: tu se kaseta hvata i izvlači */
-  -webkit-mask: radial-gradient(circle 19px at 55% 100%, transparent 96%, #000 100%);
-  mask: radial-gradient(circle 19px at 55% 100%, transparent 96%, #000 100%);
 }
-/* tamni rub otvora na dnu omota */
-.sleeve-front::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 9px; background: linear-gradient(to top, rgba(43, 33, 24, 0.5), transparent); pointer-events: none; }
-/* hrbat kutije: uspravan natpis, kao na polici */
+/* hrbat: uspravan natpis, kao na polici */
 .sleeve-spine {
-  flex: 0 0 11%;
+  flex: 0 0 15%;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-right: 2.5px solid var(--ink);
-  background: var(--sheet);
+  border: 2px solid var(--ink);
+  border-right: 0;
+  border-radius: 3px 0 0 3px;
+  background: var(--accent);
   overflow: hidden;
 }
 .sleeve-spine span {
   writing-mode: vertical-rl;
   transform: rotate(180deg);
-  max-height: 92%;
+  max-height: 94%;
   font-family: var(--hand);
   font-weight: 700;
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   line-height: 1;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.sleeve-front { position: relative; flex: 1; min-width: 0; }
-.sleeve-art {
+.sleeve-body { position: relative; flex: 1; min-width: 0; perspective: 700px; }
+/* unutrašnjost kutije: ležište s dva zupca (vidi se kad se otvori) */
+.sleeve-inside {
   position: absolute;
   inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 26%;
+  border: 2px solid var(--ink);
+  border-radius: 0 3px 3px 0;
+  background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.05) 0 3px, transparent 3px 6px), #3a2d22;
+}
+.sleeve-inside i { width: 22%; aspect-ratio: 1; border-radius: 50%; border: 3px solid #6b5a49; }
+/* prednja strana: naslovnica gore, naslov dolje; otvara se oko hrpta */
+.sleeve-front {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  border: 2px solid var(--ink);
+  border-radius: 0 3px 3px 0;
+  background: var(--sheet);
+  overflow: hidden;
+  transform-origin: left center;
+  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+  backface-visibility: hidden;
+}
+.sleeve.open .sleeve-front { transform: rotateY(-78deg); }
+.sleeve-art {
+  flex: 1;
+  min-height: 0;
   display: grid;
   place-items: center;
-  background:
-    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0 8px, transparent 8px 16px),
-    var(--accent);
-  background-size: cover;
+  border-bottom: 2px solid var(--ink);
+  background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0 8px, transparent 8px 16px), var(--accent);
 }
 .sleeve-art.has-cover { background-image: var(--cover); background-size: cover; background-position: center; }
 .sleeve-art.has-cover .sleeve-icon { display: none; }
 .sleeve-icon { font-size: 64px; color: var(--sheet); filter: drop-shadow(2px 3px 0 rgba(43, 33, 24, 0.45)); }
-/* oznaka na omotu: papirić s naslovom */
-.sleeve-tag {
-  position: absolute;
-  left: 7%;
-  right: 7%;
-  bottom: 9%;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  padding: 6px 10px 7px;
-  border: 2px solid var(--ink);
-  border-radius: 4px;
-  background: rgba(255, 250, 240, 0.96);
-  font-family: var(--hand);
-  transform: rotate(-1deg);
-  transition: all 0.4s var(--ease-out);
-}
-.sleeve-tag b { font-size: clamp(1.25rem, 6vw, 1.6rem); line-height: 1; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
-.sleeve-tag span { font-size: 1.05rem; color: var(--muted); line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.sleeve-tag span:empty { display: none; }
+.sleeve-info { flex: none; display: flex; flex-direction: column; gap: 2px; padding: 9px 10px 10px; border-top: 6px solid var(--accent); }
+.sleeve-info b { font-family: var(--serif); font-size: clamp(1rem, 4.6vw, 1.25rem); line-height: 1.1; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
+.sleeve-info span { font-size: 0.82rem; font-weight: 700; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sleeve-info span:empty { display: none; }
+.sleeve-info em { margin-top: 3px; font-style: normal; font-size: 0.62rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* odsjaj prozirne plastike */
 .sleeve-sheen {
   position: absolute;
@@ -178,12 +189,100 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
     linear-gradient(112deg, rgba(255, 255, 255, 0.34) 0 14%, transparent 14% 100%),
     linear-gradient(112deg, transparent 58%, rgba(255, 255, 255, 0.16) 58% 66%, transparent 66% 100%);
 }
-/* otkriveno: omot se smanji i ostane gore kao džep, a kaseta viri iz njegova otvora */
-.pack.out .sleeve-wrap { width: 76%; transform: rotate(-1.2deg); }
-.pack.out .sleeve-tag { display: none; }
-.pack.out .tape { margin-top: -34px; }
-.pack.out .scratch, .pack.out .veil { display: none; }
-.tape-cover { flex: none; width: 46px; height: 46px; border: 2px solid var(--ink); border-radius: 3px; object-fit: cover; background: var(--paper); }
+.sleeve.won::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, 0.95) 50%, transparent 62%);
+  transform: translateX(-120%);
+  animation: shine 0.9s ease-out 0.1s forwards;
+  pointer-events: none;
+}
+/* dodir za početak: papirnati pečat preko folije */
+.start {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+.start span {
+  display: grid;
+  place-items: center;
+  width: 112px;
+  height: 112px;
+  border: 2.5px solid var(--ink);
+  border-radius: 50%;
+  font-family: var(--hand);
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ink);
+  background: var(--sticky);
+  box-shadow: 3px 4px 0 var(--ink);
+  transform: rotate(-8deg);
+  animation: call 1.4s ease-in-out infinite;
+}
+.start:active span { transform: rotate(-8deg) translate(3px, 4px); box-shadow: none; animation: none; }
+
+/* otkriveno: omot se smanji i nasloni na kasetofon, gore desno */
+.pack.out { padding-top: 46px; }
+.pack.out .sleeve-wrap {
+  position: absolute;
+  top: 0;
+  right: 12px;
+  margin: 0;
+  transform-origin: top right;
+  transform: rotate(7deg) scale(0.26);
+  animation: none;
+  pointer-events: none;
+}
+.pack.out .scratch, .pack.out .veil, .pack.out .start { display: none; }
+
+/* ---------- kasetofon ---------- */
+
+.player-box {
+  position: relative;
+  width: 100%;
+  padding: 10px 12px 14px;
+  border: 2.5px solid var(--ink);
+  border-radius: 14px;
+  background: var(--sheet);
+  box-shadow: 5px 6px 0 var(--ink);
+}
+.player-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 78px 8px 4px; }
+.player-brand { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; }
+/* zvučnik: rupice */
+.player-grille { flex: 1; height: 12px; background: radial-gradient(circle, var(--ink) 1.500px, transparent 2px) 0 0 / 8px 6px; opacity: 0.55; }
+/* vratašca: tamno ležište u koje kaseta sjedne */
+.player-door {
+  position: relative;
+  padding: 10px;
+  border: 2.5px solid var(--ink);
+  border-radius: 10px;
+  background: #3a2d22;
+  box-shadow: inset 0 4px 0 rgba(0, 0, 0, 0.35);
+}
+/* staklo vratašca: spusti se kad kaseta sjedne */
+.door-glass {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: 7px;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    linear-gradient(112deg, rgba(255, 255, 255, 0.22) 0 12%, transparent 12% 100%),
+    linear-gradient(112deg, transparent 62%, rgba(255, 255, 255, 0.1) 62% 70%, transparent 70% 100%);
+  transition: opacity 0.4s;
+}
+.player-box.loaded .door-glass { opacity: 1; }
+.player-box .deck { margin-top: 14px; }
 
 /* ---------- kaseta ---------- */
 
@@ -194,13 +293,12 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
 .in-game .wrap { padding-bottom: max(20px, env(safe-area-inset-bottom)); }
 /* pogodi unazad: tri odgovora trebaju mjesta, pa je kaseta manja */
 .stage.guessing { gap: 14px; }
-.stage.guessing .sleeve-wrap { width: 78%; }
+.stage.guessing .sleeve-wrap { width: 40%; }
 
 .tape {
   position: relative;
-  width: 94%;
-  margin: 4px auto 0;
-  aspect-ratio: 1.46;
+  width: 100%;
+  aspect-ratio: 1.5;
   padding: 5% 5.5% 5.5%;
   display: flex;
   flex-direction: column;
@@ -208,10 +306,9 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
   border: 2.5px solid var(--ink);
   border-radius: 12px;
   background: var(--accent);
-  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.3), inset 0 -5px 0 rgba(43, 33, 24, 0.16), 5px 6px 0 var(--ink);
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.3), inset 0 -5px 0 rgba(43, 33, 24, 0.16);
   overflow: hidden;
-  transform: rotate(-2.5deg);
-  z-index: 2;
+  z-index: 5;
   touch-action: pan-y;
   user-select: none;
   -webkit-user-select: none;
@@ -240,6 +337,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
   font-family: var(--hand);
   overflow: hidden;
 }
+.tape-cover { flex: none; width: 42px; height: 42px; border: 2px solid var(--ink); border-radius: 3px; object-fit: cover; background: var(--paper); }
 .tape-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 /* naslov pjesme rukom na naljepnici: do dva reda */
 .tape-line {
@@ -331,7 +429,7 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
 
 /* ---------- tipke kazetofona ---------- */
 
-.deck { display: flex; flex-direction: column; align-items: center; gap: 10px; animation: rise 0.5s var(--ease-out) both; }
+.deck { display: flex; flex-direction: column; align-items: center; gap: 10px; }
 .deck-keys { display: flex; align-items: flex-start; gap: 10px; }
 .key { display: flex; flex-direction: column; align-items: center; gap: 8px; padding-bottom: 5px; }
 .cap { font-size: 0.72rem; font-weight: 700; color: var(--muted); }
@@ -528,8 +626,8 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
 .sign { margin: 6px 0 0; text-align: right; font-family: var(--hand); font-size: 1.35rem; }
 .sign:empty { display: none; }
 
-/* reakcije: gumeni pečati */
-.react { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+/* reakcije: gumeni pečati; ispod njih, tek nakon odabira, tajni P.S. i "javi mu" */
+.react { display: flex; flex-direction: column; align-items: center; gap: 14px; }
 .react-q { margin: 0; font-family: var(--hand); font-size: 1.5rem; font-weight: 700; line-height: 1; }
 .react-row { display: flex; gap: 8px; }
 .react-row button {
@@ -549,11 +647,10 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
 .react-row button:active { transform: translate(2px, 3px); box-shadow: 0 0 0 var(--ink); }
 .react-row.chosen button { opacity: 0.4; box-shadow: none; }
 .react-row.chosen button[aria-pressed="true"] { opacity: 1; background: var(--accent); transform: rotate(-8deg) scale(1.2); box-shadow: 2px 3px 0 var(--ink); }
-.react .btn { flex: none; width: 100%; }
-
 /* tajni P.S.: samoljepljivi papirić */
 .ps {
-  margin: 0 6px;
+  align-self: stretch;
+  margin: 4px 6px 0;
   padding: 16px 18px 20px;
   font-family: var(--hand);
   font-size: 1.45rem;
@@ -564,17 +661,15 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
   animation: rise 0.5s var(--ease-out) both;
 }
 .ps::before { content: "P.S. "; font-weight: 700; }
+.tell { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font-weight: 700; color: var(--ink); text-underline-offset: 3px; }
 
-.full { display: flex; flex-direction: column; gap: 12px; }
-.embed summary { display: flex; align-items: center; min-height: 44px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; list-style: none; }
-.embed summary::-webkit-details-marker { display: none; }
-.embed .player { margin-top: 8px; }
-.full h2, .shelf h2 { margin: 0; font-family: var(--hand); font-size: 1.5rem; font-weight: 700; line-height: 1; }
-.player:empty { display: none; }
-.player iframe { display: block; width: 100%; border: 0; border-radius: 12px; background: var(--sheet); }
-.player iframe.yt { aspect-ratio: 16 / 9; height: auto; border-radius: 6px; }
+/* dno: sitno i mirno */
+.foot { display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 14px; border-top: 2px dashed var(--rule); font-size: 0.82rem; color: var(--muted); text-align: center; }
+.foot p { margin: 0; }
+.foot a { display: inline-block; padding: 8px 2px; font-weight: 700; color: var(--ink); text-underline-offset: 3px; }
+.next b { color: var(--ink); font-variant-numeric: tabular-nums; }
 
-.links { display: flex; gap: 10px; padding-bottom: 4px; }
+/* gumbi (pogodi unazad) */
 .btn {
   flex: 1;
   display: inline-flex;
@@ -595,11 +690,6 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
 .btn-primary { background: var(--accent); }
 .btn-ghost { background: var(--sheet); }
 .btn .icon { margin-right: 6px; }
-.btn .icon:last-child { margin: 0 0 0 6px; }
-
-.next { margin: 0; text-align: center; color: var(--muted); }
-.next b { color: var(--ink); font-variant-numeric: tabular-nums; }
-.next a { color: var(--ink); font-weight: 700; }
 
 /* ---------- pogledi i kartice na dnu ---------- */
 
@@ -745,11 +835,7 @@ body.mini-on .wrap { padding-bottom: calc(150px + env(safe-area-inset-bottom)); 
 .tape.w1 .tape-window { border-radius: 8px; }
 .tape-sticker { font-size: 17px; line-height: 1; color: var(--sheet); filter: drop-shadow(1px 1px 0 rgba(43, 33, 24, 0.6)); }
 /* kaseta klizi iz omota / natrag u omot; paket odleti u kutiju */
-.tape.slide-out { animation: slide-out 0.85s cubic-bezier(0.2, 0.9, 0.3, 1.12) both; }
-.tape.tuck { animation: tuck 0.45s ease-in forwards; }
 .tape.kick { animation: kick 0.45s var(--ease-out); }
-.pack.fly { animation: pack-fly 0.6s cubic-bezier(0.5, 0, 0.8, 0.4) forwards; }
-.pack.back { animation: rise 0.5s var(--ease-out) both; }
 .ghost { position: absolute; width: 58px; height: 38px; border: 2px solid var(--ink); border-radius: 6px; background: var(--accent); box-shadow: 2px 3px 0 var(--ink); }
 .ghost::after { content: ""; position: absolute; left: 14%; right: 14%; top: 18%; height: 36%; border: 1.500px solid var(--ink); border-radius: 2px; background: var(--sheet); }
 
@@ -939,7 +1025,7 @@ body.mini-on .wrap { padding-bottom: calc(150px + env(safe-area-inset-bottom)); 
   0% { transform: translate(0, 0) scale(0.5) rotate(0deg); opacity: 1; }
   100% { transform: translate(var(--dx), var(--dy)) scale(1.3) rotate(var(--rot)); opacity: 0; }
 }
-@keyframes nudge { 0%, 100% { transform: rotate(-2.5deg); } 25% { transform: rotate(-2.5deg) translateX(-16px); } 60% { transform: rotate(-2.5deg) translateX(12px); } }
+@keyframes nudge { 0%, 100% { transform: none; } 25% { transform: translateX(-12px); } 60% { transform: translateX(9px); } }
 @keyframes won { 30% { transform: scale(1.035) rotate(-0.6deg); } 60% { transform: scale(0.99) rotate(0.4deg); } }
 @keyframes shine { to { transform: translateX(120%); } }
 @keyframes stamp { from { opacity: 0; transform: rotate(11deg) scale(2.4); } to { opacity: 0.85; transform: rotate(11deg) scale(1); } }
@@ -947,13 +1033,13 @@ body.mini-on .wrap { padding-bottom: calc(150px + env(safe-area-inset-bottom)); 
 @keyframes enter-right { from { opacity: 0; transform: translateX(28px); } }
 @keyframes slide-out { from { transform: translateY(-66%) scale(0.78) rotate(-1.2deg); } to { transform: rotate(-2.5deg); } }
 @keyframes tuck { to { transform: translateY(-66%) scale(0.78) rotate(-1.2deg); } }
-@keyframes kick { 35% { transform: rotate(-2.5deg) scale(1.045); } }
+@keyframes kick { 35% { transform: scale(1.035); } }
 @keyframes pack-fly { to { transform: translateY(70vh) rotate(14deg) scale(0.15); opacity: 0; } }
 @keyframes bump-badge { 40% { transform: scale(1.6) rotate(-10deg); } }
 @keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
 @keyframes bob { 50% { transform: translateY(5px); } }
 @keyframes call { 50% { transform: translateY(-4px) rotate(-3deg); } }
-@keyframes rewind-me { 0%, 55%, 100% { transform: rotate(-2.5deg); } 20% { transform: rotate(-2.5deg) translateX(-18px); } 35% { transform: rotate(-2.5deg) translateX(4px); } }
+@keyframes rewind-me { 0%, 55%, 100% { transform: none; } 20% { transform: translateX(-12px); } 35% { transform: translateX(3px); } }
 @keyframes unlock { from { opacity: 0; transform: rotate(-1deg) scale(0.6); } }
 @keyframes slide-l { 50% { transform: translateX(-4px); } }
 @keyframes slide-r { 50% { transform: translateX(4px); } }

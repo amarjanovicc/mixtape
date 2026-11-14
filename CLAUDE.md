@@ -10,42 +10,34 @@ Dva pogleda, jahači na dnu ekrana (ili povlačenje prstom lijevo/desno): **Dana
 
 ### Ritual (pogled Danas) — svaki korak ima jasan razlog
 
-1. **Omot je srećka: koja je pjesma?** Pjesma je zapakirana u **omot** (kutiju kasete, `.sleeve`):
-   hrbat s uspravnim natpisom, naslovnica (ili boja pjesme s ikonom), papirić s naslovom i
-   odsjaj plastike. Omot prekriva srebrna folija, a kaseta je još skrivena. Vidi samo trag
-   (`hint`) i grebe omot prstom. Omot ima **urez za palac** na donjem rubu i tamni rub otvora, da se čita kao džep.
-   Kad se ogrebe, omot se smanji i ostane gore ISPRED kasete, a **kaseta isklizne iz njegova
-   otvora** (`revealCassette`, `.pack.out`, `slide-out`) i postaje player. Omot mora ostati
-   ispred kasete (z-index) i imati urez; inače izgleda kao da nešto bez veze viri iz kasete.
-   **Animacije povezuju korake:** sjaj preko omota, izvlačenje kasete uz zvuk motora i klik,
-   „kick” kad se premota na početak, dijelovi ispod stižu jedan za drugim (`.after > *`), a pri
-   spremanju mala kaseta poleti od gumba do jahača Kutija; ako se paket vidi, kaseta se vrati u
-   omot i omot odleti (`tuck`, `pack-fly`). Omot je zakrenut pa se dodir vraća natrag
-   za kut (`tapeAngle`/`pos`). Ritual je svaki dan isti, a iznenađenje je sadržaj. Svaka peta
-   pjesma je umjesto toga **pogodi unazad** (`guess`: omot je pod lokotom, 5 s pjesme unatrag,
-   tri naslova; treba zvuk i dvije druge objavljene pjesme, inače srećka). `reveal` u pjesmi to
-   nadjača. Uvijek postoji „samo otvori”. Dok traje igra, povlačenje po omotu grebe.
-   **Krivi odgovori** su polje `decoys` ("naslov | naslov"): admin ih popuni iz izvođačevih drugih
-   pjesama (iTunes), a mogu se urediti. Bez njih se uzimaju prijašnje pjesme, što je preslabo jer
-   ih je već čula pa pogađa onu koju nije vidjela.
-2. **Kaseta: premotaj je na početak da zasvira.** Kaseta je „na kraju vrpce”; drži tipku za
-   unazad ili povuci kasetu ulijevo (oko 2 s). Dok premotava čuje pjesmu ubrzano unatrag,
-   a kad dođe do početka pjesma krene. Zato se kaseta vrti: premotaš je da bi je čula.
-   Uvijek postoji „samo pusti”. Tijekom koraka 1 i 2 jahači su skriveni.
-3. **Poruka** rukopisom (emotivni vrhunac, dok pjesma svira), pa **reakcija** ikonom koja
-   otključa tajni `ps` i gumb „javi mu”.
-4. **Spremi kasetu u kutiju** — završetak rituala. Ispod piše koliko još kaseta treba do
-   sljedeće naljepnice (uz njenu siluetu); ako se upravo otključala, pokaže se velika, s porukom.
-5. Cijela pjesma (Spotify/YouTube) i odbrojavanje do sljedeće.
+Prizor ima tri predmeta: **omot** (kutija kasete), **kaseta** i **kasetofon**.
 
-Nakon otkrivanja kaseta ostaje pravi player, a premotavanje se može napraviti na tri
-vidljiva načina: tipke s natpisima („unazad / pusti / naprijed”, drži za premotavanje),
-povlačenje kasete (strelice na donjoj ploči kućišta pokazuju da se povlači lijevo-desno) i
-**klizač** s velikom ručkom i oznakama (dodir skače, povlačenje premotava uz zvuk; radi i s
-tipkovnicom). Na naljepnici kasete je naslov, izvođač i omot pjesme, a na donjoj ploči broj i
-datum. Kad tipke izađu s ekrana (npr. dok čita poruku), pojavi se **mali player** iznad
-jahača (pusti/pauza + traka). Cijela pjesma: poveznice na Spotify/YouTube uvijek vidljive,
-a ugrađeni player je u rastvorljivom „Poslušaj ovdje” (da se ne natječe s kasetom).
+1. **Omot je srećka: koja je pjesma?** Omot je uspravna kutija kasete (`.sleeve`): hrbat s
+   uspravnim natpisom, naslovnica gore, naslov i izvođač dolje, prozirna plastika s odsjajem.
+   Pod srebrnom je folijom. Prvo ide **„dodirni pa grebi”** (`#start`): taj klik je dodir koji
+   mobilni preglednik priznaje, pa se zvuk otključa PRIJE grebanja i šuštanje se čuje od prvog
+   poteza (bez toga je cijeli prvi potez nijem, jer se zvuk otključava tek kad prst napusti
+   ekran). Zatim vidi trag (`hint`) i grebe. Svaka peta pjesma je umjesto toga **pogodi unazad**
+   (`guess`: omot pod lokotom, 5 s pjesme unatrag, tri naslova). `reveal` to nadjača. Uvijek
+   postoji „samo otvori”. **Krivi odgovori** su polje `decoys` ("naslov | naslov"), admin ih
+   popuni iz izvođačevih drugih pjesama.
+2. **Kaseta ide u kasetofon.** Omot se otvori kao knjiga (`.sleeve.open`, vidi se ležište),
+   kaseta izleti i sjedne u vratašca kasetofona (`revealCassette`, `.player-box`), staklo se
+   spusti (`.loaded`), a omot se smanji i nasloni gore desno (`.pack.out`). Tipke i klizač su NA
+   kasetofonu, ne ispod njega.
+3. **Premotaj je na početak da zasvira.** Kaseta je „na kraju vrpce”; drži tipku za unazad ili
+   povuci kasetu ulijevo (oko 2 s). Čuje pjesmu ubrzano unatrag, a na početku pjesma krene.
+   Uvijek postoji „samo pusti”. Tijekom koraka 1–3 jahači su skriveni.
+4. **Poruka** rukopisom, pa **reakcija** ikonom; tek nakon reakcije ispod nje se pojave tajni
+   `ps` i poveznica „javi mu”.
+5. **Spremi kasetu u kutiju** — završetak. Ispod piše koliko još do sljedeće naljepnice; ako se
+   upravo otključala, pokaže se velika. Mala kaseta poleti od gumba do jahača Kutija.
+6. Na dnu, sitno: poveznice na cijelu pjesmu (Spotify · YouTube) i odbrojavanje do sljedeće.
+   Ugrađenog Spotify/YouTube playera nema: svira kasetofon.
+
+Nakon otkrivanja kasetofon ostaje pravi player: tipke s natpisima (drži za premotavanje),
+povlačenje kasete (strelice na donjoj ploči), **klizač** s ručkom, i **mali player** iznad
+jahača kad tipke izađu s ekrana.
 
 ### Kutija
 

@@ -252,37 +252,17 @@
     setContent($("sleeve-icon"), icon(look.sticker));
     $("sleeve-title").textContent = song.title;
     $("sleeve-artist").textContent = song.artist || "";
+    $("sleeve-meta").textContent = "mixtape #" + pad(trackNo) + (config.to ? " · za " + config.to : "");
     $("spine-text").textContent = song.title + (song.artist ? " — " + song.artist : "");
-    $("tape-meta").textContent = "#" + pad(trackNo) + " · " + formatDate(song.day, { day: "numeric", month: "long" });
+    $("tape-meta").textContent = "#" + pad(trackNo) + " · " + formatDate(song.day, { day: "numeric", month: "numeric" });
 
-    var player = $("player");
-    var sp = spotifyEmbed(song.spotify);
-    var yt = youtubeId(song.youtube);
-    if (sp) {
-      player.appendChild(el("iframe", {
-        src: sp.src, height: String(sp.height), title: "Spotify: " + song.title, loading: "lazy",
-        allow: "autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture",
-      }));
-    } else if (yt) {
-      player.appendChild(el("iframe", {
-        src: "https://www.youtube-nocookie.com/embed/" + yt, class: "yt", title: "YouTube: " + song.title,
-        allow: "autoplay; encrypted-media; fullscreen; picture-in-picture", allowfullscreen: "", loading: "lazy",
-      }));
-    }
-
-    $("embed").hidden = !player.children.length;
+    // cijela pjesma: dvije sitne poveznice (ugrađenog playera nema, svira kasetofon)
     var q = encodeURIComponent([song.title, song.artist].filter(Boolean).join(" "));
     var links = $("links");
-    var spotifyBtn = el("a", {
-      class: "btn btn-primary", target: "_blank", rel: "noopener",
-      href: song.spotify || "https://open.spotify.com/search/" + q,
-    });
-    setContent(spotifyBtn, icon("play"), "Spotify");
-    links.appendChild(spotifyBtn);
-    links.appendChild(el("a", {
-      class: "btn btn-ghost", target: "_blank", rel: "noopener",
-      href: song.youtube || "https://www.youtube.com/results?search_query=" + q,
-    }, "YouTube"));
+    links.textContent = "";
+    links.appendChild(el("a", { target: "_blank", rel: "noopener", href: song.spotify || "https://open.spotify.com/search/" + q }, "Spotify"));
+    links.appendChild(document.createTextNode(" · "));
+    links.appendChild(el("a", { target: "_blank", rel: "noopener", href: song.youtube || "https://www.youtube.com/results?search_query=" + q }, "YouTube"));
 
     if (song.note) {
       $("note-lead").textContent = config.noteLead;
@@ -1233,25 +1213,53 @@
   // ---------- games ----------
 
   // Kaseta izlazi iz omota: omot se skupi u traku, a kaseta se spusti ispod njega.
-  // Kaseta klizi iz omota: omot se smanji i ostane gore kao džep, kaseta izađe kroz njegov otvor.
+  // Omot se otvori kao knjiga, kaseta izađe i sjedne u kasetofon, a omot se smanji i nasloni na njega.
   function revealCassette(animate, then) {
-    var pack = $("pack"), tp = $("tape");
-    var go = function () {
-      $("sleeve").classList.remove("won");
+    var pack = $("pack"), wrap = $("sleeve-wrap"), sleeve = $("sleeve"), tp = $("tape"), box = $("player-box");
+    var settle = function () {
+      sleeve.classList.remove("won", "open");
       pack.classList.add("out");
-      tp.hidden = false;
-      if (!animate || reducedMotion) { if (then) then(); return; }
-      tp.classList.add("slide-out");
+      box.hidden = false;
+    };
+    if (!animate || reducedMotion || !wrap.animate) { settle(); box.classList.add("loaded"); if (then) then(); return; }
+
+    setTimeout(function () {            // 1) sjaj je prošao: otvori omot
+      sleeve.classList.add("open");
+      fx.click();
+    }, 450);
+
+    setTimeout(function () {            // 2) kaseta leti iz omota u kasetofon, omot se smanji u kut
+      var first = wrap.getBoundingClientRect();
+      settle();
+      wrap.style.transform = "none";
+      var lay = wrap.getBoundingClientRect();
+      wrap.style.transform = "";
+      var end = getComputedStyle(wrap).transform;
+      wrap.animate([
+        { transform: "translate(" + (first.right - lay.right) + "px," + (first.top - lay.top) + "px) rotate(1.3deg) scale(1)" },
+        { transform: end === "none" ? "none" : end },
+      ], { duration: 650, delay: 380, easing: "cubic-bezier(0.22, 1, 0.36, 1)", fill: "backwards" });
+
+      var tr = tp.getBoundingClientRect();
+      var dx = first.left + first.width * 0.56 - (tr.left + tr.width / 2);
+      var dy = first.top + first.height * 0.5 - (tr.top + tr.height / 2);
+      var k = (first.width * 0.8) / tr.width;
+      tp.animate([
+        { transform: "translate(" + dx + "px," + dy + "px) scale(" + k + ") rotate(90deg)", opacity: 0 },
+        { transform: "translate(" + dx + "px," + dy + "px) scale(" + k + ") rotate(90deg)", opacity: 1, offset: 0.12 },
+        { transform: "translate(" + dx * 0.3 + "px," + (dy * 0.45 - 30) + "px) scale(" + (k + 1) / 2 + ") rotate(8deg)", opacity: 1, offset: 0.6 },
+        { transform: "translate(0,-14px) scale(1.03) rotate(0deg)", opacity: 1, offset: 0.86 },
+        { transform: "none", opacity: 1 },
+      ], { duration: 950, easing: "cubic-bezier(0.3, 0.7, 0.3, 1)" });
       fx.whirr(true);
-      setTimeout(function () {
-        tp.classList.remove("slide-out");
+      setTimeout(function () {          // 3) sjela je: vratašca se zatvore
         fx.whirr(false);
         fx.click();
         buzz(12);
+        box.classList.add("loaded");
         if (then) then();
-      }, 860);
-    };
-    if (animate && !reducedMotion) setTimeout(go, 520); else go();   // prvo sjaj preko omota
+      }, 960);
+    }, 1000);
   }
 
   function startGame(type, song, ticketNo, decoys, onDone) {
@@ -1327,7 +1335,16 @@
     var ctx = canvas.getContext && canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) { $("veil").hidden = false; cleanup = function () { $("veil").classList.add("gone"); }; text.textContent = "dodirni „samo otvori”"; return; }
     canvas.hidden = false;
-    text.textContent = "ogrebi omot";
+    var startBtn = $("start");
+    startBtn.hidden = false;
+    text.textContent = "dodirni omot";
+    startBtn.addEventListener("click", function () {
+      fx.unlock();          // klik je dodir koji preglednik priznaje: zvuk radi od prvog poteza
+      fx.click();
+      buzz(10);
+      startBtn.hidden = true;
+      text.textContent = "ogrebi omot";
+    }, { once: true });
 
     // kaseta je zakrenuta, pa se veličina uzima iz neokrenutih mjera, a dodir se vraća natrag
     var cw = Math.max(1, canvas.offsetWidth), ch = Math.max(1, canvas.offsetHeight);
@@ -1450,6 +1467,7 @@
     canvas.addEventListener("pointercancel", stop);
     cleanup = function () {
       fx.scratchEnd();
+      $("start").hidden = true;
       canvas.classList.add("gone");
       $("sleeve").classList.add("won");   // sjaj preleti omot
     };
@@ -1564,19 +1582,6 @@
           { transform: "translate(" + dx + "px," + dy + "px) rotate(12deg) scale(0.35)", opacity: 0.2 },
         ], { duration: 720, easing: "cubic-bezier(0.4, 0, 0.6, 1)" }).onfinish = function () { ghost.remove(); };
       } else ghost.remove();
-      // ako se paket vidi: kaseta se vrati u omot, omot odleti, pa se sve vrati na mjesto
-      var pack = $("pack"), tape = $("tape");
-      if (pack.getBoundingClientRect().bottom > 80) {
-        tape.classList.remove("nudge");
-        tape.classList.add("tuck");
-        setTimeout(function () { pack.classList.add("fly"); }, 470);
-        setTimeout(function () {
-          tape.classList.remove("tuck");
-          pack.classList.remove("fly");
-          pack.classList.add("back");
-          setTimeout(function () { pack.classList.remove("back"); }, 600);
-        }, 1250);
-      }
     });
     paintCollect();
     $("back").hidden = isLatest;
@@ -1602,7 +1607,7 @@
       showAfter(false);
       return;
     }
-    $("tape").hidden = true;   // dok se ne otkrije pjesma, vidi se samo omot
+    // dok se ne otkrije pjesma, vidi se samo omot (kasetofon je skriven)
 
     // Ritual je uvijek isti (srećka), a svaka peta pjesma je iznenađenje: "pogodi unazad".
     var auto = trackNo % 5 === 0 ? "guess" : "scratch";

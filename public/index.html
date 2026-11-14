@@ -65,61 +65,76 @@
     <section class="stage" id="stage" hidden>
       <!-- OMOT: kutija kasete (hrbat, naslovnica, oznaka). Prekriva ga folija; kad se ogrebe, iz njega izlazi kaseta. -->
       <div class="pack" id="pack">
-      <div class="sleeve-wrap" id="sleeve-wrap">
-      <div class="sleeve" id="sleeve">
-        <div class="sleeve-spine" aria-hidden="true"><span id="spine-text"></span></div>
-        <div class="sleeve-front">
-          <div class="sleeve-art" id="sleeve-art"><i class="sleeve-icon" id="sleeve-icon"></i></div>
-          <div class="sleeve-tag"><b id="sleeve-title"></b><span id="sleeve-artist"></span></div>
-          <i class="sleeve-sheen"></i>
-        </div>
-        <canvas class="scratch" id="scratch" hidden></canvas>
-        <div class="veil" id="veil" hidden><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg></div>
-      </div>
-      </div>
-
-      <div class="tape" id="tape">
-        <div class="tape-top" aria-hidden="true"><span class="side">A</span><i class="tape-sticker" id="tape-sticker"></i></div>
-        <!-- naljepnica je ujedno i srećka: ispod folije piše koja je pjesma -->
-        <div class="tape-label" id="tape-label">
-          <img class="tape-cover" id="tape-cover" alt="" hidden>
-          <div class="tape-text">
-            <h1 class="tape-line" id="tape-line1"></h1>
-            <p class="tape-line small" id="tape-line2"></p>
+        <!-- OMOT: uspravna kutija kasete (hrbat, naslovnica, naslov). Pod folijom je; otvara se kao knjiga. -->
+        <div class="sleeve-wrap" id="sleeve-wrap">
+          <div class="sleeve" id="sleeve">
+            <div class="sleeve-spine" aria-hidden="true"><span id="spine-text"></span></div>
+            <div class="sleeve-body">
+              <div class="sleeve-inside" aria-hidden="true"><i></i><i></i></div>
+              <div class="sleeve-front">
+                <div class="sleeve-art" id="sleeve-art"><i class="sleeve-icon" id="sleeve-icon"></i></div>
+                <div class="sleeve-info">
+                  <b id="sleeve-title"></b>
+                  <span id="sleeve-artist"></span>
+                  <em id="sleeve-meta"></em>
+                </div>
+                <i class="sleeve-sheen"></i>
+              </div>
+            </div>
+            <canvas class="scratch" id="scratch" hidden></canvas>
+            <div class="veil" id="veil" hidden><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg></div>
+            <!-- prvi dodir otključa zvuk (mobiteli ga ne daju bez dodira), pa se grebanje čuje od prvog poteza -->
+            <button class="start" id="start" type="button" hidden><span>dodirni<br>pa grebi</span></button>
           </div>
         </div>
-        <div class="tape-window">
-          <span class="spool" id="spool-l"><i class="reel"></i></span>
-          <i class="tape-band"></i>
-          <span class="spool" id="spool-r"><i class="reel"></i></span>
-        </div>
-        <!-- donja ploča kućišta: strelice pokazuju da se kaseta može povući ulijevo i udesno -->
-        <div class="tape-foot" aria-hidden="true">
-          <i class="foot-hole"></i>
-          <span class="chev chev-l"><svg class="icon" aria-hidden="true"><use href="#i-chev-left"/></svg></span>
-          <span class="tape-meta" id="tape-meta"></span>
-          <span class="chev chev-r"><svg class="icon" aria-hidden="true"><use href="#i-chev-right"/></svg></span>
-          <i class="foot-hole"></i>
-        </div>
-      </div>
-      </div>
 
-      <div class="deck" id="deck" hidden>
-        <p class="game-text intro-only">premotaj kasetu na početak</p>
-        <div class="deck-keys">
-          <div class="key key-rew"><button type="button" id="rew" aria-label="Premotaj unazad (drži)"><svg class="icon" aria-hidden="true"><use href="#i-rewind"/></svg></button><span class="cap">unazad</span></div>
-          <div class="key key-play"><button type="button" id="play" class="deck-play" aria-label="Pusti"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg></button><span class="cap" id="play-cap">pusti</span></div>
-          <div class="key key-ff"><button type="button" id="ffw" aria-label="Premotaj unaprijed (drži)"><svg class="icon" aria-hidden="true"><use href="#i-forward"/></svg></button><span class="cap">naprijed</span></div>
-        </div>
-        <div class="seek-row">
-          <span class="seek-time" id="time">0:00</span>
-          <div class="seek" id="seek" role="slider" tabindex="0" aria-label="Pozicija u pjesmi" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
-            <i class="seek-fill"></i><i class="seek-thumb"></i>
+        <!-- KASETOFON: kaseta iz omota ulazi u njega; tipke i klizač su na njemu -->
+        <div class="player-box" id="player-box" hidden>
+          <div class="player-top" aria-hidden="true"><span class="player-brand">mixtape</span><i class="player-grille"></i></div>
+          <div class="player-door">
+            <div class="tape" id="tape">
+              <div class="tape-top" aria-hidden="true"><span class="side">A</span><i class="tape-sticker" id="tape-sticker"></i></div>
+              <div class="tape-label" id="tape-label">
+                <img class="tape-cover" id="tape-cover" alt="" hidden>
+                <div class="tape-text">
+                  <h1 class="tape-line" id="tape-line1"></h1>
+                  <p class="tape-line small" id="tape-line2"></p>
+                </div>
+              </div>
+              <div class="tape-window">
+                <span class="spool" id="spool-l"><i class="reel"></i></span>
+                <i class="tape-band"></i>
+                <span class="spool" id="spool-r"><i class="reel"></i></span>
+              </div>
+              <div class="tape-foot" aria-hidden="true">
+                <i class="foot-hole"></i>
+                <span class="chev chev-l"><svg class="icon" aria-hidden="true"><use href="#i-chev-left"/></svg></span>
+                <span class="tape-meta" id="tape-meta"></span>
+                <span class="chev chev-r"><svg class="icon" aria-hidden="true"><use href="#i-chev-right"/></svg></span>
+                <i class="foot-hole"></i>
+              </div>
+            </div>
+            <i class="door-glass" aria-hidden="true"></i>
           </div>
-          <span class="seek-time" id="dur"></span>
+
+          <div class="deck" id="deck" hidden>
+            <p class="game-text intro-only">premotaj kasetu na početak</p>
+            <div class="deck-keys">
+              <div class="key key-rew"><button type="button" id="rew" aria-label="Premotaj unazad (drži)"><svg class="icon" aria-hidden="true"><use href="#i-rewind"/></svg></button><span class="cap">unazad</span></div>
+              <div class="key key-play"><button type="button" id="play" class="deck-play" aria-label="Pusti"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg></button><span class="cap" id="play-cap">pusti</span></div>
+              <div class="key key-ff"><button type="button" id="ffw" aria-label="Premotaj unaprijed (drži)"><svg class="icon" aria-hidden="true"><use href="#i-forward"/></svg></button><span class="cap">naprijed</span></div>
+            </div>
+            <div class="seek-row">
+              <span class="seek-time" id="time">0:00</span>
+              <div class="seek" id="seek" role="slider" tabindex="0" aria-label="Pozicija u pjesmi" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                <i class="seek-fill"></i><i class="seek-thumb"></i>
+              </div>
+              <span class="seek-time" id="dur"></span>
+            </div>
+            <p class="deck-time"><em id="deck-hint"></em></p>
+            <button class="skip intro-only" id="rewind-skip" type="button">samo pusti</button>
+          </div>
         </div>
-        <p class="deck-time"><em id="deck-hint"></em></p>
-        <button class="skip intro-only" id="rewind-skip" type="button">samo pusti</button>
       </div>
       <audio id="audio" preload="none"></audio>
 
@@ -144,10 +159,9 @@
       <div class="react">
         <p class="react-q">kako ti je sjela?</p>
         <div class="react-row" id="react-row"></div>
-        <a class="btn btn-ghost" id="tell" href="#" hidden>javi mu <svg class="icon" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+        <p class="ps" id="ps" hidden></p>
+        <a class="tell" id="tell" href="#" hidden>javi mu <svg class="icon" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
       </div>
-
-      <p class="ps" id="ps" hidden></p>
 
       <!-- kraj rituala: kaseta ide u kutiju, a to puni put do sljedeće naljepnice -->
       <div class="keep">
@@ -156,16 +170,11 @@
         <div class="unlock" id="unlock" hidden></div>
       </div>
 
-      <div class="full">
-        <h2>Cijela pjesma</h2>
-        <div class="links" id="links"></div>
-        <details class="embed" id="embed">
-          <summary>Poslušaj ovdje</summary>
-          <div class="player" id="player"></div>
-        </details>
+      <!-- sitno, na dnu: cijela pjesma i kad stiže sljedeća -->
+      <div class="foot">
+        <p class="foot-links">cijela pjesma: <span id="links"></span></p>
+        <p class="next" id="next" hidden></p>
       </div>
-
-      <p class="next" id="next" hidden></p>
     </section>
 
     <section class="empty" id="empty" hidden>
