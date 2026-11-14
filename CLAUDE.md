@@ -110,7 +110,7 @@ service workera, namjerno, da nikad ne vidi staru verziju.
 - **Zvuk**: `audio` (datoteka u `public/audio/`) ima prednost pred `preview` (službeni isječak
   od 30 s s iTunesa, svira se s njihovog servera). Ne dodaji skidanje cijelih pjesama sa
   Spotifyja/YouTubea — to bi bilo javno dijeljenje tuđe glazbe; vlastiti zvuk je za ono što
-  korisnik smije dijeliti (glasovna poruka, vlastita snimka).
+  korisnik smije dijeliti (glasovna poruka, vlastita snimka). Admin ima gumb „Snimi glas”: MediaRecorder, pa se u pregledniku pretvara u WAV (mono 22 kHz, do 80 s) da svira i na iPhoneu.
 - **Zvučni efekti** (`fx` u `app.js`) su sintetizirani kroz Web Audio — nema zvučnih datoteka.
   **Mobiteli:** zvuk se otključava na prvi dodir bilo gdje (`touchstart/touchend/pointerup/click`,
   jer iOS priznaje tek `touchend`/`click`), a efekti zaobilaze tihi način mobitela preko
