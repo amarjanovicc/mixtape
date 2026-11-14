@@ -1228,17 +1228,20 @@
       fx.click();
     }, 450);
 
-    setTimeout(function () {            // 2) kaseta leti iz omota u kasetofon, omot se smanji u kut
+    setTimeout(function () {            // 2) kaseta izleti iz omota, a omot odleti u stranu i nestane
       var first = wrap.getBoundingClientRect();
       settle();
-      wrap.style.transform = "none";
-      var lay = wrap.getBoundingClientRect();
-      wrap.style.transform = "";
-      var end = getComputedStyle(wrap).transform;
-      wrap.animate([
-        { transform: "translate(" + (first.right - lay.right) + "px," + (first.top - lay.top) + "px) rotate(1.3deg) scale(1)" },
-        { transform: end === "none" ? "none" : end },
-      ], { duration: 650, delay: 380, easing: "cubic-bezier(0.22, 1, 0.36, 1)", fill: "backwards" });
+      // omot više nije u toku stranice: njegov "duh" odleti s mjesta gdje je bio
+      var ghost = wrap.cloneNode(true);
+      ghost.removeAttribute("id");
+      ghost.querySelectorAll("[id]").forEach(function (n) { n.removeAttribute("id"); });
+      ghost.style.cssText = "display:block;position:fixed;margin:0;animation:none;z-index:9;pointer-events:none;left:" + first.left + "px;top:" + first.top + "px;width:" + first.width + "px;";
+      ghost.querySelector(".sleeve").classList.add("open");
+      document.body.appendChild(ghost);
+      ghost.animate([
+        { transform: "rotate(1.3deg)", opacity: 1 },
+        { transform: "translate(-30px,-40px) rotate(-14deg) scale(0.86)", opacity: 0 },
+      ], { duration: 520, delay: 300, easing: "cubic-bezier(0.4, 0, 1, 1)", fill: "forwards" }).onfinish = function () { ghost.remove(); };
 
       var tr = tp.getBoundingClientRect();
       var dx = first.left + first.width * 0.56 - (tr.left + tr.width / 2);

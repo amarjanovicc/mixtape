@@ -199,18 +199,8 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
   animation: shine 0.9s ease-out 0.1s forwards;
   pointer-events: none;
 }
-/* otkriveno: omot se smanji i nasloni na kasetu, gore desno */
-.pack.out { padding-top: 46px; }
-.pack.out .sleeve-wrap {
-  position: absolute;
-  top: 0;
-  right: 12px;
-  margin: 0;
-  transform-origin: top right;
-  transform: rotate(7deg) scale(0.26);
-  animation: none;
-  pointer-events: none;
-}
+/* otkriveno: omot je odradio svoje i nestane; ostaje samo kaseta */
+.pack.out .sleeve-wrap { display: none; }
 .pack.out .scratch, .pack.out .veil { display: none; }
 
 /* kaseta ispod omota; tipke i klizač ispod nje (bez kućišta kasetofona) */

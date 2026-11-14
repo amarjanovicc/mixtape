@@ -24,8 +24,9 @@ isprobano i odbačeno: korisniku se nije svidjelo. Ne vraćati ga.)
    **Krivi odgovori** su polje `decoys` ("naslov | naslov"), admin ih popuni iz izvođačevih
    drugih pjesama.
 2. **Kaseta izađe iz omota.** Omot se otvori kao knjiga (`.sleeve.open`, vidi se ležište),
-   kaseta izleti i spusti se ispod (`revealCassette`), a omot se smanji i nasloni na njezin
-   gornji desni kut (`.pack.out`). Tipke i klizač su ispod kasete.
+   kaseta izleti i spusti se na njegovo mjesto (`revealCassette`), a omot odleti u stranu i
+   nestane (`.pack.out`). Ne ostavljati mali omot uz kasetu: isprobano i odbačeno. Tipke i
+   klizač su ispod kasete.
 3. **Premotaj je na početak da zasvira.** Kaseta je „na kraju vrpce”; drži tipku za unazad ili
    povuci kasetu ulijevo (oko 2 s). Čuje pjesmu ubrzano unatrag, a na početku pjesma krene.
    Uvijek postoji „samo pusti”. Tijekom koraka 1–3 jahači su skriveni.
