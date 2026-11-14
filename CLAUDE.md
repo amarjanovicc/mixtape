@@ -15,8 +15,10 @@ isprobano i odbačeno: korisniku se nije svidjelo. Ne vraćati ga.)
 
 1. **Omot je srećka: koja je pjesma?** Omot je uspravna kutija kasete (`.sleeve`): hrbat s
    uspravnim natpisom, naslovnica gore, naslov i izvođač dolje, prozirna plastika s odsjajem.
-   Pod srebrnom je folijom. Ispod omota leži **novčić** (`#coin`): prvo ga uzme dodirom, pa
-   grebe njime (novčić prati prst). Razlog je zvuk: mobilni preglednik otključa zvuk samo na
+   Pod srebrnom je folijom. Ispod omota leži **novčić** (`#coin`): uhvati ga, drži i povuče na
+   omot pa grebe njime u istom potezu (novčić prati prst); kad ga pusti, ostaje joj „u ruci” i
+   dalje grebe izravno po foliji. Zvuk se na mobitelu otključa tek kad prst prvi put napusti
+   ekran, pa prvi potez može biti nijem. Razlog je zvuk: mobilni preglednik otključa zvuk samo na
    pravi dodir (klik), ne na povlačenje, pa bi grebanje inače bilo nijemo. Bez novčića folija
    se ne grebe, a novčić se zatrese. (Pečat „dodirni pa grebi” preko folije je isproban i
    odbačen.) Svaka peta pjesma je umjesto toga **pogodi unazad** (`guess`: omot pod lokotom,
