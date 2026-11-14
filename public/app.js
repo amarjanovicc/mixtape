@@ -514,8 +514,13 @@
     var armed = false;       // smije se pokazati tek kad istekne čekanje
     var texts = {};          // tekst po pogledu
     var seen = {};           // pogledi u kojima je već skrolala
+    var targets = {};        // na što šapat upućuje, po pogledu (id elementa)
+    // Šapat ima smisla samo dok se ono na što upućuje JOŠ NE VIDI. Ako je poruka već na ekranu,
+    // "netko ti je nešto napisao" je suvišan (i zbunjuje), pa se ne pokazuje.
     function more() {
-      return document.documentElement.scrollHeight - window.innerHeight - window.scrollY > 160;
+      var t = targets[currentView] && $(targets[currentView]);
+      if (!t || t.hidden || !t.offsetParent) return false;
+      return t.getBoundingClientRect().top > window.innerHeight - 110;   // ispod ruba, iza jahača
     }
     function update() {
       if (!node) return;
@@ -534,7 +539,7 @@
           window.scrollBy({ top: window.innerHeight * 0.6, behavior: reducedMotion ? "auto" : "smooth" });
         });
       },
-      set: function (view, text) { texts[view] = text; },
+      set: function (view, text, targetId) { texts[view] = text; targets[view] = targetId; },
       // pričekaj da se stranica smiri (otkrivanje, promjena pogleda), pa tek onda izviri
       soon: function (ms) {
         armed = false;
@@ -1563,8 +1568,8 @@
     refreshBox();
     initViews();
     peek.init();
-    peek.set("today", current.note ? "psst… netko ti je nešto napisao" : "ima još nešto ispod…");
-    peek.set("box", "nešto se krije malo niže…");
+    peek.set("today", current.note ? "psst… netko ti je nešto napisao" : "ima još nešto ispod…", current.note ? "note-wrap" : "collect");
+    peek.set("box", "nešto se krije malo niže…", "rewards");
 
     // spremanje kasete u kutiju
     var collectBtn = $("collect");
