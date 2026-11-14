@@ -97,6 +97,7 @@ service workera, namjerno, da nikad ne vidi staru verziju.
 - `scripts/dev-live.mjs` — lokalno pokreće ISTE funkcije kao Vercel (`node scripts/dev-live.mjs`,
   http://localhost:4330, lozinka `lokalna-lozinka`, pohrana u `data/.live-dev.json`): za
   isprobavanje živog toka (prijava, spremanje, reset) prije objave
+  - Admin ima četiri odjeljka (tabovi, `#danas`, `#raspored`, `#dodaj`, `#postavke`): Danas (koliko je dana unaprijed složeno, objava, reset), Raspored (idućih 14 dana s gumbom „Dodaj” na slobodnom danu i oznakama „nema poruke” / „nema linka”, plus sve pjesme), Dodaj (obrazac), Postavke.
 - `tools/qr.html` — generator QR koda
 - `vercel.json`, `package.json` (jedina ovisnost: `@vercel/blob`)
 

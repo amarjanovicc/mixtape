@@ -118,6 +118,21 @@
     .check { display: flex; align-items: center; gap: 8px; margin: 0; font-weight: 400; }
     .check input { width: 20px; height: 20px; accent-color: var(--accent); }
     .px { display: block; image-rendering: pixelated; }
+    #app { display: flex; flex-direction: column; gap: 16px; }
+    .pane { display: flex; flex-direction: column; gap: 16px; }
+    .tabs { position: sticky; top: 0; z-index: 10; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 8px 0; background: var(--paper); }
+    .tabs button { min-height: 44px; padding: 6px 4px; font-size: .92rem; box-shadow: 2px 3px 0 var(--ink); }
+    .tabs button[aria-selected="true"] { background: var(--accent); }
+    ul.days { list-style: none; margin: 0; padding: 0; }
+    ul.days li { display: flex; gap: 10px; align-items: center; padding: 9px 0; border-top: 1.5px solid var(--rule); min-height: 52px; }
+    ul.days li:first-child { border-top: 0; }
+    ul.days .d { flex: none; width: 82px; font-weight: 700; font-size: .9rem; }
+    ul.days li.today .d { color: var(--accent); }
+    ul.days .what { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    ul.days .what.free { color: var(--muted); font-style: italic; white-space: normal; line-height: 1.2; font-size: .9rem; }
+    ul.days li.past { opacity: .6; }
+    .tag.warn { background: #ffd9d2; }
+    .ahead p { margin: 0 0 12px; font-weight: 600; }
     select, .pet input, .reward input { padding: 9px 8px; }
   </style>
 </head>
@@ -151,6 +166,22 @@
 
     <div id="app" hidden>
 
+    <nav class="tabs" id="tabs" aria-label="Odjeljci">
+      <button type="button" data-go="danas">Danas</button>
+      <button type="button" data-go="raspored">Raspored</button>
+      <button type="button" data-go="dodaj">Dodaj</button>
+      <button type="button" data-go="postavke">Postavke</button>
+    </nav>
+
+    <p class="msg" id="flash" role="status" hidden></p>
+
+    <div class="pane" data-tab="danas">
+    <section class="card ahead" id="ahead">
+      <h2>Sljedeći dani</h2>
+      <p id="ahead-text"></p>
+      <button class="primary" type="button" id="ahead-add" hidden>Dodaj pjesmu</button>
+    </section>
+
     <section class="card publish clean" id="publish-card">
       <p id="publish-text">Učitavam…</p>
       <button class="primary" id="publish" type="button">Objavi</button>
@@ -170,6 +201,9 @@
       <p class="today-open" id="today-open" hidden><a href="/" target="_blank" rel="noopener">Otvori stranicu i ogrebi ponovno</a></p>
     </section>
 
+    </div>
+
+    <div class="pane" data-tab="dodaj" hidden>
     <form class="card" id="song-form" autocomplete="off">
       <h2 id="form-title">Nova pjesma</h2>
 
@@ -252,12 +286,22 @@
       <p class="msg" id="form-msg" hidden></p>
     </form>
 
+    </div>
+
+    <div class="pane" data-tab="raspored" hidden>
     <section class="card">
-      <h2>Pjesme <span id="count"></span></h2>
-      <ul class="songs" id="songs"></ul>
+      <h2>Idućih 14 dana</h2>
+      <ul class="days" id="days"></ul>
     </section>
 
-    <details class="card" id="settings">
+    <section class="card">
+      <h2>Sve pjesme <span id="count"></span></h2>
+      <ul class="songs" id="songs"></ul>
+    </section>
+    </div>
+
+    <div class="pane" data-tab="postavke" hidden>
+    <details class="card" id="settings" open>
       <summary>Postavke</summary>
       <form class="inner" id="config-form" autocomplete="off">
         <label for="c-to">Njeno ime</label>
@@ -303,6 +347,7 @@
         <p class="msg" id="config-msg" hidden></p>
       </form>
     </details>
+    </div>
     </div>
   </div>
 
@@ -362,6 +407,86 @@
         return localDay(new Date());
       }
       function when() { return document.querySelector('input[name="when"]:checked').value; }
+
+      // ---------- odjeljci (tabovi) ----------
+      var TABS = ["danas", "raspored", "dodaj", "postavke"];
+      function go(name) {
+        if (TABS.indexOf(name) === -1) name = "danas";
+        Array.prototype.forEach.call(document.querySelectorAll(".pane"), function (p) { p.hidden = p.getAttribute("data-tab") !== name; });
+        Array.prototype.forEach.call(document.querySelectorAll("#tabs button"), function (b) {
+          b.setAttribute("aria-selected", String(b.getAttribute("data-go") === name));
+        });
+        try { history.replaceState(null, "", "#" + name); } catch (e) {}
+        if (go.keep) go.keep = false; else msg("flash");
+        window.scrollTo(0, 0);
+      }
+      Array.prototype.forEach.call(document.querySelectorAll("#tabs button"), function (b) {
+        b.addEventListener("click", function () { go(b.getAttribute("data-go")); });
+      });
+      // nova pjesma na točno određeni dan
+      function addOn(day) {
+        resetForm();
+        document.querySelector('input[name="when"][value="pick"]').checked = true;
+        $("pick-box").hidden = false;
+        $("day").value = day;
+        go("dodaj");
+        $("link").focus();
+      }
+      $("ahead-add").addEventListener("click", function () { addOn($("ahead-add").getAttribute("data-day")); });
+
+      function problems(s) {
+        var p = [];
+        if (!s.note) p.push("nema poruke");
+        if (!s.spotify && !s.youtube) p.push("nema linka");
+        return p;
+      }
+      function addDays(d, n) { var x = new Date(d.getTime()); x.setDate(x.getDate() + n); return x; }
+
+      // ---------- raspored: idućih 14 dana + koliko je unaprijed složeno ----------
+      function renderSchedule() {
+        var list = $("days");
+        list.textContent = "";
+        var today = new Date();
+        var byDay = {};
+        state.songs.forEach(function (s) { (byDay[s.date.slice(0, 10)] = byDay[s.date.slice(0, 10)] || []).push(s); });
+        for (var i = -2; i <= 13; i++) {
+          var d = addDays(today, i), key = localDay(d);
+          var label = i === 0 ? "Danas" : i === 1 ? "Sutra" : pretty(key);
+          var cls = i < 0 ? "past" : i === 0 ? "today" : "";
+          var songs = byDay[key] || [];
+          if (songs.length) {
+            songs.forEach(function (s, k) {
+              var li = el("li", { class: cls });
+              li.appendChild(el("span", { class: "d" }, k === 0 ? label : ""));
+              li.appendChild(el("span", { class: "what" }, s.title + (s.artist ? " — " + s.artist : "")));
+              problems(s).forEach(function (t) { li.appendChild(el("span", { class: "tag warn" }, t)); });
+              var edit = el("button", { class: "small", type: "button" }, "Uredi");
+              edit.addEventListener("click", function () { startEdit(s); });
+              li.appendChild(edit);
+              list.appendChild(li);
+            });
+            continue;
+          }
+          var li = el("li", { class: cls });
+          li.appendChild(el("span", { class: "d" }, label));
+          li.appendChild(el("span", { class: "what free" }, i < 0 ? "bez pjesme" : i === 0 ? "nema nove (svira prethodna)" : "slobodno"));
+          if (i >= 0) {
+            var add = el("button", { class: "small", type: "button" }, "Dodaj");
+            add.addEventListener("click", addOn.bind(null, key));
+            li.appendChild(add);
+          }
+          list.appendChild(li);
+        }
+        // koliko dana unaprijed ima pjesmu (od sutra bez prekida)
+        var n = 0;
+        while (n < 400 && byDay[localDay(addDays(today, n + 1))]) n++;
+        var txt = n === 0 ? "Za sutra nema pjesme." : n === 1 ? "Pjesma je složena za sutra." : "Pjesme su složene za idućih " + n + " dana.";
+        var free = localDay(addDays(today, n + 1));
+        $("ahead-text").textContent = txt + (n < 3 ? " Dodaj još koju da ne ostane bez." : "");
+        $("ahead-add").hidden = n >= 7;
+        $("ahead-add").setAttribute("data-day", free);
+        $("ahead-add").textContent = "Dodaj za " + pretty(free);
+      }
 
       // ---------- objava ----------
 
@@ -424,6 +549,7 @@
           var sub = el("span", null, pretty(s.date) + " ");
           if (s === current) sub.appendChild(el("span", { class: "tag now" }, "svira sada"));
           else if (at(s) > now) sub.appendChild(el("span", { class: "tag wait" }, "čeka"));
+          problems(s).forEach(function (t) { sub.appendChild(document.createTextNode(" ")); sub.appendChild(el("span", { class: "tag warn" }, t)); });
           info.appendChild(sub);
           li.appendChild(info);
           var acts = el("div", { class: "acts" });
@@ -437,6 +563,7 @@
         });
         renderToday(current);
         renderPublish();
+        renderSchedule();
       }
 
       // ---------- današnja pjesma: reset ----------
@@ -637,9 +764,9 @@
         if (s.audio) $("file-hint").textContent = "Trenutno: tvoja datoteka. Odaberi novu samo ako je želiš zamijeniti.";
         showFound();
         showNames(!$("title").value);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        go("dodaj");
       }
-      $("cancel").addEventListener("click", resetForm);
+      $("cancel").addEventListener("click", function () { resetForm(); go("raspored"); });
 
       Array.prototype.forEach.call(document.querySelectorAll('input[name="when"]'), function (r) {
         r.addEventListener("change", function () { $("pick-box").hidden = when() !== "pick"; });
@@ -747,7 +874,8 @@
           state = data;
           renderSongs();
           resetForm();
-          msg("form-msg", "Spremljeno: " + song.title + " (" + pretty(song.date) + ")." + (state.live ? " Već je live." : " Ne zaboravi Objavi."), "ok");
+          go("raspored");
+          msg("flash", "Spremljeno: " + song.title + " (" + pretty(song.date) + ")." + (state.live ? " Već je live." : " Ne zaboravi Objavi."), "ok");
         }).catch(function (err) {
           msg("form-msg", err.message, "err");
         }).then(function () { $("save").disabled = false; });
@@ -756,7 +884,7 @@
       function removeSong(s) {
         if (!window.__delArmed || window.__delArmed.d !== s.date || Date.now() - window.__delArmed.t > 8000) {
           window.__delArmed = { d: s.date, t: Date.now() };
-          msg("form-msg", "Obrisati „" + s.title + "”?" + (s.audio ? " Briše se i spremljeni zvuk." : "") + " Klikni Obriši još jednom za potvrdu.", "warn");
+          msg("flash", "Obrisati „" + s.title + "”?" + (s.audio ? " Briše se i spremljeni zvuk." : "") + " Klikni Obriši još jednom za potvrdu.", "warn");
           return;
         }
         window.__delArmed = null;
@@ -764,7 +892,8 @@
           state = data;
           renderSongs();
           if (editing === s.date) resetForm();
-        }).catch(function (err) { msg("form-msg", err.message, "err"); });
+          msg("flash", "Obrisano: " + s.title + ".", "ok");
+        }).catch(function (err) { msg("flash", err.message, "err"); });
       }
 
       // ---------- postavke ----------
@@ -912,6 +1041,7 @@
           resetForm();
           renderConfig();
           renderSongs();
+          go(location.hash.slice(1));
         }).catch(function (err) { $("publish-text").textContent = err.message; });
       }
 
