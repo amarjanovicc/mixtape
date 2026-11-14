@@ -41,6 +41,10 @@ Nakon otkrivanja kaseta ostaje pravi player: tipke s natpisima (drži za premota
 povlačenje kasete (strelice na donjoj ploči), **klizač** s ručkom, i **mali player** iznad
 jahača kad tipke izađu s ekrana.
 
+**Šapat** („psst… netko ti je nešto napisao”, `peek` u `app.js`) pojavljuje se SAMO ako se ono
+na što upućuje (poruka; u Kutiji naljepnice) još ne vidi na ekranu. Ako je poruka već vidljiva,
+šapata nema.
+
 ### Kutija
 
 - Spremljene kasete kao male kasete; nespremljene su prazna mjesta („nije spremljena”,
