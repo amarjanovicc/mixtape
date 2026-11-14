@@ -171,6 +171,7 @@
       window: (h >>> 5) % 2,
       sticker: STICKERS[(h >>> 7) % STICKERS.length],
       tilt: ((h >>> 11) % 7) - 3,
+      rare: (h >>> 14) % 6 === 0,      // otprilike svaka šesta kaseta je rijetka: zlatna folija i žig
     };
   }
 
@@ -223,6 +224,7 @@
     var look = designFor(song);
     document.documentElement.style.setProperty("--accent", look.color);
     $("tape").classList.add("w" + look.window);
+    $("tape").classList.toggle("rare", look.rare);
     document.querySelector(".tape-label").classList.add("p" + look.pattern);
     setContent($("tape-sticker"), icon(look.sticker));
     document.title = "Mixtape #" + pad(trackNo);
@@ -357,7 +359,7 @@
 
   function miniTape(song, n, isCurrent, href) {
     var look = designFor(song);
-    var a = el("a", { class: "mini p" + look.pattern + " w" + look.window, href: href });
+    var a = el("a", { class: "mini p" + look.pattern + " w" + look.window + (look.rare ? " rare" : ""), href: href });
     a.style.setProperty("--c", look.color);
     a.style.setProperty("--tilt", look.tilt * 0.6 + "deg");
     if (isCurrent) a.setAttribute("aria-current", "true");
@@ -895,6 +897,12 @@
         [1047, 1319, 1568, 2093].forEach(function (f, i) { tone(f, t + 0.22 + i * 0.085, 0.5, "triangle", 0.18); });
         tone(3136, t + 0.6, 0.9, "sine", 0.1);
       },
+      // rijetka kaseta: dulji, svjetliji zvon
+      rare: function () {
+        if (!ready()) return;
+        var t = ctx.currentTime + 0.5;
+        [1319, 1568, 1976, 2637, 3136].forEach(function (f, i) { tone(f, t + i * 0.09, 0.7, "triangle", 0.14); });
+      },
       // tap po srcu: svaki malo viši
       blip: function (step) {
         if (!ready()) return;
@@ -1382,7 +1390,9 @@
 
     // folija: metalni preljev + zrno + sitni tisak "OGREBI"
     var g = ctx.createLinearGradient(0, 0, W, H);
-    [[0, "#d9dce2"], [0.3, "#a2a7b0"], [0.48, "#eceef2"], [0.62, "#9a9fa9"], [0.85, "#d2d5db"], [1, "#b0b5bd"]]
+    (designFor(song).rare
+      ? [[0, "#e8c76a"], [0.3, "#b8902f"], [0.48, "#f3dc92"], [0.62, "#b08a2c"], [0.85, "#e2c066"], [1, "#c29a38"]]
+      : [[0, "#d9dce2"], [0.3, "#a2a7b0"], [0.48, "#eceef2"], [0.62, "#9a9fa9"], [0.85, "#d2d5db"], [1, "#b0b5bd"]])
       .forEach(function (st) { g.addColorStop(st[0], st[1]); });
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
@@ -1678,8 +1688,10 @@
       renderNext(upcoming[0], isLatest);
       peek.soon(celebrate ? 2600 : 1400);   // nakon slavlja, kad se ekran smiri
       if (celebrate) {
-        confetti($("tape"), 26);
-        buzz([20, 40, 30]);
+        var rareDay = designFor(current).rare;
+        confetti($("tape"), rareDay ? 60 : 26);
+        if (rareDay) fx.rare();
+        buzz(rareDay ? [20, 40, 30, 40, 60] : [20, 40, 30]);
       }
     }
 

@@ -62,6 +62,7 @@ na što upućuje (poruka; u Kutiji naljepnice) još ne vidi na ekranu. Ako je po
 - **Nagrade idu po broju kaseta u kutiji, ne po nizu dana.** Propušten dan ne smije ništa
   oduzeti niti stvarati grižnju savjesti; propuštenu kasetu može otvoriti i spremiti kasnije.
   Niz dana je samo veseli plamen u kutu.
+- **Rijetka kaseta** (`designFor().rare`, otprilike svaka šesta, uvijek ista za istu pjesmu): zlatna folija umjesto srebrne, zlatni žig „rijetka” na kaseti, više konfeta i dulji zvon (`fx.rare`), isprekidan zlatni rub u Kutiji. Razlog: promjenjiva nagrada (kao rijetke karte u igrama s paketima) čini svaki dan malo neizvjesnim. Žig je ravna boja, bez sjaja.
 - **Jedan ritual, ne izmjena četiri igre.** Navika traži isti početak; raznolikost dolazi iz
   pjesme, poruke, izgleda kasete i povremenog „pogodi unazad”.
 - **Trud prije nagrade, ali kratak** (grebanje nekoliko sekundi, premotavanje oko dvije) i
