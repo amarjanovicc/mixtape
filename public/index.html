@@ -83,14 +83,11 @@
             </div>
             <canvas class="scratch" id="scratch" hidden></canvas>
             <div class="veil" id="veil" hidden><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg></div>
-            <!-- prvi dodir otključa zvuk (mobiteli ga ne daju bez dodira), pa se grebanje čuje od prvog poteza -->
-            <button class="start" id="start" type="button" hidden><span>dodirni<br>pa grebi</span></button>
           </div>
         </div>
 
-        <!-- KASETOFON: kaseta iz omota ulazi u njega; tipke i klizač su na njemu -->
+        <!-- kaseta izađe iz omota i ostane ispod njega; tipke i klizač su ispod kasete -->
         <div class="player-box" id="player-box" hidden>
-          <div class="player-top" aria-hidden="true"><span class="player-brand">mixtape</span><i class="player-grille"></i></div>
           <div class="player-door">
             <div class="tape" id="tape">
               <div class="tape-top" aria-hidden="true"><span class="side">A</span><i class="tape-sticker" id="tape-sticker"></i></div>
@@ -114,7 +111,6 @@
                 <i class="foot-hole"></i>
               </div>
             </div>
-            <i class="door-glass" aria-hidden="true"></i>
           </div>
 
           <div class="deck" id="deck" hidden>
@@ -140,6 +136,8 @@
 
       <div class="game" id="game" hidden>
         <p class="hint" id="hint" hidden></p>
+        <!-- novčić: dodir kojim ga uzme otključa zvuk, pa se grebanje čuje od prvog poteza -->
+        <button class="coin" id="coin" type="button" hidden><i aria-hidden="true"></i><span>uzmi novčić</span></button>
         <p class="game-text" id="game-text"></p>
         <div class="guess" id="guess" hidden>
           <button class="btn btn-primary" id="guess-play" type="button"><svg class="icon" aria-hidden="true"><use href="#i-rewind"/></svg>pusti unazad</button>

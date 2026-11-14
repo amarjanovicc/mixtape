@@ -4,8 +4,8 @@ Ona skenira QR kod (uvijek isti) pa otvori se kaseta sa skrivenom pjesmom koja t
 
 **Kako izgleda njen dan:**
 
-1. **Omot je srećka.** Pjesma je u omotu (uspravna kutija kasete s hrptom i naslovnicom) pod srebrnom folijom. Dodirne ga, pa grebe prstom. Svaka peta pjesma je umjesto toga "pogodi unazad".
-2. **Kasetofon.** Omot se otvori, kaseta izleti i sjedne u kasetofon. Premota je na početak (drži tipku ili povuče kasetu), čuje pjesmu ubrzano unatrag, i onda pjesma zasvira.
+1. **Omot je srećka.** Pjesma je u omotu (uspravna kutija kasete s hrptom i naslovnicom) pod srebrnom folijom. Uzme novčić koji leži ispod i njime ogrebe omot. Svaka peta pjesma je umjesto toga "pogodi unazad".
+2. **Kaseta.** Omot se otvori i kaseta izleti iz njega. Premota je na početak (drži tipku ili povuče kasetu), čuje pjesmu ubrzano unatrag, i onda pjesma zasvira.
 3. **Poruka.** Tvoja poruka rukopisom, pa reakcija ikonom koja otključa tajni P.S. i gumb "javi mu".
 4. **Kutija.** Kasetu spremi u kutiju. Svaka izgleda drugačije, a propušteni dani ostaju prazna mjesta koja može naknadno popuniti.
 5. **Naljepnice.** Kad skupi dovoljno kaseta, otključa pixel-art naljepnicu: nju, tebe, vaše životinje i na kraju vas dvoje, svaku s tvojom porukom. Zaključane vidi kao siluete.

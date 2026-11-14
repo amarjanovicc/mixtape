@@ -1248,8 +1248,8 @@
         { transform: "translate(" + dx + "px," + dy + "px) scale(" + k + ") rotate(90deg)", opacity: 0 },
         { transform: "translate(" + dx + "px," + dy + "px) scale(" + k + ") rotate(90deg)", opacity: 1, offset: 0.12 },
         { transform: "translate(" + dx * 0.3 + "px," + (dy * 0.45 - 30) + "px) scale(" + (k + 1) / 2 + ") rotate(8deg)", opacity: 1, offset: 0.6 },
-        { transform: "translate(0,-14px) scale(1.03) rotate(0deg)", opacity: 1, offset: 0.86 },
-        { transform: "none", opacity: 1 },
+        { transform: "translate(0,-14px) scale(1.03) rotate(-2.5deg)", opacity: 1, offset: 0.86 },
+        { transform: "rotate(-2.5deg)", opacity: 1 },
       ], { duration: 950, easing: "cubic-bezier(0.3, 0.7, 0.3, 1)" });
       fx.whirr(true);
       setTimeout(function () {          // 3) sjela je: vratašca se zatvore
@@ -1335,16 +1335,28 @@
     var ctx = canvas.getContext && canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) { $("veil").hidden = false; cleanup = function () { $("veil").classList.add("gone"); }; text.textContent = "dodirni „samo otvori”"; return; }
     canvas.hidden = false;
-    var startBtn = $("start");
-    startBtn.hidden = false;
-    text.textContent = "dodirni omot";
-    startBtn.addEventListener("click", function () {
-      fx.unlock();          // klik je dodir koji preglednik priznaje: zvuk radi od prvog poteza
+    // Novčić: mobitel otključa zvuk samo na pravi dodir (ne na povlačenje), pa se grebanje bez
+    // njega ne bi čulo. Zato ona prvo "uzme novčić" (dodir), a onda grebe njime.
+    var coin = $("coin"), armed = false, cursor = null;
+    coin.hidden = false;
+    coin.classList.remove("taken", "wiggle");
+    text.textContent = "uzmi novčić pa ogrebi omot";
+    coin.addEventListener("click", function () {
+      if (armed) return;
+      armed = true;
+      fx.unlock();
       fx.click();
+      fx.blip(6);
       buzz(10);
-      startBtn.hidden = true;
-      text.textContent = "ogrebi omot";
-    }, { once: true });
+      coin.classList.add("taken");
+      text.textContent = "ogrebi omot novčićem";
+    });
+    function coinAt(e) {
+      if (!cursor) { cursor = el("i", { class: "coin-cursor", "aria-hidden": "true" }); fxLayer().appendChild(cursor); }
+      cursor.style.left = e.clientX + "px";
+      cursor.style.top = e.clientY + "px";
+    }
+    function coinOff() { if (cursor) { cursor.remove(); cursor = null; } }
 
     // kaseta je zakrenuta, pa se veličina uzima iz neokrenutih mjera, a dodir se vraća natrag
     var cw = Math.max(1, canvas.offsetWidth), ch = Math.max(1, canvas.offsetHeight);
@@ -1434,7 +1446,14 @@
     function check() { if (cleared() > 0.4) finish(); }
 
     canvas.addEventListener("pointerdown", function (e) {
+      if (!armed) {                       // bez novčića: podsjeti gdje je
+        coin.classList.remove("wiggle");
+        void coin.offsetWidth;
+        coin.classList.add("wiggle");
+        return;
+      }
       drawing = true;
+      coinAt(e);
       var p0 = pos(e);
       px = p0[0]; py = p0[1];
       try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
@@ -1447,6 +1466,7 @@
     });
     canvas.addEventListener("pointermove", function (e) {
       if (!drawing) return;
+      coinAt(e);
       var p1 = pos(e);
       ctx.beginPath();
       ctx.moveTo(px, py);
@@ -1462,12 +1482,13 @@
       if (moves % 6 === 0) buzz(4);
       if (moves % 10 === 0) check();
     });
-    var stop = function () { if (drawing) { drawing = false; fx.scratchEnd(); check(); } };
+    var stop = function () { coinOff(); if (drawing) { drawing = false; fx.scratchEnd(); check(); } };
     canvas.addEventListener("pointerup", stop);
     canvas.addEventListener("pointercancel", stop);
     cleanup = function () {
       fx.scratchEnd();
-      $("start").hidden = true;
+      coinOff();
+      coin.hidden = true;
       canvas.classList.add("gone");
       $("sleeve").classList.add("won");   // sjaj preleti omot
     };

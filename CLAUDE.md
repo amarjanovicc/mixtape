@@ -10,21 +10,22 @@ Dva pogleda, jahači na dnu ekrana (ili povlačenje prstom lijevo/desno): **Dana
 
 ### Ritual (pogled Danas) — svaki korak ima jasan razlog
 
-Prizor ima tri predmeta: **omot** (kutija kasete), **kaseta** i **kasetofon**.
+Prizor ima dva predmeta: **omot** (kutija kasete) i **kaseta**. (Kućište kasetofona je
+isprobano i odbačeno: korisniku se nije svidjelo. Ne vraćati ga.)
 
 1. **Omot je srećka: koja je pjesma?** Omot je uspravna kutija kasete (`.sleeve`): hrbat s
    uspravnim natpisom, naslovnica gore, naslov i izvođač dolje, prozirna plastika s odsjajem.
-   Pod srebrnom je folijom. Prvo ide **„dodirni pa grebi”** (`#start`): taj klik je dodir koji
-   mobilni preglednik priznaje, pa se zvuk otključa PRIJE grebanja i šuštanje se čuje od prvog
-   poteza (bez toga je cijeli prvi potez nijem, jer se zvuk otključava tek kad prst napusti
-   ekran). Zatim vidi trag (`hint`) i grebe. Svaka peta pjesma je umjesto toga **pogodi unazad**
-   (`guess`: omot pod lokotom, 5 s pjesme unatrag, tri naslova). `reveal` to nadjača. Uvijek
-   postoji „samo otvori”. **Krivi odgovori** su polje `decoys` ("naslov | naslov"), admin ih
-   popuni iz izvođačevih drugih pjesama.
-2. **Kaseta ide u kasetofon.** Omot se otvori kao knjiga (`.sleeve.open`, vidi se ležište),
-   kaseta izleti i sjedne u vratašca kasetofona (`revealCassette`, `.player-box`), staklo se
-   spusti (`.loaded`), a omot se smanji i nasloni gore desno (`.pack.out`). Tipke i klizač su NA
-   kasetofonu, ne ispod njega.
+   Pod srebrnom je folijom. Ispod omota leži **novčić** (`#coin`): prvo ga uzme dodirom, pa
+   grebe njime (novčić prati prst). Razlog je zvuk: mobilni preglednik otključa zvuk samo na
+   pravi dodir (klik), ne na povlačenje, pa bi grebanje inače bilo nijemo. Bez novčića folija
+   se ne grebe, a novčić se zatrese. (Pečat „dodirni pa grebi” preko folije je isproban i
+   odbačen.) Svaka peta pjesma je umjesto toga **pogodi unazad** (`guess`: omot pod lokotom,
+   5 s pjesme unatrag, tri naslova). `reveal` to nadjača. Uvijek postoji „samo otvori”.
+   **Krivi odgovori** su polje `decoys` ("naslov | naslov"), admin ih popuni iz izvođačevih
+   drugih pjesama.
+2. **Kaseta izađe iz omota.** Omot se otvori kao knjiga (`.sleeve.open`, vidi se ležište),
+   kaseta izleti i spusti se ispod (`revealCassette`), a omot se smanji i nasloni na njezin
+   gornji desni kut (`.pack.out`). Tipke i klizač su ispod kasete.
 3. **Premotaj je na početak da zasvira.** Kaseta je „na kraju vrpce”; drži tipku za unazad ili
    povuci kasetu ulijevo (oko 2 s). Čuje pjesmu ubrzano unatrag, a na početku pjesma krene.
    Uvijek postoji „samo pusti”. Tijekom koraka 1–3 jahači su skriveni.
@@ -35,7 +36,7 @@ Prizor ima tri predmeta: **omot** (kutija kasete), **kaseta** i **kasetofon**.
 6. Na dnu, sitno: poveznice na cijelu pjesmu (Spotify · YouTube) i odbrojavanje do sljedeće.
    Ugrađenog Spotify/YouTube playera nema: svira kasetofon.
 
-Nakon otkrivanja kasetofon ostaje pravi player: tipke s natpisima (drži za premotavanje),
+Nakon otkrivanja kaseta ostaje pravi player: tipke s natpisima (drži za premotavanje),
 povlačenje kasete (strelice na donjoj ploči), **klizač** s ručkom, i **mali player** iznad
 jahača kad tipke izađu s ekrana.
 
