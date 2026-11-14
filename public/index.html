@@ -89,6 +89,8 @@
         <!-- kaseta izađe iz omota i ostane ispod njega; tipke i klizač su ispod kasete -->
         <div class="player-box" id="player-box" hidden>
           <div class="player-door">
+            <!-- premotavanje bez teksta: kaseta se samo povuče ulijevo -->
+            <div class="pull-hint" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#i-chev-left"/></svg><svg class="icon" aria-hidden="true"><use href="#i-chev-left"/></svg></div>
             <div class="tape" id="tape">
               <div class="tape-top" aria-hidden="true"><span class="side">A</span><i class="tape-sticker" id="tape-sticker"></i></div>
               <div class="tape-label" id="tape-label">
@@ -114,7 +116,6 @@
           </div>
 
           <div class="deck" id="deck" hidden>
-            <p class="game-text intro-only">premotaj kasetu na početak</p>
             <div class="deck-keys">
               <div class="key key-rew"><button type="button" id="rew" aria-label="Premotaj unazad (drži)"><svg class="icon" aria-hidden="true"><use href="#i-rewind"/></svg></button><span class="cap">unazad</span></div>
               <div class="key key-play"><button type="button" id="play" class="deck-play" aria-label="Pusti"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg></button><span class="cap" id="play-cap">pusti</span></div>

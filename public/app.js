@@ -994,6 +994,7 @@
       buzz([10, 30, 20]);
       $("rew").classList.remove("on");
       $("deck").classList.remove("intro");
+      $("player-box").classList.remove("pulling");
       tape.classList.remove("rewind-me");
       tape.classList.add("kick");            // kaseta "sjedne" na početak
       setTimeout(function () { tape.classList.remove("kick"); }, 460);
@@ -1197,7 +1198,11 @@
         $("deck").hidden = false;
         $("deck").classList.add("intro");
         if (!reducedMotion) tape.classList.add("rewind-me");
-        setContent(hintEl, "drži ", icon("rewind"), " ili povuci kasetu ulijevo");
+        setContent(hintEl);
+        $("player-box").classList.add("pulling");
+        var rs = $("rewind-skip");
+        rs.classList.add("late");
+        setTimeout(function () { rs.classList.add("show"); }, 9000);
         syncButton();
         paint();
       },
@@ -1220,18 +1225,25 @@
   // Kaseta izlazi iz omota: omot se skupi u traku, a kaseta se spusti ispod njega.
   // Omot se otvori kao knjiga, kaseta izađe i sjedne u kasetofon, a omot se smanji i nasloni na njega.
   function revealCassette(animate, then) {
-    var pack = $("pack"), wrap = $("sleeve-wrap"), sleeve = $("sleeve"), tp = $("tape"), box = $("player-box");
+    var pack = $("pack"), wrap = $("sleeve-wrap"), sleeve = $("sleeve"), tp = $("tape"), box = $("player-box"), game = $("game"), stageEl = $("stage");
     var settle = function () {
       sleeve.classList.remove("won", "open");
+      wrap.classList.remove("tada");
+      game.hidden = true;
+      game.classList.remove("away");
+      stageEl.classList.remove("gaming", "guessing");
+      document.body.classList.remove("in-game");
       pack.classList.add("out");
       box.hidden = false;
+      window.scrollTo(0, 0);
     };
     if (!animate || reducedMotion || !wrap.animate) { settle(); box.classList.add("loaded"); if (then) then(); return; }
 
-    setTimeout(function () {            // 1) sjaj je prošao: otvori omot
+    wrap.classList.add("tada");         // 0) omot "poskoči": otkriven je
+    setTimeout(function () {            // 1) otvori omot
       sleeve.classList.add("open");
       fx.click();
-    }, 450);
+    }, 520);
 
     setTimeout(function () {            // 2) kaseta izleti iz omota, a omot odleti u stranu i nestane
       var first = wrap.getBoundingClientRect();
@@ -1245,8 +1257,8 @@
       document.body.appendChild(ghost);
       ghost.animate([
         { transform: "rotate(1.3deg)", opacity: 1 },
-        { transform: "translate(-30px,-40px) rotate(-14deg) scale(0.86)", opacity: 0 },
-      ], { duration: 520, delay: 300, easing: "cubic-bezier(0.4, 0, 1, 1)", fill: "forwards" }).onfinish = function () { ghost.remove(); };
+        { transform: "translate(-40px,60px) rotate(-16deg) scale(0.8)", opacity: 0 },
+      ], { duration: 700, delay: 380, easing: "cubic-bezier(0.4, 0, 1, 1)", fill: "forwards" }).onfinish = function () { ghost.remove(); };
 
       var tr = tp.getBoundingClientRect();
       var dx = first.left + first.width * 0.56 - (tr.left + tr.width / 2);
@@ -1258,7 +1270,7 @@
         { transform: "translate(" + dx * 0.3 + "px," + (dy * 0.45 - 30) + "px) scale(" + (k + 1) / 2 + ") rotate(8deg)", opacity: 1, offset: 0.6 },
         { transform: "translate(0,-14px) scale(1.03) rotate(-2.5deg)", opacity: 1, offset: 0.86 },
         { transform: "rotate(-2.5deg)", opacity: 1 },
-      ], { duration: 950, easing: "cubic-bezier(0.3, 0.7, 0.3, 1)" });
+      ], { duration: 1150, easing: "cubic-bezier(0.3, 0.7, 0.3, 1)" });
       fx.whirr(true);
       setTimeout(function () {          // 3) sjela je: vratašca se zatvore
         fx.whirr(false);
@@ -1266,8 +1278,8 @@
         buzz(12);
         box.classList.add("loaded");
         if (then) then();
-      }, 960);
-    }, 1000);
+      }, 1160);
+    }, 1250);
   }
 
   function startGame(type, song, ticketNo, decoys, onDone) {
@@ -1280,18 +1292,22 @@
       if (finished) return;
       finished = true;
       cleanup();
-      game.hidden = true;
-      $("stage").classList.remove("gaming", "guessing");
-      document.body.classList.remove("in-game");
+      clearTimeout(skipTimer);
+      game.classList.add("away");
       if (type === "scratch") fx.win(); else fx.reveal();
       revealCassette(true, onDone);
     }
 
-    if (song.hint) {
+    function showHint() {
+      if (!song.hint || !$("hint").hidden) return;
       $("hint").textContent = "trag: " + song.hint;
       $("hint").hidden = false;
     }
+    $("hint").hidden = true;
+    var skipTimer = setTimeout(function () { $("skip").classList.add("show"); }, 10000);
+    $("skip").classList.add("late");
     game.hidden = false;
+    game.classList.remove("away");
     $("stage").classList.add("gaming");
     document.body.classList.add("in-game");   // igra ima cijeli ekran: kartice na dnu se sklone
     $("skip").addEventListener("click", finish);
@@ -1306,6 +1322,7 @@
       text.textContent = "poslušaj unazad pa pogodi";
       var say = function (t) { setContent(listen, icon("rewind"), t); };
       listen.addEventListener("click", function () {
+        showHint();
         say("učitavam…");
         fx.onBuffer(function (ok) {
           if (finished) return;
@@ -1404,7 +1421,7 @@
     ctx.globalCompositeOperation = "destination-out";
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
-    ctx.lineWidth = 34 * dpr;
+    ctx.lineWidth = 30 * dpr;
 
     var drawing = false, px = 0, py = 0, moves = 0, lastMove = 0;
     function tapeAngle() {
@@ -1442,7 +1459,7 @@
         return clear / total;
       } catch (e) { return 1; }
     }
-    function check() { if (cleared() > 0.4) finish(); }
+    function check() { if (cleared() > 0.6) finish(); }
 
     function strokeStart(e) {
       drawing = true;
@@ -1469,6 +1486,7 @@
       moves++;
       if (moves % 3 === 0) flake(e);
       if (moves % 6 === 0) buzz(4);
+      if (moves === 16) showHint();
       if (moves % 10 === 0) check();
     }
     function strokeEnd() { if (drawing) { drawing = false; fx.scratchEnd(); check(); } }

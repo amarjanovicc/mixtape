@@ -79,7 +79,7 @@ window.DAILY_SONG = {
       "youtube": "https://www.youtube.com/watch?v=hTSg6S1h5V8",
       "preview": "https://audio-ssl.itunes.apple.com/itunes-assets/AudioPreview221/v4/48/32/c7/4832c76c-42b3-8f58-da06-2d7c2582230e/mzaf_1610818130004524660.plus.aac.p.m4a",
       "cover": "https://i.ytimg.com/vi/hTSg6S1h5V8/hqdefault.jpg",
-      "reset": "1794649024281"
+      "reset": "1794649060164"
     }
   ]
 };
