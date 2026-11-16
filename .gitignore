@@ -4,3 +4,4 @@ node_modules/
 data/.live-dev.json
 node_modules/
 public/songs.js
+data/.live-users/

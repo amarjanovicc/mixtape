@@ -73,10 +73,52 @@
       collected: s.collected && typeof s.collected === "object" ? s.collected : {},
       best: Number(s.best) || 0,
       resets: s.resets && typeof s.resets === "object" ? s.resets : {},
+      ur: s.ur && typeof s.ur === "object" ? s.ur : {},     // resetiranja iz admina za ovaj uređaj koja su već primijenjena
     };
   }
   function saveState() {
     try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) { /* private mode */ }
+    scheduleSync();
+  }
+
+  // ---------- korisnik po uređaju (bez prijave) ----------
+  // Uređaj ima nasumičan ID (localStorage + kolačić). Stanje se sinkronizira na server: admin vidi
+  // što je ona napravila, a napredak se vrati i ako preglednik obriše podatke (ostane kolačić).
+  var UID_KEY = "pjesma-dana:uid";
+  var syncTimer = null;
+  function scheduleSync() {
+    if (!window.fetch) return;
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(syncNow, 1800);
+  }
+  function syncNow() {
+    clearTimeout(syncTimer);
+    var uid = "";
+    try { uid = localStorage.getItem(UID_KEY) || ""; } catch (e) {}
+    fetch("/api/sync", {
+      method: "POST", credentials: "same-origin", keepalive: true,
+      headers: { "Content-Type": "application/json", "X-Mixtape": "1" },
+      body: JSON.stringify({ uid: uid, opened: state.opened, collected: state.collected, reactions: state.reactions, resets: state.resets, ur: state.ur }),
+    }).then(function (r) { return r.ok ? r.json() : null; }).then(function (r) {
+      if (!r || !r.uid) return;
+      try { localStorage.setItem(UID_KEY, r.uid); } catch (e) {}
+      var changed = false;
+      Object.keys(r.admin || {}).forEach(function (k) {       // admin je resetirao pjesmu za ovaj uređaj
+        if (state.ur[k] === r.admin[k]) return;
+        state.ur[k] = r.admin[k];
+        delete state.opened[k]; delete state.collected[k]; delete state.reactions[k];
+        changed = true;
+      });
+      ["opened", "collected", "reactions"].forEach(function (f) {   // što server zna, a uređaj ne
+        Object.keys(r[f] || {}).forEach(function (k) {
+          if (state[f][k] == null) { state[f][k] = r[f][k]; changed = true; }
+        });
+      });
+      if (changed) {
+        try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {}
+        location.reload();                                      // sljedeća sinkronizacija više ništa ne mijenja
+      }
+    }).catch(function () { /* bez mreže: stanje ostaje na uređaju */ });
   }
   var state = loadState();
 
@@ -1634,6 +1676,7 @@
       resetChanged = true;
     });
     if (resetChanged) saveState();
+    setTimeout(syncNow, 900);
     var upcoming = songs.filter(function (s) { return s.at > now.slice(0, 16); });
 
     if (!released.length) {

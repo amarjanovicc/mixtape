@@ -57,6 +57,22 @@ na što upućuje (poruka; u Kutiji naljepnice) još ne vidi na ekranu. Ako je po
   (`her`/`him`: `hair`, `long`, `skin`; `pets`: `type`, `color`, `name`); isti kod koristi i
   sučelje za unos za pregled uživo. Redoslijed: ona, prva životinja, on, ostale, nas dvoje.
 
+### Uređaji bez prijave (anonimni korisnici)
+
+Nema računa ni prijave. Server (`lib/users.mjs`, `api/sync.js`) svakom uređaju dodijeli nasumičan ID od 32 hex znaka
+(nije pogodiv); pamti se u `localStorage` (`pjesma-dana:uid`) i u HttpOnly kolačiću `mx_uid` (2 godine). Stranica
+sinkronizira `opened`, `collected`, `reactions`, `resets` i `ur` (`syncNow` u `app.js`, nakon svake promjene i pri
+otvaranju). Server spaja (unija, reakcija s uređaja pobjeđuje) i vraća ono što uređaj ne zna; ako se stanje promijenilo,
+stranica se jednom učita opet. Zato napredak preživi brisanje podataka preglednika (ostane kolačić). Zapisi su u
+privatnom Blobu `mixtape/users/<id>.json` (lokalno `data/.live-users/`, u `.gitignore`).
+
+- Admin (odjeljak Uređaji, `api/users.js`, traži prijavu): ime uređaja, zadnji put viđen, što je otvorila i kako je reagirala,
+  „Resetiraj današnju” po uređaju (`user.admin[at]`; uređaj to primijeni preko `state.ur`) i „Ukloni”. Reset pjesme za sve
+  ide i dalje preko `song.reset`: server pri novoj oznaci zaboravi svoj zapis za tu pjesmu.
+- `api/sync.js` je JAVAN (bez prijave): traži `X-Mixtape`, isti izvor, tijelo do 32 KB, najviše 50 uređaja (429 iznad toga).
+  Nikad ne vraća tuđe zapise ni popis; ID je jedini ključ.
+- Ne spremati ništa osobno (ime, lokaciju): samo ID, vrstu uređaja i napredak.
+
 ### Zašto baš tako (ne mijenjati bez razloga)
 
 - **Nagrade idu po broju kaseta u kutiji, ne po nizu dana.** Propušten dan ne smije ništa
@@ -73,7 +89,7 @@ na što upućuje (poruka; u Kutiji naljepnice) još ne vidi na ekranu. Ako je po
 - **Siluete i „još N do…”** drže znatiželju i pokazuju da je cilj blizu.
 - **Spremanje u kutiju je kraj**, da dan završi s osjećajem dovršenosti.
 
-Stanje (otvoreno, spremljeno, reakcije, niz) živi samo u `localStorage` njenog mobitela.
+Stanje (otvoreno, spremljeno, reakcije, niz) živi u `localStorage` njenog mobitela, a **otvoreno, spremljeno i reakcije** se još i sinkroniziraju na server pod anonimnim ID-om uređaja (vidi „Uređaji bez prijave” niže).
 **Reset pjesme** (kartica „Danas svira” u sučelju za unos: „Resetiraj pjesmu” i „Samo na ovom uređaju”; stranica i admin su na istoj adresi pa admin može očistiti `localStorage` stranice): pjesma
 dobije polje `reset` (vrijeme u ms). Kad njena stranica vidi oznaku koju još nije primijenila
 (`state.resets`), zaboravi da je pjesma otvorena, spremljena i ocijenjena, pa je ona opet
@@ -86,7 +102,7 @@ service workera, namjerno, da nikad ne vidi staru verziju.
 
 - `public/` — cijela stranica (statično): `index.html`, `style.css`, `app.js`, `pixel.js`, ikone, manifest
   - `admin/index.html` — sučelje za unos (prijava lozinkom; radi i uživo i lokalno)
-- `api/` — Vercel funkcije: `songs.js` (javni sadržaj kao JS, samo objavljene pjesme), `data.js`
+- `api/` — Vercel funkcije: `sync.js` (javno: stanje uređaja), `users.js` (popis uređaja za admin), `songs.js` (javni sadržaj kao JS, samo objavljene pjesme), `data.js`
   (čitanje/spremanje, traži prijavu), `lookup.js` (podaci iz linka), `audio.js` (vlastiti zvuk,
   do 4 MB), `media.js` (zvuk za nju: `/media/<ime>`, s Range), `login.js`
 - `lib/` — `core.mjs` (čista logika: provjera podataka, dohvat linka, javni pogled), `store.mjs`
@@ -97,7 +113,7 @@ service workera, namjerno, da nikad ne vidi staru verziju.
 - `scripts/dev-live.mjs` — lokalno pokreće ISTE funkcije kao Vercel (`node scripts/dev-live.mjs`,
   http://localhost:4330, lozinka `lokalna-lozinka`, pohrana u `data/.live-dev.json`): za
   isprobavanje živog toka (prijava, spremanje, reset) prije objave
-  - Admin ima četiri odjeljka (tabovi, `#danas`, `#raspored`, `#dodaj`, `#postavke`): Danas (koliko je dana unaprijed složeno, objava, reset), Raspored (idućih 14 dana s gumbom „Dodaj” na slobodnom danu i oznakama „nema poruke” / „nema linka”, plus sve pjesme), Dodaj (obrazac), Postavke.
+  - Admin ima pet odjeljaka (tabovi, `#danas`, `#raspored`, `#dodaj`, `#korisnici`, `#postavke`): Danas (koliko je dana unaprijed složeno, objava, reset), Raspored (idućih 14 dana s gumbom „Dodaj” na slobodnom danu i oznakama „nema poruke” / „nema linka”, plus sve pjesme), Dodaj (obrazac), Postavke.
 - `tools/qr.html` — generator QR koda
 - `vercel.json`, `package.json` (jedina ovisnost: `@vercel/blob`)
 

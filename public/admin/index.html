@@ -120,8 +120,8 @@
     .px { display: block; image-rendering: pixelated; }
     #app { display: flex; flex-direction: column; gap: 16px; }
     .pane { display: flex; flex-direction: column; gap: 16px; }
-    .tabs { position: sticky; top: 0; z-index: 10; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 8px 0; background: var(--paper); }
-    .tabs button { min-height: 44px; padding: 6px 4px; font-size: .92rem; box-shadow: 2px 3px 0 var(--ink); }
+    .tabs { position: sticky; top: 0; z-index: 10; display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; padding: 8px 0; background: var(--paper); }
+    .tabs button { min-height: 44px; padding: 6px 2px; font-size: .84rem; box-shadow: 2px 3px 0 var(--ink); }
     .tabs button[aria-selected="true"] { background: var(--accent); }
     ul.days { list-style: none; margin: 0; padding: 0; }
     ul.days li { display: flex; gap: 10px; align-items: center; padding: 9px 0; border-top: 1.5px solid var(--rule); min-height: 52px; }
@@ -133,6 +133,14 @@
     ul.days li.past { opacity: .6; }
     .tag.warn { background: #ffd9d2; }
     .ahead p { margin: 0 0 12px; font-weight: 600; }
+    ul.users { list-style: none; margin: 0; padding: 0; }
+    ul.users li { padding: 12px 0; border-top: 1.5px solid var(--rule); }
+    ul.users li:first-child { border-top: 0; padding-top: 0; }
+    ul.users .u-head { display: flex; gap: 8px; align-items: center; }
+    ul.users .u-name { flex: 1; min-width: 0; padding: 8px 10px; font-weight: 700; }
+    ul.users .u-meta { margin: 6px 0 0; font-size: .86rem; color: var(--muted); }
+    ul.users .u-now { margin: 6px 0 0; font-weight: 600; }
+    ul.users .u-acts { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
     select, .pet input, .reward input { padding: 9px 8px; }
   </style>
 </head>
@@ -170,6 +178,7 @@
       <button type="button" data-go="danas">Danas</button>
       <button type="button" data-go="raspored">Raspored</button>
       <button type="button" data-go="dodaj">Dodaj</button>
+      <button type="button" data-go="korisnici">Uređaji</button>
       <button type="button" data-go="postavke">Postavke</button>
     </nav>
 
@@ -191,6 +200,7 @@
     <section class="card" id="today" hidden>
       <h2>Danas svira</h2>
       <p class="today-song" id="today-song"></p>
+      <p class="today-song" id="today-seen" hidden></p>
       <p class="help" id="today-last" hidden></p>
       <div class="today-actions">
         <button class="primary" id="reset-all" type="button">Resetiraj pjesmu</button>
@@ -297,6 +307,15 @@
     <section class="card">
       <h2>Sve pjesme <span id="count"></span></h2>
       <ul class="songs" id="songs"></ul>
+    </section>
+    </div>
+
+    <div class="pane" data-tab="korisnici" hidden>
+    <section class="card">
+      <h2>Uređaji</h2>
+      <p class="help" style="margin:0 0 10px">Svaki mobitel koji otvori stranicu dobije svoj anonimni ID (bez prijave) i njegov napredak se pamti ovdje. Ako obriše podatke preglednika, napredak se vrati.</p>
+      <ul class="users" id="users"></ul>
+      <p class="msg" id="users-msg" hidden></p>
     </section>
     </div>
 
@@ -409,7 +428,7 @@
       function when() { return document.querySelector('input[name="when"]:checked').value; }
 
       // ---------- odjeljci (tabovi) ----------
-      var TABS = ["danas", "raspored", "dodaj", "postavke"];
+      var TABS = ["danas", "raspored", "dodaj", "korisnici", "postavke"];
       function go(name) {
         if (TABS.indexOf(name) === -1) name = "danas";
         Array.prototype.forEach.call(document.querySelectorAll(".pane"), function (p) { p.hidden = p.getAttribute("data-tab") !== name; });
@@ -433,6 +452,66 @@
         $("link").focus();
       }
       $("ahead-add").addEventListener("click", function () { addOn($("ahead-add").getAttribute("data-day")); });
+
+      // ---------- uređaji (anonimni korisnici) ----------
+      var RX = { love: "Obožavam", fire: "Vatra", dance: "Pleše mi se", laugh: "Nasmijala me", cry: "Rasplakala me" };
+      var users = [];
+      var delArm = null;
+      function ago(ms) {
+        var m = Math.round((Date.now() - ms) / 60000);
+        if (m < 1) return "upravo sada";
+        if (m < 60) return "prije " + m + " min";
+        var h = Math.round(m / 60);
+        if (h < 48) return "prije " + h + " h";
+        return "prije " + Math.round(h / 24) + " dana";
+      }
+      function ownUid() { try { return localStorage.getItem("pjesma-dana:uid") || ""; } catch (e) { return ""; } }
+      function clock(ms) { var d = new Date(ms); return pad(d.getHours()) + ":" + pad(d.getMinutes()); }
+      function loadUsers() {
+        return api("GET", "/api/users").then(function (r) { users = r.users || []; renderUsers(); renderToday(todaySong); }).catch(function (err) { msg("users-msg", err.message, "err"); });
+      }
+      function userAction(body) {
+        return api("POST", "/api/users", body).then(loadUsers).catch(function (err) { msg("users-msg", err.message, "err"); });
+      }
+      function renderUsers() {
+        var list = $("users");
+        list.textContent = "";
+        if (!users.length) list.appendChild(el("li", { class: "empty" }, "Još nijedan uređaj. Pojavi se čim netko otvori stranicu."));
+        var cur = todaySong ? at(todaySong) : null;
+        var total = state.songs.filter(function (s) { return at(s) <= nowLocal(); }).length;
+        users.forEach(function (u) {
+          var li = el("li");
+          var head = el("div", { class: "u-head" });
+          var name = el("input", { class: "u-name", value: u.name || "", placeholder: u.device + (u.id === ownUid() ? " (ovaj uređaj)" : ""), "aria-label": "Ime uređaja", maxlength: "30" });
+          var save = el("button", { class: "small", type: "button" }, "Spremi ime");
+          save.addEventListener("click", function () { userAction({ action: "rename", id: u.id, name: name.value }); });
+          head.appendChild(name); head.appendChild(save);
+          li.appendChild(head);
+          var n = Object.keys(u.collected || {}).length;
+          li.appendChild(el("p", { class: "u-meta" }, u.device + " · zadnji put " + ago(u.seen) + " · u kutiji " + n + "/" + total));
+          if (cur) {
+            var line = u.opened && u.opened[cur] ? "Današnja: otvorena u " + clock(u.opened[cur]) : "Današnja: još nije otvorena";
+            if (u.reactions && u.reactions[cur]) line += ", reakcija: " + (RX[u.reactions[cur]] || u.reactions[cur]);
+            if (u.collected && u.collected[cur]) line += ", spremljena u kutiju";
+            li.appendChild(el("p", { class: "u-now" }, line));
+          }
+          var acts = el("div", { class: "u-acts" });
+          if (cur) {
+            var rs = el("button", { class: "small", type: "button" }, "Resetiraj današnju");
+            rs.addEventListener("click", function () { userAction({ action: "reset", id: u.id, at: cur }); msg("users-msg", "Resetirano za ovaj uređaj; primijeni se kad ga sljedeći put otvori.", "ok"); });
+            acts.appendChild(rs);
+          }
+          var del = el("button", { class: "small danger", type: "button" }, "Ukloni");
+          del.addEventListener("click", function () {
+            if (delArm !== u.id) { delArm = u.id; del.textContent = "Klikni opet"; setTimeout(function () { if (delArm === u.id) { delArm = null; del.textContent = "Ukloni"; } }, 6000); return; }
+            delArm = null;
+            userAction({ action: "delete", id: u.id });
+          });
+          acts.appendChild(del);
+          li.appendChild(acts);
+          list.appendChild(li);
+        });
+      }
 
       function problems(s) {
         var p = [];
@@ -574,6 +653,12 @@
         $("today").hidden = !current;
         if (!current) return;
         $("today-song").textContent = current.title + (current.artist ? " — " + current.artist : "");
+        var k = at(current), seen = users.filter(function (u) { return u.opened && u.opened[k]; });
+        var sum = $("today-seen");
+        sum.hidden = !users.length;
+        sum.textContent = !users.length ? "" : seen.length
+          ? "Otvorena na " + seen.length + " od " + users.length + " uređaja" + (users.length === 1 && users[0].reactions && users[0].reactions[k] ? ", reakcija: " + (RX[users[0].reactions[k]] || users[0].reactions[k]) : "") + "."
+          : "Još je nitko nije otvorio.";
         var last = Number(current.reset);
         $("today-last").hidden = !last;
         if (last) $("today-last").textContent = "Zadnji reset: " + new Date(last).toLocaleString("hr-HR", { day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -594,6 +679,7 @@
       $("reset-local").addEventListener("click", function () {
         if (!todaySong) return;
         var ok = clearLocal(todaySong);
+        if (ok && ownUid()) userAction({ action: "reset", id: ownUid(), at: at(todaySong) });
         msg("today-msg", ok ? "Resetirano na ovom uređaju. Otvori stranicu i ogrebi ponovno." : "Ne mogu očistiti ovaj uređaj.", ok ? "ok" : "err");
         $("today-open").hidden = !ok;
         $("today-open").querySelector("a").href = "/?r=" + Date.now();
@@ -1041,6 +1127,7 @@
           resetForm();
           renderConfig();
           renderSongs();
+          loadUsers();
           go(location.hash.slice(1));
         }).catch(function (err) { $("publish-text").textContent = err.message; });
       }

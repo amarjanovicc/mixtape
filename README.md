@@ -32,7 +32,7 @@ Nagrade se računaju po broju spremljenih kaseta, ne po nizu dana, pa propušten
 
 - **Izvor istine je Blob, ne git.** `data/songs.js` je samo početni sadržaj dok u Blobu ništa nije spremljeno (i sadržaj lokalnog servera).
 - **Buduće pjesme nikad ne napuštaju server.** `api/songs.js` šalje samo objavljene pjesme i anonimno „sljedeću” za odbrojavanje.
-- **Njeno stanje** (otvoreno, spremljeno, reakcije, niz) živi samo u `localStorage` njenog mobitela. Nema korisničkih računa ni servera za njene podatke.
+- **Uređaji umjesto računa:** nema prijave. Svaki mobitel dobije nasumičan anonimni ID (`localStorage` i kolačić), a njegov napredak (otvoreno, spremljeno, reakcije) sinkronizira se na server, pa ga admin vidi, a napredak se vrati i ako preglednik obriše podatke. Ne sprema se ništa osobno, samo ID, vrsta uređaja i napredak.
 
 ### Struktura
 
@@ -40,7 +40,7 @@ Nagrade se računaju po broju spremljenih kaseta, ne po nizu dana, pa propušten
 | --- | --- |
 | `public/` | cijela stranica: `index.html`, `style.css`, `app.js`, `pixel.js`, ikone, manifest |
 | `public/admin/index.html` | admin sučelje (prijava lozinkom) |
-| `api/` | Vercel funkcije: `songs`, `data`, `lookup`, `audio`, `media`, `login` |
+| `api/` | Vercel funkcije: `songs`, `sync`, `users`, `data`, `lookup`, `audio`, `media`, `login` |
 | `lib/` | `core.mjs` (čista logika), `store.mjs` (Blob / lokalna datoteka), `http.mjs` (prijava, zaštita) |
 | `data/songs.js` | početni sadržaj (u ovom repou samo primjeri) |
 | `server.mjs` | lokalni server za isprobavanje |
@@ -71,11 +71,12 @@ Za isprobavanje igre: `?igra=scratch` ili `?igra=guess`; za staru pjesmu: `?t=<d
 
 ## Admin
 
-Četiri odjeljka:
+Pet odjeljaka:
 
 - **Danas:** koliko je dana unaprijed složeno, objava (lokalno) i **Resetiraj pjesmu**: današnja se pjesma opet otkriva od početka na njenom mobitelu kad sljedeći put otvori stranicu (niz dana ostaje).
 - **Raspored:** idućih 14 dana, slobodan dan ima gumb „Dodaj”, a pjesme bez poruke ili linka imaju upozorenje.
 - **Dodaj:** zalijepi link sa Spotifyja ili YouTubea (naslov, izvođač, omot i isječak od 30 s popune se sami), odaberi kad se pojavi i upiši poruku. Pod „Više opcija”: trag, P.S., odabir igre, krivi odgovori, vlastiti zvuk, snimanje glasa u pregledniku.
+- **Uređaji:** popis mobitela koji su otvorili stranicu (ime možeš dati sam), što su otvorili i kako su reagirali, reset po uređaju.
 - **Postavke:** njeno ime, tvoj potpis, WhatsApp, likovi i naljepnice.
 
 ### Polja pjesme
@@ -106,7 +107,7 @@ Zvučni efekti su sintetizirani u pregledniku (Web Audio), pa nema zvučnih dato
 
 ## Sigurnost
 
-- Sve u `api/` osim `songs` i `login` traži prijavu: HMAC kolačić (`HttpOnly`, `Secure`, `SameSite=Strict`), zaglavlje `X-Mixtape` i provjeru izvora.
+- Sve u `api/` osim `songs`, `login` i `sync` traži prijavu (`sync` je javan, ali radi samo s nasumičnim ID-om uređaja, ograničen je veličinom i brojem uređaja): HMAC kolačić (`HttpOnly`, `Secure`, `SameSite=Strict`), zaglavlje `X-Mixtape` i provjeru izvora.
 - Lozinka je samo u Vercel okruženju (`ADMIN_PASSWORD`), nikad u kodu.
 - Zvuk i podaci su u privatnom Blobu i dostupni samo kroz funkcije.
 - Sadržaj ide kroz `textContent`, nikad `innerHTML`.

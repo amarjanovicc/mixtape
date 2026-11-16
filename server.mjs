@@ -14,6 +14,7 @@ import vm from "node:vm";
 import crypto from "node:crypto";
 import { execFile } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { adminAction, listUsers, sync as syncUser } from "./lib/users.mjs";
 import { AUDIO_EXT, DEFAULT_CONFIG, HttpError, bad, cleanData, dataToJs, lookup, publicData } from "./lib/core.mjs";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
@@ -196,6 +197,12 @@ async function handle(req, res) {
       return json(res, 200, await lookup(body.url));
     }
     if (p === "/api/audio" && req.method === "PUT") return json(res, 200, await saveAudio(req, url.searchParams.get("name")));
+    if (p === "/api/sync" && req.method === "POST") {
+      const body = JSON.parse((await readBody(req, 32 * 1024)).toString("utf8") || "{}");
+      return json(res, 200, await syncUser({ hint: body.uid, cookie: "", body, ua: req.headers["user-agent"] }));
+    }
+    if (p === "/api/users" && req.method === "GET") return json(res, 200, { users: await listUsers() });
+    if (p === "/api/users" && req.method === "POST") return json(res, 200, await adminAction(JSON.parse((await readBody(req, 4096)).toString("utf8") || "{}")));
     if (p === "/api/publish" && req.method === "POST") return json(res, 200, { ...(await publish()), git: await gitStatus() });
     throw new HttpError(404, "Nepoznata ruta.");
   }
