@@ -746,6 +746,8 @@
           keepEl.loop = true;
           keepEl.setAttribute("playsinline", "");
           keepEl.src = silentUrl();
+          keepEl.style.display = "none";
+          try { document.body.appendChild(keepEl); } catch (e) {}
         }
         if (keepEl.paused) { var pr = keepEl.play(); if (pr && pr.catch) pr.catch(function () {}); }
       } catch (e) {}
@@ -888,6 +890,7 @@
       claimEl: function () { priming = false; },
       unlock: function () {
         primeSong();
+        if (ctx && ctx.state !== "running") primed = false;   // iOS ga zna ponovno ušutkati: probudi opet
         var wasRunning = ctx && ctx.state === "running" && primed && keepEl && !keepEl.paused;
         ready();
         if (wasRunning) return;
@@ -917,6 +920,11 @@
         src.start(0, off, seconds);
         clip = src;
         return true;
+      },
+      debug: function () {
+        var a = navigator.audioSession ? navigator.audioSession.type : "nema";
+        return "ctx " + (ctx ? ctx.state : "nema") + " | tihi " + (keepEl ? (keepEl.paused ? "pauza" : "svira") : "nema") +
+          " | sesija " + a + " | utisano " + state.muted;
       },
       stopClip: function () {
         if (!clip) return;
@@ -981,7 +989,7 @@
           scr = { src: src, f: f, g: g };
         }
         var v = Math.min(1, speed / 1.6);                    // px/ms -> 0..1
-        scr.g.gain.setTargetAtTime(0.14 + v * 0.55, ctx.currentTime, 0.012);
+        scr.g.gain.setTargetAtTime(0.5 + v * 1.3, ctx.currentTime, 0.012);
         scr.f.frequency.setTargetAtTime(2400 + v * 3200, ctx.currentTime, 0.02);
         clearTimeout(scrTimer);
         scrTimer = setTimeout(function () { if (scr) scr.g.gain.setTargetAtTime(0, ctx.currentTime, 0.03); }, 60);
@@ -1722,6 +1730,12 @@
       document.addEventListener(ev, fx.unlock, { capture: true, passive: true });
     });
 
+    if (/[?&]dbg=1/.test(location.search)) {
+      var dbg = el("div", null, "");
+      dbg.style.cssText = "position:fixed;left:4px;bottom:70px;z-index:99999;background:#fff;color:#000;font:11px monospace;padding:4px;border:1px solid #000;max-width:95vw";
+      document.body.appendChild(dbg);
+      setInterval(function () { dbg.textContent = fx.debug(); }, 400);
+    }
     var muteBtn = $("mute");
     var paintMute = function () {
       setContent(muteBtn, icon(state.muted ? "volume-off" : "volume"));
