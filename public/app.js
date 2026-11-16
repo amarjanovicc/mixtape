@@ -762,6 +762,24 @@
       } catch (e) {}
     }
 
+    var songEl = null, primedSong = false, priming = false;
+    function primeSong() {
+      var el = songEl;
+      if (!el || primedSong || priming || !el.paused) return;
+      priming = true;
+      var was = el.muted;
+      el.muted = true;
+      var done = function (ok) {
+        el.muted = was;
+        if (ok) primedSong = true;
+        if (priming) { priming = false; try { el.pause(); el.currentTime = 0; } catch (e) {} }
+      };
+      var pr;
+      try { pr = el.play(); } catch (e) { done(false); return; }
+      if (pr && pr.then) pr.then(function () { done(true); }, function () { done(false); });
+      else done(true);
+    }
+
     function ready() {
       if (!AC) return false;
       if (!ctx) {
@@ -864,7 +882,12 @@
       // stranica ode u pozadinu: ugasi tihi medij (baterija, bez duha na zaključanom zaslonu)
       sleep: function () { try { if (keepEl && !keepEl.paused) keepEl.pause(); } catch (e) {} },
       // zove se iz svakog dodira (touchstart/touchend/click...): jeftino kad je već sve pokrenuto
+      // pjesma je običan <audio>: iOS ga pusti programski (nakon premotavanja) tek ako je taj
+      // element već jednom pokrenut u dodiru. Zato ga u prvom pravom dodiru tiho "probudimo".
+      watchEl: function (el) { songEl = el; },
+      claimEl: function () { priming = false; },
       unlock: function () {
+        primeSong();
         var wasRunning = ctx && ctx.state === "running" && primed && keepEl && !keepEl.paused;
         ready();
         if (wasRunning) return;
@@ -1067,6 +1090,8 @@
 
     function play() {
       if (!hasAudio) { virtualPlaying = true; return; }
+      fx.claimEl();
+      audio.muted = state.muted;
       var pr = audio.play();
       if (pr && pr.catch) pr.catch(function () { syncButton(); }); // preglednik traži dodir: ostaje gumb za puštanje
     }
@@ -1252,6 +1277,7 @@
           audio.preload = "metadata";
           audio.src = src;
           audio.muted = state.muted;
+          fx.watchEl(audio);
           fx.load(src);
           ["play", "pause", "ended"].forEach(function (ev) { audio.addEventListener(ev, syncButton); });
           ["loadedmetadata", "timeupdate", "seeked"].forEach(function (ev) { audio.addEventListener(ev, paint); });
