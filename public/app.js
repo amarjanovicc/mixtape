@@ -1493,7 +1493,7 @@
     // Novčić: dodir ga podigne nad omot, grebe se njime po foliji, a kad pusti vrati se dolje.
     var coin = $("coin"), armed = false, holding = false, cursor = null;
     coin.hidden = false;
-    coin.classList.remove("taken", "wiggle", "held", "back");
+    coin.classList.remove("taken", "wiggle", "held", "returned");
     text.textContent = "dodirni novčić";
     function coinAt(e) {
       if (!cursor) { cursor = el("i", { class: "coin-cursor", "aria-hidden": "true" }); fxLayer().appendChild(cursor); }
@@ -1645,9 +1645,9 @@
       armed = false; holding = false;
       strokeEnd();
       coinOff();
-      coin.classList.remove("held", "back");
+      coin.classList.remove("held", "returned");
       void coin.offsetWidth;
-      coin.classList.add("back");
+      coin.classList.add("returned");
       if (!finished) text.textContent = moves ? "uzmi novčić i grebi dalje" : "dodirni novčić";
     }
     coin.addEventListener("pointerdown", function (e) {

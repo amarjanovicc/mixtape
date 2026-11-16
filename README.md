@@ -55,6 +55,7 @@ Treba Node 22.
 npm install
 node server.mjs                 # stranica http://localhost:4321, admin http://localhost:4321/admin
 node scripts/check-songs.mjs    # provjera sadržaja
+npm test                        # testovi cijelog toka (Playwright WebKit; jednom: npx playwright install webkit)
 node scripts/dev-live.mjs       # iste funkcije kao na Vercelu, http://localhost:4330 (lozinka: lokalna-lozinka)
 ```
 
@@ -112,6 +113,10 @@ Zvučni efekti su sintetizirani u pregledniku (Web Audio), pa nema zvučnih dato
 - Zvuk i podaci su u privatnom Blobu i dostupni samo kroz funkcije.
 - Sadržaj ide kroz `textContent`, nikad `innerHTML`.
 - Stranica nije indeksirana (`noindex`), ali je dostupna svakome tko zna adresu.
+
+## Tok, odluke i testovi
+
+Pravila toka su u [`docs/FLOW.md`](docs/FLOW.md), odluke u [`docs/adr/`](docs/adr), a provjerava ih `npm test`.
 
 ## Dizajnerska pravila
 

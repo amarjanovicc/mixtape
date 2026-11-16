@@ -239,7 +239,6 @@ button:focus-visible, a:focus-visible { outline: 3px solid var(--ink); outline-o
 .coin { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
 /* dok ga drži, novčić je pod prstom (ne na svom mjestu) */
 .coin.held i { visibility: hidden; animation: none; }
-.coin.held span { opacity: 0.4; }
 .coin.taken { pointer-events: none; animation: coin-take 0.4s var(--ease-out) forwards; }
 /* novčić pod prstom dok grebe */
 .coin-cursor { position: absolute; width: 40px; height: 40px; margin: -46px 0 0 -20px; box-shadow: 2px 3px 0 var(--ink); pointer-events: none; }
@@ -1063,7 +1062,7 @@ body.mini-on .wrap { padding-bottom: calc(150px + env(safe-area-inset-bottom)); 
 .player-box.pulling .player-door { margin-bottom: 34px; }
 
 /* novčić: podignut lebdi nad omotom; kad se vrati dolje, kratko poskoči */
-.coin.back i { animation: pop-in 0.3s var(--ease-out), call 1.4s ease-in-out 0.3s infinite; }
+.coin.returned i { animation: pop-in 0.3s var(--ease-out), call 1.4s ease-in-out 0.3s infinite; }
 @media (prefers-reduced-motion: no-preference) {
   .coin-cursor.hover { animation: coin-bob 0.8s ease-in-out infinite alternate; }
 }

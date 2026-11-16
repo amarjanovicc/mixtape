@@ -121,10 +121,18 @@ service workera, namjerno, da nikad ne vidi staru verziju.
 **Uživo je izvor istine Vercel Blob, ne git.** Sadržaj se mijenja u `/admin` i odmah je live;
 `data/songs.js` je samo početno stanje. Nema više gumba „Objavi” uživo (lokalni server ga i dalje ima).
 
+## Tok igre: pravila, odluke, testovi
+
+Kako se tok mora ponašati je u `docs/FLOW.md` (izvor istine), zašto je tako u `docs/adr/`, a provjerava
+ga `npm test` (`tests/flow.test.mjs`, Playwright WebKit, iPhone emulacija; jednom
+`npm install && npx playwright install webkit`). **Tok mora biti jednostavan**: u svakom trenutku jedna
+uputa i jedan predmet za diranje. Svaka izmjena toka ažurira FLOW.md, ADR ako mijenja odluku, i testove.
+Testovi ne dokazuju da se zvuk čuje: to samo pravi telefon (`?dbg=1`).
+
 ## Pravila
 
 - Stranica (`public/`) je čisti HTML/CSS/JS bez frameworka i build koraka. Backend su male
-  Vercel funkcije bez frameworka; jedina ovisnost je `@vercel/blob`.
+  Vercel funkcije bez frameworka; jedina produkcijska ovisnost je `@vercel/blob` (dev: `playwright` za testove).
 - **Sigurnost**: sve u `api/` osim `songs.js` i `login.js` traži prijavu (cookie `mx_admin`,
   HMAC, HttpOnly/Secure/SameSite=Strict) i zaglavlje `X-Mixtape`; lozinka je samo u Vercel
   okruženju (`ADMIN_PASSWORD`), nikad u kodu. `api/songs.js` mora ostati jedino što stranica
