@@ -138,6 +138,11 @@
     ul.users li:first-child { border-top: 0; padding-top: 0; }
     ul.users .u-head { display: flex; gap: 8px; align-items: center; }
     ul.users .u-name { flex: 1; min-width: 0; padding: 8px 10px; font-weight: 700; }
+    ul.users .u-stats { margin: 8px 0 0; font-weight: 700; }
+    ul.users .u-hist { margin: 8px 0 0; padding-top: 4px; border-top: 0; }
+    ul.users .u-hist summary { min-height: 36px; font-size: .9rem; }
+    ul.users .u-row { margin: 0; padding: 6px 0; border-top: 1px solid var(--rule); font-size: .88rem; display: flex; flex-direction: column; }
+    ul.users .u-row span { color: var(--muted); }
     ul.users .u-meta { margin: 6px 0 0; font-size: .86rem; color: var(--muted); }
     ul.users .u-now { margin: 6px 0 0; font-weight: 600; }
     ul.users .u-acts { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
@@ -467,6 +472,7 @@
       }
       function ownUid() { try { return localStorage.getItem("pjesma-dana:uid") || ""; } catch (e) { return ""; } }
       function clock(ms) { var d = new Date(ms); return pad(d.getHours()) + ":" + pad(d.getMinutes()); }
+      function stamp(ms) { var d = new Date(ms); return d.getDate() + "." + (d.getMonth() + 1) + ". " + clock(ms); }
       function loadUsers() {
         return api("GET", "/api/users").then(function (r) { users = r.users || []; renderUsers(); renderToday(todaySong); }).catch(function (err) { msg("users-msg", err.message, "err"); });
       }
@@ -488,13 +494,31 @@
           head.appendChild(name); head.appendChild(save);
           li.appendChild(head);
           var n = Object.keys(u.collected || {}).length;
-          li.appendChild(el("p", { class: "u-meta" }, u.device + " · zadnji put " + ago(u.seen) + " · u kutiji " + n + "/" + total));
+          var nOpen = Object.keys(u.opened || {}).length;
+          li.appendChild(el("p", { class: "u-stats" }, "U kutiji " + n + "/" + total + " · otvoreno " + nOpen + "/" + total));
+          li.appendChild(el("p", { class: "u-meta" }, u.device + " · prvi put " + stamp(u.created) + " · zadnji put " + stamp(u.seen) + " (" + ago(u.seen) + ")"));
           if (cur) {
-            var line = u.opened && u.opened[cur] ? "Današnja: otvorena u " + clock(u.opened[cur]) : "Današnja: još nije otvorena";
+            var line = u.opened && u.opened[cur] ? "Današnja: otvorena " + stamp(u.opened[cur]) : "Današnja: još nije otvorena";
             if (u.reactions && u.reactions[cur]) line += ", reakcija: " + (RX[u.reactions[cur]] || u.reactions[cur]);
             if (u.collected && u.collected[cur]) line += ", spremljena u kutiju";
             li.appendChild(el("p", { class: "u-now" }, line));
           }
+          // povijest po pjesmama: kad je otvorena, kad je spremljena u kutiju, reakcija
+          var hist = el("details", { class: "u-hist" });
+          hist.appendChild(el("summary", null, "Povijest po pjesmama"));
+          var rows = state.songs.filter(function (s) { return at(s) <= nowLocal(); }).sort(function (a, b) { return at(a) < at(b) ? 1 : -1; });
+          rows.forEach(function (s) {
+            var k = at(s), r = el("p", { class: "u-row" });
+            r.appendChild(el("b", null, s.title));
+            var bits = [];
+            bits.push(u.opened && u.opened[k] ? "otvorena " + stamp(u.opened[k]) : "nije otvorena");
+            if (u.collected && u.collected[k]) bits.push("u kutiji od " + stamp(u.collected[k]));
+            if (u.reactions && u.reactions[k]) bits.push(RX[u.reactions[k]] || u.reactions[k]);
+            r.appendChild(el("span", null, bits.join(" · ")));
+            hist.appendChild(r);
+          });
+          if (!rows.length) hist.appendChild(el("p", { class: "u-meta" }, "Još nema objavljenih pjesama."));
+          li.appendChild(hist);
           var acts = el("div", { class: "u-acts" });
           if (cur) {
             var rs = el("button", { class: "small", type: "button" }, "Resetiraj današnju");
