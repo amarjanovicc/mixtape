@@ -136,15 +136,17 @@
     ul.users { list-style: none; margin: 0; padding: 0; }
     ul.users li { padding: 12px 0; border-top: 1.5px solid var(--rule); }
     ul.users li:first-child { border-top: 0; padding-top: 0; }
-    ul.users .u-head { display: flex; gap: 8px; align-items: center; }
+    ul.users .u-head { display: flex; gap: 8px; align-items: center; justify-content: space-between; }
+    ul.users .u-title { font-size: 1.1rem; overflow-wrap: anywhere; }
     ul.users .u-name { flex: 1; min-width: 0; padding: 8px 10px; font-weight: 700; }
-    ul.users .u-stats { margin: 8px 0 0; font-weight: 700; }
-    ul.users .u-hist { margin: 8px 0 0; padding-top: 4px; border-top: 0; }
-    ul.users .u-hist summary { min-height: 36px; font-size: .9rem; }
+    ul.users .u-facts { margin: 8px 0 0; display: grid; grid-template-columns: auto 1fr; gap: 3px 14px; font-size: .95rem; }
+    ul.users .u-facts dt { color: var(--muted); }
+    ul.users .u-facts dd { margin: 0; font-weight: 600; }
+    ul.users .u-more { margin: 6px 0 0; padding-top: 2px; border-top: 0; }
+    ul.users .u-more summary { min-height: 40px; font-size: .9rem; color: var(--muted); }
+    ul.users .u-more .u-head { margin: 4px 0 8px; }
     ul.users .u-row { margin: 0; padding: 6px 0; border-top: 1px solid var(--rule); font-size: .88rem; display: flex; flex-direction: column; }
     ul.users .u-row span { color: var(--muted); }
-    ul.users .u-meta { margin: 6px 0 0; font-size: .86rem; color: var(--muted); }
-    ul.users .u-now { margin: 6px 0 0; font-weight: 600; }
     ul.users .u-acts { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
     select, .pet input, .reward input { padding: 9px 8px; }
   </style>
@@ -318,7 +320,7 @@
     <div class="pane" data-tab="korisnici" hidden>
     <section class="card">
       <h2>Uređaji</h2>
-      <p class="help" style="margin:0 0 10px">Svaki mobitel koji otvori stranicu dobije svoj anonimni ID (bez prijave) i njegov napredak se pamti ovdje. Ako obriše podatke preglednika, napredak se vrati.</p>
+      <p class="help" style="margin:0 0 10px">Svaki mobitel koji otvori stranicu pojavi se ovdje sam, bez prijave.</p>
       <ul class="users" id="users"></ul>
       <p class="msg" id="users-msg" hidden></p>
     </section>
@@ -479,46 +481,61 @@
       function userAction(body) {
         return api("POST", "/api/users", body).then(loadUsers).catch(function (err) { msg("users-msg", err.message, "err"); });
       }
+      // "danas 09:35", "jučer 18:00", "12.11. 18:00"
+      function when2(ms) {
+        var d = new Date(ms), t = new Date();
+        var days = Math.round((new Date(t.getFullYear(), t.getMonth(), t.getDate()) - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 86400000);
+        return (days === 0 ? "danas" : days === 1 ? "jučer" : d.getDate() + "." + (d.getMonth() + 1) + ".") + " " + clock(ms);
+      }
       function renderUsers() {
         var list = $("users");
         list.textContent = "";
         if (!users.length) list.appendChild(el("li", { class: "empty" }, "Još nijedan uređaj. Pojavi se čim netko otvori stranicu."));
         var cur = todaySong ? at(todaySong) : null;
         var total = state.songs.filter(function (s) { return at(s) <= nowLocal(); }).length;
+        var order = users.slice().sort(function (a, b) { return a.created - b.created; });
         users.forEach(function (u) {
+          var title = u.name || (u.device + " " + (order.indexOf(u) + 1)) + (u.id === ownUid() ? " (ovaj uređaj)" : "");
+          var opened = cur && u.opened && u.opened[cur];
           var li = el("li");
+
           var head = el("div", { class: "u-head" });
-          var name = el("input", { class: "u-name", value: u.name || "", placeholder: u.device + (u.id === ownUid() ? " (ovaj uređaj)" : ""), "aria-label": "Ime uređaja", maxlength: "30" });
+          head.appendChild(el("b", { class: "u-title" }, title));
+          head.appendChild(el("span", { class: "tag " + (opened ? "now" : "wait") }, opened ? "otvorena danas" : "nije otvorena"));
+          li.appendChild(head);
+
+          var box = Object.keys(u.collected || {}).length;
+          var facts = el("dl", { class: "u-facts" });
+          function fact(k, v) { facts.appendChild(el("dt", null, k)); facts.appendChild(el("dd", null, v)); }
+          fact("U kutiji", box + " od " + total);
+          fact("Zadnji put", when2(u.seen));
+          if (cur) {
+            var today = opened ? "otvorena " + when2(u.opened[cur]) : "još nije otvorena";
+            if (u.reactions && u.reactions[cur]) today += " · " + (RX[u.reactions[cur]] || u.reactions[cur]);
+            fact("Današnja pjesma", today);
+          }
+          li.appendChild(facts);
+
+          var more = el("details", { class: "u-more" });
+          more.appendChild(el("summary", null, "Više"));
+          var rename = el("div", { class: "u-head" });
+          var name = el("input", { class: "u-name", value: u.name || "", placeholder: "Ime uređaja", "aria-label": "Ime uređaja", maxlength: "30" });
           var save = el("button", { class: "small", type: "button" }, "Spremi ime");
           save.addEventListener("click", function () { userAction({ action: "rename", id: u.id, name: name.value }); });
-          head.appendChild(name); head.appendChild(save);
-          li.appendChild(head);
-          var n = Object.keys(u.collected || {}).length;
-          var nOpen = Object.keys(u.opened || {}).length;
-          li.appendChild(el("p", { class: "u-stats" }, "U kutiji " + n + "/" + total + " · otvoreno " + nOpen + "/" + total));
-          li.appendChild(el("p", { class: "u-meta" }, u.device + " · prvi put " + stamp(u.created) + " · zadnji put " + stamp(u.seen) + " (" + ago(u.seen) + ")"));
-          if (cur) {
-            var line = u.opened && u.opened[cur] ? "Današnja: otvorena " + stamp(u.opened[cur]) : "Današnja: još nije otvorena";
-            if (u.reactions && u.reactions[cur]) line += ", reakcija: " + (RX[u.reactions[cur]] || u.reactions[cur]);
-            if (u.collected && u.collected[cur]) line += ", spremljena u kutiju";
-            li.appendChild(el("p", { class: "u-now" }, line));
-          }
-          // povijest po pjesmama: kad je otvorena, kad je spremljena u kutiju, reakcija
-          var hist = el("details", { class: "u-hist" });
-          hist.appendChild(el("summary", null, "Povijest po pjesmama"));
+          rename.appendChild(name); rename.appendChild(save);
+          more.appendChild(rename);
+
           var rows = state.songs.filter(function (s) { return at(s) <= nowLocal(); }).sort(function (a, b) { return at(a) < at(b) ? 1 : -1; });
           rows.forEach(function (s) {
             var k = at(s), r = el("p", { class: "u-row" });
             r.appendChild(el("b", null, s.title));
-            var bits = [];
-            bits.push(u.opened && u.opened[k] ? "otvorena " + stamp(u.opened[k]) : "nije otvorena");
-            if (u.collected && u.collected[k]) bits.push("u kutiji od " + stamp(u.collected[k]));
+            var bits = [u.opened && u.opened[k] ? "otvorena " + when2(u.opened[k]) : "nije otvorena"];
+            if (u.collected && u.collected[k]) bits.push("u kutiji");
             if (u.reactions && u.reactions[k]) bits.push(RX[u.reactions[k]] || u.reactions[k]);
             r.appendChild(el("span", null, bits.join(" · ")));
-            hist.appendChild(r);
+            more.appendChild(r);
           });
-          if (!rows.length) hist.appendChild(el("p", { class: "u-meta" }, "Još nema objavljenih pjesama."));
-          li.appendChild(hist);
+
           var acts = el("div", { class: "u-acts" });
           if (cur) {
             var rs = el("button", { class: "small", type: "button" }, "Resetiraj današnju");
@@ -532,7 +549,8 @@
             userAction({ action: "delete", id: u.id });
           });
           acts.appendChild(del);
-          li.appendChild(acts);
+          more.appendChild(acts);
+          li.appendChild(more);
           list.appendChild(li);
         });
       }
