@@ -764,10 +764,10 @@
       } catch (e) {}
     }
 
-    var songEl = null, primedSong = false, priming = false;
+    var songEl = null, primedSong = false, priming = false, primeOk = false;
     function primeSong() {
       var el = songEl;
-      if (!el || primedSong || priming || !el.paused) return;
+      if (!primeOk || !el || primedSong || priming || !el.paused) return;
       priming = true;
       var was = el.muted;
       el.muted = true;
@@ -888,6 +888,8 @@
       // element već jednom pokrenut u dodiru. Zato ga u prvom pravom dodiru tiho "probudimo".
       watchEl: function (el) { songEl = el; },
       claimEl: function () { priming = false; },
+      // tek kad je omot otvoren (prije toga pjesma se nikad ne smije ni pokrenuti, ni tiho)
+      allowPrime: function () { primeOk = true; },
       unlock: function () {
         primeSong();
         if (ctx && ctx.state !== "running") primed = false;   // iOS ga zna ponovno ušutkati: probudi opet
@@ -1888,6 +1890,7 @@
       state.opened[current.at] = Date.now();
       saveState();
       refreshBox();
+      fx.allowPrime();
       // drugi korak rituala: premotaj kasetu na početak pa će zasvirati
       document.body.classList.add("in-game");
       window.scrollTo({ top: 0, behavior: reducedMotion ? "auto" : "smooth" });
