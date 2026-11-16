@@ -921,6 +921,8 @@
         clip = src;
         return true;
       },
+      // je li zvuk stvarno pokrenut (ili ga ionako neće biti)
+      running: function () { return !AC || state.muted || Boolean(ctx && ctx.state === "running"); },
       debug: function () {
         var a = navigator.audioSession ? navigator.audioSession.type : "nema";
         return "ctx " + (ctx ? ctx.state : "nema") + " | tihi " + (keepEl ? (keepEl.paused ? "pauza" : "svira") : "nema") +
@@ -1486,13 +1488,11 @@
     var ctx = canvas.getContext && canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) { $("veil").hidden = false; cleanup = function () { $("veil").classList.add("gone"); }; text.textContent = "dodirni „samo otvori”"; return; }
     canvas.hidden = false;
-    // Novčić: uhvati ga, drži i povuci na omot pa grebi njime (jedan potez). Kad ga pusti, ostaje
-    // joj "u ruci": svaki sljedeći dodir po foliji grebe novčićem. Zvuk: mobitel ga otključa tek
-    // kad prst prvi put napusti ekran, pa prvi potez može biti nijem, a sljedeći se čuju.
+    // Novčić: dodir ga podigne nad omot, grebe se njime po foliji, a kad pusti vrati se dolje.
     var coin = $("coin"), armed = false, holding = false, cursor = null;
     coin.hidden = false;
-    coin.classList.remove("taken", "wiggle", "held");
-    text.textContent = "uhvati novčić i ogrebi omot";
+    coin.classList.remove("taken", "wiggle", "held", "back");
+    text.textContent = "dodirni novčić";
     function coinAt(e) {
       if (!cursor) { cursor = el("i", { class: "coin-cursor", "aria-hidden": "true" }); fxLayer().appendChild(cursor); }
       cursor.style.left = e.clientX + "px";
@@ -1623,41 +1623,74 @@
       return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
     }
 
-    // 1) uhvati novčić i vuci ga: dok je prst dolje, novčić ga prati i grebe čim dođe na foliju
+    // 1) Novčić se podigne DODIROM (tap). Razlog je zvuk: iPhone otključa zvuk samo na dodir bez
+    //    povlačenja; kraj povlačenja mu se ne računa. Zato prvi put nema hvatanja povlačenjem:
+    //    dodir podigne novčić nad omot, a grebanje se onda čuje od prvog poteza. Kad zvuk već
+    //    radi, novčić se može i uhvatiti i povući u jednom potezu.
+    var idle = 0, downAt = null, dragged = false;
+    function lift() {                     // novčić lebdi nad omotom i čeka prst
+      armed = true;
+      coin.classList.add("held");
+      var r = canvas.getBoundingClientRect();
+      coinAt({ clientX: r.left + r.width / 2, clientY: r.top + r.height * 0.3 + 46 });
+      cursor.classList.add("hover");
+      if (!finished) text.textContent = "sad grebi omot";
+      clearTimeout(idle);
+      idle = setTimeout(putBack, 12000);
+    }
+    function putBack() {                  // pustila ga je: vrati se dolje i može ga opet uzeti
+      clearTimeout(idle);
+      armed = false; holding = false;
+      strokeEnd();
+      coinOff();
+      coin.classList.remove("held", "back");
+      void coin.offsetWidth;
+      coin.classList.add("back");
+      if (!finished) text.textContent = moves ? "uzmi novčić i grebi dalje" : "dodirni novčić";
+    }
     coin.addEventListener("pointerdown", function (e) {
       if (finished) return;
       e.preventDefault();
-      holding = true;
       fx.unlock();
       buzz(10);
-      coin.classList.add("held");
+      downAt = [e.clientX, e.clientY];
+      dragged = false;
       try { coin.setPointerCapture(e.pointerId); } catch (err) {}
-      coinAt(e);
-      text.textContent = "povuci ga na omot i grebi";
     });
     coin.addEventListener("pointermove", function (e) {
+      if (!downAt || finished) return;
+      if (!dragged) {
+        if (Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) < 12) return;
+        dragged = true;
+        if (!fx.running()) {              // zvuk još nije otključan: traži dodir, ne povlačenje
+          coin.classList.remove("wiggle"); void coin.offsetWidth; coin.classList.add("wiggle");
+          text.textContent = "samo ga dodirni";
+          return;
+        }
+        clearTimeout(idle);
+        holding = true; armed = false;
+        coin.classList.add("held");
+      }
       if (!holding) return;
       coinAt(e);
+      cursor.classList.remove("hover");
       if (overFoil(e)) { if (drawing) strokeMove(e); else strokeStart(e); }
       else strokeEnd();
     });
     var letGo = function () {
-      if (!holding) return;
-      holding = false;
-      strokeEnd();
-      coinOff();
-      fx.unlock();                 // prst je napustio ekran: sad se zvuk smije otključati
-      armed = true;                // novčić joj ostaje u ruci
-      coin.classList.remove("held");
-      coin.classList.add("taken");
-      if (!finished) text.textContent = "grebi dalje novčićem";
+      if (!downAt) return;
+      downAt = null;
+      fx.unlock();
+      if (finished) return;
+      if (holding) putBack();             // povlačila ga je i pustila
+      else if (!dragged) lift();          // dodir: podigni ga
     };
     coin.addEventListener("pointerup", letGo);
     coin.addEventListener("pointercancel", letGo);
     coin.addEventListener("lostpointercapture", letGo);
     coin.addEventListener("contextmenu", function (e) { e.preventDefault(); });
 
-    // 2) kad je novčić u ruci, grebe se i izravno po foliji
+    // 2) podignut novčić: dodir po foliji grebe; kad pusti, novčić se vrati dolje
     canvas.addEventListener("pointerdown", function (e) {
       if (!armed) {                       // bez novčića: podsjeti gdje je
         coin.classList.remove("wiggle");
@@ -1665,8 +1698,10 @@
         coin.classList.add("wiggle");
         return;
       }
+      clearTimeout(idle);
       try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
       coinAt(e);
+      cursor.classList.remove("hover");
       strokeStart(e);
     });
     canvas.addEventListener("pointermove", function (e) {
@@ -1674,10 +1709,11 @@
       coinAt(e);
       strokeMove(e);
     });
-    var stop = function () { if (holding) return; coinOff(); strokeEnd(); };
+    var stop = function () { if (holding || !drawing) return; putBack(); };
     canvas.addEventListener("pointerup", stop);
     canvas.addEventListener("pointercancel", stop);
     cleanup = function () {
+      clearTimeout(idle);
       fx.scratchEnd();
       coinOff();
       coin.hidden = true;

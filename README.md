@@ -10,7 +10,7 @@ Mala web stranica za jednu osobu. Ona skenira **uvijek isti QR kod** i otvori se
 
 ## Kako izgleda njen dan
 
-1. **Omot je srećka.** Na ekranu je samo omot kasete pod srebrnom folijom i novčić. Uhvati novčić, povuče ga na omot i ogrebe oko 60 % folije. Svaka peta pjesma je umjesto toga „pogodi unazad”: pet sekundi pjesme unatrag i tri naslova. Uvijek postoji „samo otvori”.
+1. **Omot je srećka.** Na ekranu je samo omot kasete pod srebrnom folijom i novčić. Dodirne novčić da ga podigne i njime ogrebe oko 60 % folije; kad pusti, novčić se vrati dolje. Svaka peta pjesma je umjesto toga „pogodi unazad”: pet sekundi pjesme unatrag i tri naslova. Uvijek postoji „samo otvori”.
 2. **Kaseta izleti iz omota.** Omot se otvori kao knjiga, kaseta se spusti na njegovo mjesto, a omot odleti.
 3. **Premotavanje.** Kaseta je „na kraju vrpce”: drži tipku za unazad ili povuče kasetu ulijevo. Čuje ubrzani zvuk premotavanja, a na početku pjesma zasvira.
 4. **Poruka i reakcija.** Poruka rukopisom, pa reakcija ikonom. Tek nakon reakcije pojave se tajni P.S., „javi mu” i „pošalji mu svoju pjesmu”.
@@ -103,7 +103,7 @@ Projekt **ne skida cijele pjesme** sa Spotifyja ili YouTubea: to bi bilo javno d
 - **cijela pjesma** je poveznica na Spotify ili YouTube;
 - **vlastiti zvuk** (glasovna poruka, tvoja snimka) služi za ono što smiješ dijeliti.
 
-Zvučni efekti su sintetizirani u pregledniku (Web Audio), pa nema zvučnih datoteka. Na iPhoneu se zvuk otključava tek kad prst napusti ekran, pa prvi potez grebanja može biti nijem.
+Zvučni efekti su sintetizirani u pregledniku (Web Audio), pa nema zvučnih datoteka. Na iPhoneu se zvuk otključava tek na dodir bez povlačenja, zato se novčić podiže dodirom.
 
 ## Sigurnost
 

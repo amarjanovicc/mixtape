@@ -1061,3 +1061,10 @@ body.mini-on .wrap { padding-bottom: calc(150px + env(safe-area-inset-bottom)); 
 /* strelice za premot ispod kasete, ne preko naljepnice */
 .pull-hint { right: 8%; top: auto; bottom: -34px; translate: none; }
 .player-box.pulling .player-door { margin-bottom: 34px; }
+
+/* novčić: podignut lebdi nad omotom; kad se vrati dolje, kratko poskoči */
+.coin.back i { animation: pop-in 0.3s var(--ease-out), call 1.4s ease-in-out 0.3s infinite; }
+@media (prefers-reduced-motion: no-preference) {
+  .coin-cursor.hover { animation: coin-bob 0.8s ease-in-out infinite alternate; }
+}
+@keyframes coin-bob { to { transform: translateY(-9px); } }

@@ -15,14 +15,15 @@ isprobano i odbačeno: korisniku se nije svidjelo. Ne vraćati ga.)
 
 1. **Omot je srećka: koja je pjesma?** Omot je uspravna kutija kasete (`.sleeve`): hrbat s
    uspravnim natpisom, naslovnica gore, naslov i izvođač dolje, prozirna plastika s odsjajem.
-   Pod srebrnom je folijom. Ispod omota leži **novčić** (`#coin`): uhvati ga, drži i povuče na
-   omot pa grebe njime u istom potezu (novčić prati prst); kad ga pusti, ostaje joj „u ruci” i
-   dalje grebe izravno po foliji. Zvuk se na mobitelu otključa tek kad prst prvi put napusti
-   ekran, pa prvi potez može biti nijem. Razlog je zvuk: mobilni preglednik otključa zvuk samo na
-   pravi dodir (klik), ne na povlačenje, pa bi grebanje inače bilo nijemo. Bez novčića folija
-   se ne grebe, a novčić se zatrese. (Pečat „dodirni pa grebi” preko folije je isproban i
+   Pod srebrnom je folijom. Ispod omota leži **novčić** (`#coin`): **dodirom** (tap) se podigne i lebdi nad
+   omotom, pa ona grebe po foliji i novčić prati prst; kad pusti, novčić se sam vrati dolje i može ga
+   opet uzeti (isto i ako ga 12 s ne iskoristi). Razlog je zvuk: iPhone otključa zvuk samo na dodir
+   BEZ povlačenja (kraj povlačenja mu se ne računa kao dodir), pa bi grebanje započeto povlačenjem
+   zauvijek bilo nijemo. Zato se novčić prvi put ne može uhvatiti povlačenjem (zatrese se, „samo ga
+   dodirni”); kad zvuk već radi (`fx.running()`), može ga i uhvatiti i povući u jednom potezu. Bez
+   novčića folija se ne grebe, a novčić se zatrese. (Pečat „dodirni pa grebi” preko folije je isproban i
    odbačen.) Svaka peta pjesma je umjesto toga **pogodi unazad** (`guess`: omot pod lokotom,
-   5 s pjesme unatrag, tri naslova). `reveal` to nadjača. Uvijek postoji „samo otvori”. Početni ekran je prazan: samo omot, novčić i poruka „uhvati novčić i ogrebi omot”; trag se pojavi tek nakon ~16 poteza (ili u „pogodi unazad” nakon slušanja), a „samo otvori” nakon 10 s. Treba ogrebati oko 60 % folije.
+   5 s pjesme unatrag, tri naslova). `reveal` to nadjača. Uvijek postoji „samo otvori”. Početni ekran je prazan: samo omot, novčić i poruka „dodirni novčić”; trag se pojavi tek nakon ~16 poteza (ili u „pogodi unazad” nakon slušanja), a „samo otvori” nakon 10 s. Treba ogrebati oko 60 % folije.
    **Krivi odgovori** su polje `decoys` ("naslov | naslov"), admin ih popuni iz izvođačevih
    drugih pjesama.
 2. **Kaseta izađe iz omota.** Omot se otvori kao knjiga (`.sleeve.open`, vidi se ležište),
@@ -136,8 +137,8 @@ service workera, namjerno, da nikad ne vidi staru verziju.
   **Mobiteli:** zvuk se otključava na prvi dodir bilo gdje (`touchstart/touchend/pointerup/click`,
   jer iOS priznaje tek `touchend`/`click`), a efekti zaobilaze tihi način mobitela preko
   `navigator.audioSession.type = "playback"` (iOS 17+) i uvijek tihim `<audio>` u petlji (gasi se kad
-  stranica ode u pozadinu). Prvi potez po foliji može biti nijem: preglednik zvuk otključava tek kad
-  prst napusti ekran.
+  stranica ode u pozadinu). iOS priznaje samo dodir bez povlačenja, zato se novčić podiže dodirom.
+  Dijagnostika na mobitelu: `?dbg=1` ispiše stanje zvuka.
   Bez toga efekti šute, a pjesma (običan `<audio>`) svira.
   Premotavanje pušta dekodirani isječak unazad/unaprijed (`fx.scrub`); ako se zvuk ne može
   dekodirati (CORS, datoteka veća od 3 MB), ostaje samo šum motora. AudioContext se smije
